@@ -39,3 +39,9 @@ export interface TelegramFeedResponse {
   channelInfo: ChannelInfo;
   posts: TelegramPost[];
 }
+
+export interface TelegramFeedResult {
+  data: TelegramFeedResponse;
+  source: 'live' | 'cache';
+  updatedAt: number;
+}

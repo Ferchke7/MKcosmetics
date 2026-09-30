@@ -3,7 +3,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { TelegramPost } from '../../core/types/telegram';
-import { Send, Eye, Calendar, MessageCircle, ChevronLeft, ChevronRight, Sparkles, Check, Package, Sparkle } from 'lucide-react';
+import { Send, Calendar, MessageCircle, ChevronLeft, ChevronRight, Sparkles, Check, Package } from 'lucide-react';
 import { sanitizeTelegramText } from '../../utils/textSanitizer';
 
 interface PostDetailModalProps {
@@ -36,11 +36,14 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
   const priceRub = post.prices.rub;
   const priceUsd = post.prices.usd;
 
-  const displayPrice = priceKrw
-    ? `${priceKrw.toLocaleString('ru-RU')} ₩`
-    : priceRub
-    ? `${priceRub.toLocaleString('ru-RU')} ₽`
-    : 'По запросу';
+  const displayPrice = [
+    priceKrw && `${priceKrw.toLocaleString('ru-RU')} ₩`,
+    priceRub && `${priceRub.toLocaleString('ru-RU')} ₽`,
+    priceUsd && `$${priceUsd}`,
+    post.prices.eur && `€${post.prices.eur}`,
+    post.prices.kzt && `${post.prices.kzt.toLocaleString('ru-RU')} ₸`,
+    post.prices.uzs && `${post.prices.uzs.toLocaleString('ru-RU')} сум`,
+  ].filter(Boolean).join(' / ') || 'Уточнить при заказе';
 
   const discountPercent =
     post.prices.originalKrw &&
@@ -131,14 +134,10 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
         )}
 
         {/* Post Meta Top Bar */}
-        <div className="flex items-center justify-between text-xs text-[#8C827A] border-b border-[#F0E6DE] pb-3">
+        <div className="flex items-center text-xs text-[#8C827A] border-b border-[#F0E6DE] pb-3">
           <div className="flex items-center gap-1.5 font-medium">
             <Calendar className="w-3.5 h-3.5 text-[#C2836B]" />
             <span>{dateFormatted}</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-medium">
-            <Eye className="w-3.5 h-3.5 text-[#8C827A]" />
-            <span>{post.views} просмотров</span>
           </div>
         </div>
 
@@ -151,7 +150,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
               </span>
             )}
             <span className="text-[11px] text-[#A89F97] uppercase tracking-widest font-semibold">
-              Прямой эфир из Сеула
+              Публикация Telegram
             </span>
           </div>
 
@@ -168,7 +167,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
         </div>
 
         {/* Price Breakdown Card */}
-        {(priceKrw || priceRub || priceUsd || post.prices.eur || post.prices.kzt) && (
+        {(priceKrw || priceRub || priceUsd || post.prices.eur || post.prices.kzt || post.prices.uzs) && (
           <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FAF5EE] to-[#FDF8F6] border border-[#EED9CF] space-y-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A503C] block">
               Стоимость на день публикации:
@@ -219,8 +218,22 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   </span>
                 </div>
               )}
+              {post.prices.uzs && (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xs font-semibold text-[#8A503C]">UZS:</span>
+                  <span className="text-sm font-semibold text-[#2D2A2E]">
+                    {post.prices.uzs.toLocaleString('ru-RU')} сум
+                  </span>
+                </div>
+              )}
             </div>
           </div>
+        )}
+
+        {(priceKrw || priceRub || priceUsd || post.prices.eur || post.prices.kzt || post.prices.uzs) && (
+          <p className="text-xs leading-relaxed text-[#8C827A]">
+            Цена приведена по публикации. Перед заказом уточните актуальную стоимость и наличие.
+          </p>
         )}
 
         {/* Clean Description Paragraphs */}

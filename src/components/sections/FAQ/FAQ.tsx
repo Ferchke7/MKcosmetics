@@ -3,74 +3,71 @@ import { SectionHeading } from '../../ui/SectionHeading';
 import { Card } from '../../ui/Card';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 
-interface FAQItem {
-  question: string;
-  answer: string;
-}
+const FAQ_ITEMS = [
+  {
+    question: 'Как заказать товар из публикации?',
+    answer: 'Нажмите «Заказать» в карточке товара. WhatsApp откроется с подготовленным сообщением и ссылкой на публикацию. Проверьте текст и отправьте его консультанту.',
+  },
+  {
+    question: 'Цена и наличие в публикации актуальны?',
+    answer: 'В карточке указана цена из публикации. Перед оформлением заказа консультант подтвердит актуальную стоимость и наличие.',
+  },
+  {
+    question: 'Как узнать стоимость и срок доставки?',
+    answer: 'Напишите в WhatsApp и укажите страну и город. Условия доставки подтвердят перед оформлением заказа.',
+  },
+  {
+    question: 'Как попросить подобрать уход?',
+    answer: 'Ответьте на три вопроса в тесте на сайте. WhatsApp откроется с краткой сводкой ваших ответов — отправьте её, чтобы обсудить уход с консультантом.',
+  },
+];
 
 export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const faqs: FAQItem[] = [
-    {
-      question: 'Как я могу быть уверен(а) в 100% оригинальности косметики?',
-      answer: 'Мы находимся непосредственно в Южной Корее (г. Сеул) и работаем только с официальными фармацевтическими заводами, дистрибьюторами брендов (LG Household & Health Care, Amorepacific) и крупными сетями. Вся продукция сертифицирована, имеет актуальные батч-коды и максимальные сроки годности.',
-    },
-    {
-      question: 'Как осуществляется доставка и сколько времени она занимает?',
-      answer: 'Доставка осуществляется авиа-сообщением из Сеула с последующим вручением курьером до вашей двери. Сроки доставки в Россию — 7-12 дней, в Казахстан и Узбекистан — 5-9 дней, в Европу и США — 5-10 дней. После отправки мы предоставляем трек-номер для круглосуточного отслеживания.',
-    },
-    {
-      question: 'Можно ли заказать косметику оптом для магазина или салона красоты?',
-      answer: 'Да! Мы работаем как в розницу, так и мелким/крупным оптом. Для оптовых клиентов действуют специальные фабричные прайс-листы и помощь с таможенным оформлением. Напишите нам в WhatsApp или Telegram для получения оптового каталога.',
-    },
-    {
-      question: 'Как оплатить заказ?',
-      answer: 'Оплата производится удобным для вас способом: банковской картой (РФ, СНГ, Международные карты), через СБП, переводом или электронными платежными системами. Все детали согласовываются с консультантом в чате перед отправкой.',
-    },
-    {
-      question: 'Что делать, если я не знаю, какая косметика мне подойдет?',
-      answer: 'Пройдите наш экспресс-тест на сайте или напишите напрямую Мухаббат Ким в WhatsApp (+82 10 8390 5577). Расскажите о типе кожи и текущих пожеланиях — мы бесплатно подберем индивидуальную пошаговую схему ухода.',
-    },
-  ];
-
   return (
-    <section id="faq" className="py-20 sm:py-28 bg-[#FAF7F2] scroll-mt-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="scroll-mt-20 bg-[#FAF7F2] py-16 sm:py-24">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           badge="Частые вопросы"
-          badgeIcon={<HelpCircle className="w-3.5 h-3.5 text-[#C2836B]" />}
-          title="Ответы на популярные вопросы"
-          subtitle="Все, что нужно знать о заказе, оригинальности, сроках и оплате"
+          badgeIcon={<HelpCircle className="h-3.5 w-3.5 text-[#C2836B]" />}
+          title="Перед заказом"
+          subtitle="Коротко о заказе, ценах и доставке."
         />
 
-        <div className="space-y-3.5">
-          {faqs.map((faq, idx) => {
-            const isOpen = openIndex === idx;
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, index) => {
+            const isOpen = openIndex === index;
+            const answerId = `faq-answer-${index}`;
+
             return (
-              <Card
-                key={idx}
-                className="bg-white border-[#F0E6DE] transition-all overflow-hidden"
-              >
+              <Card key={item.question} className="overflow-hidden border-[#F0E6DE] bg-white">
                 <button
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 transition-colors hover:bg-[#FAF5EE]/50"
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  aria-expanded={isOpen}
+                  aria-controls={answerId}
+                  className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-[#FAF5EE]/50 sm:p-6"
                 >
-                  <span className="font-serif text-base sm:text-lg font-medium text-[#2D2A2E]">
-                    {faq.question}
+                  <span className="font-serif text-base font-medium text-[#2D2A2E] sm:text-lg">
+                    {item.question}
                   </span>
-                  <div
-                    className={`w-7 h-7 rounded-full bg-[#FAF5EE] border border-[#EED9CF] flex items-center justify-center text-[#8A503C] shrink-0 transition-transform duration-300 ${
-                      isOpen ? 'rotate-180 bg-[#C2836B] text-white border-[#C2836B]' : ''
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#EED9CF] bg-[#FAF5EE] text-[#8A503C] transition-transform ${
+                      isOpen ? 'rotate-180 bg-[#C2836B] text-white' : ''
                     }`}
                   >
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
+                    <ChevronDown className="h-4 w-4" />
+                  </span>
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#6C635B] leading-relaxed border-t border-[#F0E6DE]/60 pt-3 animate-fade-in">
-                    {faq.answer}
+                  <div
+                    id={answerId}
+                    role="region"
+                    className="border-t border-[#F0E6DE]/60 px-5 pb-5 pt-3 text-sm leading-relaxed text-[#6C635B] sm:px-6 sm:pb-6"
+                  >
+                    {item.answer}
                   </div>
                 )}
               </Card>

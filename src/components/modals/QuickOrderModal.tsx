@@ -25,6 +25,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   const [phoneOrTelegram, setPhoneOrTelegram] = useState('');
   const [comment, setComment] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [preparedUrl, setPreparedUrl] = useState('');
 
   const handleSendWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +41,8 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
     message += `\nПожалуйста, подтвердите наличие и рассчитайте доставку ✨`;
 
     const url = buildWhatsAppUrl(message);
-    window.open(url, '_blank');
+    setPreparedUrl(url);
+    window.open(url, '_blank', 'noopener,noreferrer');
     setIsSuccess(true);
   };
 
@@ -49,6 +51,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
     setCountryCity('');
     setPhoneOrTelegram('');
     setComment('');
+    setPreparedUrl('');
     setIsSuccess(false);
     onClose();
   };
@@ -60,15 +63,26 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
           <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-9 h-9" />
           </div>
-          <h4 className="font-serif text-2xl text-[#2D2A2E] font-medium">
-            Чат в WhatsApp открыт!
+          <h4 className="font-serif text-2xl font-medium text-[#2D2A2E]">
+            Черновик сообщения готов
           </h4>
-          <p className="text-sm text-[#8C827A] leading-relaxed max-w-sm mx-auto">
-            Ваше сообщение сформировано и отправлено Мухаббат Ким. Консультант свяжется с вами в течение 5 минут.
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-[#8C827A]">
+            Проверьте данные и нажмите «Отправить» в WhatsApp. Если окно не открылось, воспользуйтесь кнопкой ниже.
           </p>
-          <Button variant="primary" onClick={handleReset} fullWidth className="mt-4">
-            Готово
-          </Button>
+          <div className="mx-auto flex max-w-sm flex-col gap-2 pt-2">
+            <a
+              href={preparedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#20BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Открыть WhatsApp
+            </a>
+            <Button variant="ghost" onClick={handleReset} fullWidth>
+              Готово
+            </Button>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSendWhatsApp} className="space-y-4">
@@ -79,14 +93,17 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             </div>
             <div className="flex-1">
               <h5 className="text-xs font-semibold text-[#8A503C] uppercase tracking-wider">
-                Выбранный товар
+                Товар из публикации
               </h5>
               <p className="text-sm font-medium text-[#2D2A2E] line-clamp-2 mt-0.5">
                 {productTitle}
               </p>
-              <span className="inline-block mt-1 font-semibold text-sm text-[#C2836B]">
+              <span className="mt-1 inline-block text-sm font-semibold text-[#C2836B]">
                 {priceFormatted}
               </span>
+              <p className="mt-1 text-xs leading-relaxed text-[#8C827A]">
+                Актуальную цену и наличие подтвердят перед заказом.
+              </p>
             </div>
           </div>
 
@@ -139,7 +156,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               Заказать через WhatsApp
             </Button>
             <p className="text-[11px] text-center text-[#8C827A] mt-2">
-              Откроется прямой чат с основателем бренда Мухаббат Ким
+              WhatsApp откроется с подготовленным сообщением. Его нужно отправить в приложении.
             </p>
           </div>
         </form>

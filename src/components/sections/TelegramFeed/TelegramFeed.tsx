@@ -1,16 +1,23 @@
 import React from 'react';
-import { Send, Search, Sparkles } from 'lucide-react';
+import { Search, Send } from 'lucide-react';
 import { SectionHeading } from '../../ui/SectionHeading';
 import { TelegramPostCard } from './TelegramPostCard';
 import { Button } from '../../ui/Button';
 import { Skeleton } from '../../ui/Skeleton';
-import { TelegramPost, ChannelInfo } from '../../../core/types/telegram';
+import { TelegramPost } from '../../../core/types/telegram';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
+
+const TELEGRAM_LINK_CLASSES =
+  'inline-flex items-center justify-center gap-2 rounded-full bg-[#229ED9] px-5 py-2.5 text-sm font-medium tracking-wide text-white transition-colors hover:bg-[#1E8BC0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#229ED9]';
 
 interface TelegramFeedProps {
   posts: TelegramPost[];
-  channelInfo: ChannelInfo;
   isLoading: boolean;
+  isRefreshing: boolean;
+  dataSource: 'live' | 'cache' | null;
+  updatedAt: number | null;
+  error: string | null;
+  onRefresh: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   allTags: string[];
@@ -22,8 +29,12 @@ interface TelegramFeedProps {
 
 export const TelegramFeed: React.FC<TelegramFeedProps> = ({
   posts,
-  channelInfo,
   isLoading,
+  isRefreshing,
+  dataSource,
+  updatedAt,
+  error,
+  onRefresh,
   searchQuery,
   onSearchChange,
   allTags,
@@ -32,99 +43,87 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
   onOpenDetails,
   onQuickOrder,
 }) => {
+  const dateText = updatedAt
+    ? new Date(updatedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+    : null;
+  const hasFilters = Boolean(searchQuery.trim() || selectedTag);
+
   return (
-    <section id="telegram-feed" className="py-20 sm:py-28 bg-[#F5EDE6]/40 scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="telegram-feed" className="scroll-mt-20 bg-[#F5EDE6]/40 py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          badge="Прямой эфир из Сеула"
-          badgeIcon={<Send className="w-3.5 h-3.5 text-[#229ED9]" />}
-          title="Свежие поступления & Обзоры в Telegram"
-          subtitle="Актуальные цены, наличие, новинки и акции в режиме реального времени напрямую из нашего канала"
+          badge="Предложения"
+          badgeIcon={<Send className="h-3.5 w-3.5 text-[#229ED9]" />}
+          title="Товары из Telegram"
+          subtitle="Если цена указана в публикации, перед заказом мы подтвердим актуальную стоимость и наличие."
         />
 
-        {/* Telegram Channel Info Banner */}
-        <div className="mb-10 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-white via-white to-[#FAF5EE] border border-[#EED9CF] shadow-soft flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4 text-center sm:text-left">
-            <div className="relative">
-              <img
-                src={channelInfo.avatarUrl || 'https://cdn5.telesco.pe/file/LrwC6ts6S58ITMMKK7AsAmMM0KVnQBrw7pNF9KPYX7pba5bmdN9U1Cmm7JrNP7fEF7yF-L1o_p9r17u7m2S9PKf50AnariV1_iyhY-GCU3ecNrWPIrPuenjXPwX6RsmWJm6JLoEQfkQ9jR9RRXkgfpEqZGp5uwOhzmpHwZqermQ8QBRyr4_ZUvRAEKFlVPvVN-EO_1-4bhRngkftolPVd2GEoq1MO-FBEu0L67A4CGK6t2TFZ1xocaN2LAeTLWwX2LPpe6F678ENUye6aFOiYWOh3MUe4MA3Ma5SM_-uamSjv-Tdp3ofj98VIKpXag3TF7BzvhBsGbnUw46HCIUDdw.jpg'}
-                alt={channelInfo.title}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-[#C2836B]/30 shadow-md"
-              />
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#229ED9] text-white flex items-center justify-center text-[10px] font-bold border-2 border-white">
-                ✓
-              </span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 justify-center sm:justify-start">
-                <h3 className="font-serif text-lg sm:text-xl font-bold text-[#2D2A2E]">
-                  {channelInfo.title}
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-[#229ED9]/10 text-[#1E8BC0] text-xs font-semibold">
-                  {channelInfo.subscribersCount} подписчиков
-                </span>
-              </div>
-              <p className="text-xs text-[#8C827A] mt-1 line-clamp-1 max-w-xl">
-                {channelInfo.description}
-              </p>
-              <div className="flex items-center gap-4 text-xs text-[#6C3E2E] mt-2 font-medium">
-                <span>📸 {channelInfo.photosCount} фото</span>
-                <span>🎥 {channelInfo.videosCount} видео</span>
-                <span className="text-emerald-600 font-semibold">● На связи 24/7</span>
-              </div>
-            </div>
+        <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#EED9CF] bg-white p-5 sm:flex-row sm:p-6">
+          <div className="text-center sm:text-left">
+            <h3 className="font-serif text-lg font-semibold text-[#2D2A2E]">
+              {BRAND_CONFIG.telegramChannel}
+            </h3>
+            <p className="mt-1 text-sm text-[#6C635B]">
+              Свежие публикации и предложения — в канале.
+            </p>
           </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <a
-              href={BRAND_CONFIG.telegramChannelUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button
-                variant="telegram"
-                size="md"
-                icon={<Send className="w-4 h-4" />}
-              >
-                Подписаться на канал
-              </Button>
-            </a>
-          </div>
+          <a
+            href={BRAND_CONFIG.telegramChannelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={TELEGRAM_LINK_CLASSES}
+          >
+            <Send className="h-4 w-4" />
+            Открыть канал
+          </a>
         </div>
 
-        {/* Filter & Search Bar without post count */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Search Input */}
-            <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 text-[#8C827A] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Поиск по товарам и новинкам (пилинг, CNP, ботокс, спф)..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-[#EED9CF] text-xs sm:text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => onSearchChange('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#8C827A] hover:text-[#4D2C20]"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+        {dataSource === 'live' && dateText && (
+          <p className="mb-4 text-xs text-[#8C827A]" role="status">
+            Данные получены {dateText}
+          </p>
+        )}
+
+        {dataSource === 'cache' && dateText && (
+          <div className="mb-5 flex flex-col items-start justify-between gap-3 rounded-xl border border-[#EED9CF] bg-[#FAF5EE] p-4 text-sm text-[#6C3E2E] sm:flex-row sm:items-center">
+            <p role="status">
+              Сохранённые публикации на {dateText}. Telegram временно недоступен; уточните цену и наличие перед заказом.
+              {error ? ` ${error}` : ''}
+            </p>
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="shrink-0 font-semibold text-[#8A503C] underline underline-offset-4 disabled:opacity-60"
+            >
+              {isRefreshing ? 'Обновляем…' : 'Повторить'}
+            </button>
+          </div>
+        )}
+
+        <div className="mb-7 space-y-4">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C827A]" />
+            <input
+              type="search"
+              aria-label="Поиск по публикациям"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Поиск по товарам и публикациям…"
+              className="w-full rounded-2xl border border-[#EED9CF] bg-white py-2.5 pl-10 pr-4 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
+            />
           </div>
 
-          {/* Dynamic Tags */}
           {allTags.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
               <button
+                type="button"
                 onClick={() => onSelectTag(null)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0 ${
+                aria-pressed={selectedTag === null}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedTag === null
                     ? 'bg-[#C2836B] text-white'
-                    : 'bg-white text-[#6C3E2E] border border-[#EED9CF] hover:bg-[#FAF5EE]'
+                    : 'border border-[#EED9CF] bg-white text-[#6C3E2E] hover:bg-[#FAF5EE]'
                 }`}
               >
                 Все темы
@@ -132,25 +131,26 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
               {allTags.map((tag) => (
                 <button
                   key={tag}
+                  type="button"
                   onClick={() => onSelectTag(tag === selectedTag ? null : tag)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0 ${
+                  aria-pressed={selectedTag === tag}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     selectedTag === tag
                       ? 'bg-[#C2836B] text-white'
-                      : 'bg-white text-[#6C3E2E] border border-[#EED9CF] hover:bg-[#FAF5EE]'
+                      : 'border border-[#EED9CF] bg-white text-[#6C3E2E] hover:bg-[#FAF5EE]'
                   }`}
                 >
-                  #{tag}
+                  {tag}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Posts Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 space-y-3 border border-[#F0E6DE]">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="space-y-3 rounded-2xl border border-[#F0E6DE] bg-white p-4">
                 <Skeleton className="aspect-[4/3] rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
@@ -158,30 +158,64 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
               </div>
             ))}
           </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-3xl border border-[#F0E6DE] space-y-4">
-            <div className="w-16 h-16 rounded-full bg-[#FAF5EE] text-[#A89F97] flex items-center justify-center mx-auto">
-              <Search className="w-8 h-8" />
-            </div>
-            <h4 className="font-serif text-xl text-[#2D2A2E] font-medium">
-              Посты не найдены
-            </h4>
-            <p className="text-xs text-[#8C827A] max-w-sm mx-auto">
-              Попробуйте изменить запрос или сбросить фильтр по тегам
+        ) : error && posts.length === 0 ? (
+          <div className="space-y-4 rounded-3xl border border-[#F0E6DE] bg-white px-5 py-12 text-center sm:py-16">
+            <h3 className="font-serif text-xl font-medium text-[#2D2A2E]">Предложения не загрузились</h3>
+            <p className="mx-auto max-w-md text-sm text-[#6C635B]">
+              Попробуйте обновить ленту или откройте канал Telegram.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onSearchChange('');
-                onSelectTag(null);
-              }}
-            >
-              Сбросить фильтры
-            </Button>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button variant="outline" size="md" onClick={onRefresh}>
+                {isRefreshing ? 'Обновляем…' : 'Повторить'}
+              </Button>
+              <a
+                href={BRAND_CONFIG.telegramChannelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={TELEGRAM_LINK_CLASSES}
+              >
+                <Send className="h-4 w-4" />
+                Открыть канал
+              </a>
+            </div>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="space-y-4 rounded-3xl border border-[#F0E6DE] bg-white px-5 py-12 text-center sm:py-16">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FAF5EE] text-[#A89F97]">
+              <Search className="h-7 w-7" />
+            </div>
+            <h3 className="font-serif text-xl font-medium text-[#2D2A2E]">
+              {hasFilters ? 'Ничего не найдено' : 'Публикаций пока нет'}
+            </h3>
+            <p className="mx-auto max-w-sm text-sm text-[#6C635B]">
+              {hasFilters
+                ? 'Измените поиск или сбросьте фильтр, чтобы посмотреть другие публикации.'
+                : 'Новые предложения можно посмотреть в Telegram-канале.'}
+            </p>
+            {hasFilters ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onSearchChange('');
+                  onSelectTag(null);
+                }}
+              >
+                Сбросить фильтры
+              </Button>
+            ) : (
+              <a
+                href={BRAND_CONFIG.telegramChannelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={TELEGRAM_LINK_CLASSES}
+              >
+                Открыть канал
+              </a>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
             {posts.map((post) => (
               <TelegramPostCard
                 key={post.id}

@@ -79,9 +79,9 @@ export class TelegramScraperService {
       username,
       description,
       avatarUrl,
-      subscribersCount: counters['subscribers'] || '1.5K',
-      photosCount: counters['photos'] || '8.2K',
-      videosCount: counters['videos'] || '2.9K',
+      subscribersCount: counters['subscribers'] || '',
+      photosCount: counters['photos'] || '',
+      videosCount: counters['videos'] || '',
     };
 
     // 2. Parse Posts & Albums
@@ -102,7 +102,7 @@ export class TelegramScraperService {
         const timestamp = new Date(dateStr).getTime() || Date.now();
 
         // Views
-        const views = $post.find('.tgme_widget_message_views').text().trim() || '100+';
+        const views = $post.find('.tgme_widget_message_views').text().trim();
 
         // Author
         const author = $post.find('.tgme_widget_message_from_author').text().trim() || 'Мухаббат Ким';

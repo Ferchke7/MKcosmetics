@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TelegramFeedResponse, TelegramPost } from '../core/types/telegram';
+import { TelegramFeedResult, TelegramPost } from '../core/types/telegram';
 import { TelegramService } from '../services/telegram/telegramService';
-import { INITIAL_TELEGRAM_DATA } from '../services/telegram/telegramMockData';
 
 export function useTelegramFeed() {
-  const [data, setData] = useState<TelegramFeedResponse>(INITIAL_TELEGRAM_DATA);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [feed, setFeed] = useState<TelegramFeedResult | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -21,9 +20,10 @@ export function useTelegramFeed() {
 
     try {
       const result = await TelegramService.fetchFeed(isSilent);
-      setData(result);
-    } catch (err: any) {
-      setError(err.message || 'Не удалось обновить Telegram ленту');
+      setFeed(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось обновить Telegram ленту');
+      setFeed((previous) => previous ? { ...previous, source: 'cache' } : null);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -44,11 +44,11 @@ export function useTelegramFeed() {
 
   // Extract unique tags
   const allTags = Array.from(
-    new Set(data.posts.flatMap((p) => p.tags || []))
+    new Set((feed?.data.posts ?? []).flatMap((p) => p.tags || []))
   ).filter(Boolean);
 
   // Filter posts
-  const filteredPosts: TelegramPost[] = data.posts.filter((post) => {
+  const filteredPosts: TelegramPost[] = (feed?.data.posts ?? []).filter((post) => {
     const matchesSearch =
       searchQuery.trim() === '' ||
       post.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,9 +61,9 @@ export function useTelegramFeed() {
   });
 
   return {
-    channelInfo: data.channelInfo,
     posts: filteredPosts,
-    rawPosts: data.posts,
+    dataSource: feed?.source ?? null,
+    updatedAt: feed?.updatedAt ?? null,
     allTags,
     selectedTag,
     setSelectedTag,
@@ -72,6 +72,6 @@ export function useTelegramFeed() {
     isLoading,
     isRefreshing,
     error,
-    refreshFeed: () => loadFeed(true),
+    refreshFeed: () => loadFeed(feed !== null),
   };
 }

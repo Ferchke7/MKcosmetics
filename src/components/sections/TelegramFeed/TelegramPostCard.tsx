@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TelegramPost } from '../../../core/types/telegram';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { Eye, Calendar, Send, MessageCircle, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Calendar, Send, MessageCircle, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { sanitizeTelegramText } from '../../../utils/textSanitizer';
 
 interface TelegramPostCardProps {
@@ -26,15 +26,16 @@ export const TelegramPostCard: React.FC<TelegramPostCardProps> = ({
     : '';
 
   const prices = post?.prices || {};
-  const priceKrw = prices.krw;
-  const priceRub = prices.rub;
-  const priceUsd = prices.usd;
+  const priceEntries = [
+    prices.krw ? `${prices.krw.toLocaleString('ru-RU')} ₩` : null,
+    prices.rub ? `${prices.rub.toLocaleString('ru-RU')} ₽` : null,
+    prices.usd ? `$${prices.usd}` : null,
+    prices.eur ? `€${prices.eur}` : null,
+    prices.kzt ? `${prices.kzt.toLocaleString('ru-RU')} ₸` : null,
+    prices.uzs ? `${prices.uzs.toLocaleString('ru-RU')} сум` : null,
+  ].filter((price): price is string => Boolean(price));
 
-  const displayPrice = priceKrw
-    ? `${priceKrw.toLocaleString('ru-RU')} ₩`
-    : priceRub
-    ? `${priceRub.toLocaleString('ru-RU')} ₽`
-    : 'По запросу';
+  const displayPrice = priceEntries.join(' / ') || 'Уточнить при заказе';
 
   const discountPercent =
     prices.originalKrw &&
@@ -124,14 +125,6 @@ export const TelegramPostCard: React.FC<TelegramPostCardProps> = ({
             </>
           )}
 
-          {/* Telegram Channel Pill */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#229ED9] text-white text-[10px] font-bold shadow-xs">
-              <Send className="w-3 h-3" />
-              <span>@mkcosmetkor</span>
-            </span>
-          </div>
-
           {/* Discount Tag: ONLY if discountPercent is strictly > 0 */}
           {discountPercent > 0 && (
             <div className="absolute top-3 right-3 z-10">
@@ -144,15 +137,10 @@ export const TelegramPostCard: React.FC<TelegramPostCardProps> = ({
 
         {/* Card Body */}
         <div className="p-5 space-y-3">
-          {/* Date & Views */}
-          <div className="flex items-center justify-between text-[11px] text-[#8C827A]">
+          <div className="flex items-center text-[11px] text-[#8C827A]">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span>{formattedDate}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5" />
-              <span>{post?.views || '100+'}</span>
             </div>
           </div>
 
@@ -162,25 +150,24 @@ export const TelegramPostCard: React.FC<TelegramPostCardProps> = ({
           </h4>
 
           {/* Multi-currency Price Pills */}
-          {(priceKrw || priceRub || priceUsd) && (
+          {priceEntries.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              {priceKrw && (
-                <span className="px-2.5 py-1 rounded-lg bg-[#FAF5EE] border border-[#EED9CF] text-xs font-bold text-[#8A503C]">
-                  {priceKrw.toLocaleString('ru-RU')} ₩
+              {priceEntries.map((price) => (
+                <span
+                  key={price}
+                  className="rounded-lg border border-[#EED9CF] bg-[#FAF5EE] px-2.5 py-1 text-xs font-semibold text-[#6C3E2E]"
+                >
+                  {price}
                 </span>
-              )}
-              {priceRub && (
-                <span className="px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#F0E6DE] text-xs font-semibold text-[#2D2A2E]">
-                  {priceRub.toLocaleString('ru-RU')} ₽
-                </span>
-              )}
-              {priceUsd && (
-                <span className="px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#F0E6DE] text-xs font-medium text-[#6C635B]">
-                  ${priceUsd}
-                </span>
-              )}
+              ))}
             </div>
           )}
+          {priceEntries.length === 0 && (
+            <p className="pt-1 text-xs font-semibold text-[#8A503C]">Цена — по запросу</p>
+          )}
+          <p className="text-[11px] leading-relaxed text-[#8C827A]">
+            Наличие и актуальную цену подтвердим перед заказом.
+          </p>
 
           {/* Sanitized Clean Preview Text */}
           {sanitized?.descriptionParagraphs && sanitized.descriptionParagraphs.length > 0 && (

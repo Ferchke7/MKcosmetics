@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Product } from '../core/types/product';
-import { PRODUCTS_CATALOG } from '../services/product/productData';
 import { buildWhatsAppUrl } from '../core/constants/brand';
 
 export interface QuizQuestionData {
@@ -79,23 +77,6 @@ export function useSkinQuiz() {
     setIsCompleted(false);
   };
 
-  const getRecommendedProducts = (): Product[] => {
-    if (!isCompleted) return [];
-
-    let filtered = PRODUCTS_CATALOG.filter((product) => {
-      if (answers.skinConcern && product.skinConcerns.includes(answers.skinConcern as any)) {
-        return true;
-      }
-      return false;
-    });
-
-    if (filtered.length < 2) {
-      filtered = PRODUCTS_CATALOG.slice(0, 3);
-    }
-
-    return filtered.slice(0, 3);
-  };
-
   const generateConsultationUrl = (): string => {
     const typeLabel = QUIZ_QUESTIONS[0].options.find((o) => o.id === answers.skinType)?.label || 'не указан';
     const concernLabel = QUIZ_QUESTIONS[1].options.find((o) => o.id === answers.skinConcern)?.label || 'не указана';
@@ -121,7 +102,6 @@ export function useSkinQuiz() {
     isCompleted,
     handleSelectOption,
     restartQuiz,
-    getRecommendedProducts,
     generateConsultationUrl,
     setCurrentStep,
   };

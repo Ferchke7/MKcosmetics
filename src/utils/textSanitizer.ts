@@ -64,8 +64,8 @@ const INGREDIENT_KEYWORDS = [
 export function sanitizeTelegramText(rawText: string, fallbackTitle?: string): SanitizedPostContent {
   if (!rawText || rawText.trim() === '') {
     return {
-      title: fallbackTitle || 'Премиальный корейский уход MK COSMET',
-      descriptionParagraphs: ['Оригинальная сертифицированная корейская косметика с прямыми поставками из Сеула.'],
+      title: fallbackTitle || 'Публикация из Telegram',
+      descriptionParagraphs: ['Описание в публикации отсутствует.'],
       benefits: [],
       keyIngredients: [],
       rawTags: [],
@@ -174,11 +174,11 @@ export function sanitizeTelegramText(rawText: string, fallbackTitle?: string): S
   }
 
   return {
-    title: title || fallbackTitle || 'Премиальный корейский уход',
+    title: title || fallbackTitle || 'Публикация из Telegram',
     brand,
     volume: volume || weight,
     weight,
-    descriptionParagraphs: descriptionParagraphs.length > 0 ? descriptionParagraphs : ['Оригинальный продукт премиум-класса напрямую из Южной Кореи.'],
+    descriptionParagraphs: descriptionParagraphs.length > 0 ? descriptionParagraphs : ['Описание в публикации отсутствует.'],
     benefits,
     keyIngredients,
     howToUse,
