@@ -85,6 +85,55 @@ export interface StaffMember {
   paidCount: number;
 }
 
+export interface StaffPayrollOrder {
+  id: number;
+  orderNumber: string;
+  date: string;
+  customerName: string;
+  city: string;
+  totalAmount: number;
+  totalKRW: number;
+  totalUZS: number;
+  costPriceKRW: number;
+  marginKRW: number;
+  marginUZS: number;
+  status: string;
+  paymentMethod: string;
+}
+
+export interface StaffPayrollSummary {
+  username: string;
+  displayName: string;
+  phone: string;
+  role: string;
+  ordersCount: number;
+  paidCount: number;
+  totalRevenueKRW: number;
+  totalRevenueUZS: number;
+  totalMarginKRW: number;
+  totalMarginUZS: number;
+  baseSalaryUZS: number;
+  commissionRatePct: number;
+  commissionType: 'revenue' | 'margin';
+  commissionEarnedUZS: number;
+  commissionEarnedKRW: number;
+  kpiBonusUZS: number;
+  totalPayoutUZS: number;
+  totalPayoutKRW: number;
+  orders: StaffPayrollOrder[];
+}
+
+export interface PayrollReportResponse {
+  month: string;
+  commissionType: string;
+  totalStaffCount: number;
+  totalPaidOrders: number;
+  totalRevenueUZS: number;
+  totalMarginUZS: number;
+  totalPayoutUZS: number;
+  staffPayrolls: StaffPayrollSummary[];
+}
+
 export interface DeepAnalyticsData {
   periodDays: number;
   totalOrders: number;
@@ -554,6 +603,59 @@ export const adminService = {
     if (!res.ok || !data.success) {
       throw new Error(data.error || 'Ошибка удаления сотрудника');
     }
+  },
+
+  async getStaffPayroll(
+    params: {
+      month?: string;
+      commissionType?: 'revenue' | 'margin';
+      commissionRate?: number;
+      baseSalary?: number;
+      kpiBonus?: number;
+    },
+    token: string
+  ): Promise<PayrollReportResponse> {
+    const qs = new URLSearchParams();
+    if (params.month) qs.set('month', params.month);
+    if (params.commissionType) qs.set('commissionType', params.commissionType);
+    if (params.commissionRate !== undefined) qs.set('commissionRate', String(params.commissionRate));
+    if (params.baseSalary !== undefined) qs.set('baseSalary', String(params.baseSalary));
+    if (params.kpiBonus !== undefined) qs.set('kpiBonus', String(params.kpiBonus));
+
+    const res = await fetch(`${API_BASE}/admin/staff/payroll?${qs.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Ошибка загрузки ведомости зарплат');
+    }
+    return data.report;
+  },
+
+  async exportStaffPayrollCSV(
+    params: {
+      month?: string;
+      commissionType?: 'revenue' | 'margin';
+      commissionRate?: number;
+      baseSalary?: number;
+      kpiBonus?: number;
+    },
+    token: string
+  ): Promise<Blob> {
+    const qs = new URLSearchParams();
+    if (params.month) qs.set('month', params.month);
+    if (params.commissionType) qs.set('commissionType', params.commissionType);
+    if (params.commissionRate !== undefined) qs.set('commissionRate', String(params.commissionRate));
+    if (params.baseSalary !== undefined) qs.set('baseSalary', String(params.baseSalary));
+    if (params.kpiBonus !== undefined) qs.set('kpiBonus', String(params.kpiBonus));
+
+    const res = await fetch(`${API_BASE}/admin/staff/payroll/export-csv?${qs.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      throw new Error('Ошибка выгрузки ведомости зарплат в Excel');
+    }
+    return res.blob();
   },
 
   // Products CRUD

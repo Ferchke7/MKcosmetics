@@ -92,3 +92,58 @@ func (h *StaffHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
 }
+
+// GetPayroll handles GET /api/admin/staff/payroll
+func (h *StaffHandler) GetPayroll(w http.ResponseWriter, r *http.Request) {
+	month := r.URL.Query().Get("month")
+	commType := r.URL.Query().Get("commissionType")
+	commRateStr := r.URL.Query().Get("commissionRate")
+	baseSalaryStr := r.URL.Query().Get("baseSalary")
+	kpiBonusStr := r.URL.Query().Get("kpiBonus")
+
+	commRate, _ := strconv.ParseFloat(commRateStr, 64)
+	baseSalary, _ := strconv.ParseFloat(baseSalaryStr, 64)
+	kpiBonus, _ := strconv.ParseFloat(kpiBonusStr, 64)
+
+	report, err := h.staffUC.GetPayrollReport(r.Context(), month, commType, commRate, baseSalary, kpiBonus)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "report": report})
+}
+
+// ExportPayrollCSV handles GET /api/admin/staff/payroll/export-csv
+func (h *StaffHandler) ExportPayrollCSV(w http.ResponseWriter, r *http.Request) {
+	month := r.URL.Query().Get("month")
+	commType := r.URL.Query().Get("commissionType")
+	commRateStr := r.URL.Query().Get("commissionRate")
+	baseSalaryStr := r.URL.Query().Get("baseSalary")
+	kpiBonusStr := r.URL.Query().Get("kpiBonus")
+
+	commRate, _ := strconv.ParseFloat(commRateStr, 64)
+	baseSalary, _ := strconv.ParseFloat(baseSalaryStr, 64)
+	kpiBonus, _ := strconv.ParseFloat(kpiBonusStr, 64)
+
+	data, err := h.staffUC.ExportPayrollCSV(r.Context(), month, commType, commRate, baseSalary, kpiBonus)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	filename := "mk_payroll_statement.csv"
+	if month != "" && month != "all" {
+		filename = "mk_payroll_" + month + ".csv"
+	}
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+filename+"\"")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+}

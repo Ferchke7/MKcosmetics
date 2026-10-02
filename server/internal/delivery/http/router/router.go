@@ -148,6 +148,8 @@ func NewRouter(
 			admin.Route("/staff", func(s chi.Router) {
 				s.Get("/", staffHandler.GetAll)
 				s.Post("/", staffHandler.Create)
+				s.Get("/payroll", staffHandler.GetPayroll)
+				s.Get("/payroll/export-csv", staffHandler.ExportPayrollCSV)
 				s.Put("/{id}", staffHandler.Update)
 				s.Delete("/{id}", staffHandler.Delete)
 			})
