@@ -5,6 +5,8 @@ import { NAV_ITEMS } from '../../../core/constants/navigation';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
 import { CurrencyCode, CurrencyConfig } from '../../../core/types/currency';
 import { CurrencySelector } from './CurrencySelector';
+import { LanguageSelector } from './LanguageSelector';
+import { useLanguage } from '../../../core/i18n/LanguageContext';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -29,7 +31,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   currencies,
   onSelectCurrency,
 }) => {
+  const { t } = useLanguage();
   if (!isOpen) return null;
+
+  const getLocalizedLabel = (href: string, fallback: string) => {
+    switch (href) {
+      case '#top':
+        return t('nav_home');
+      case '#catalog':
+        return t('nav_catalog');
+      case '#delivery':
+        return t('nav_delivery');
+      case '#faq':
+        return t('nav_faq');
+      case '#contacts':
+        return t('nav_contact');
+      default:
+        return fallback;
+    }
+  };
 
   const handleNavClick = (href: string) => {
     onClose();
@@ -44,7 +64,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Меню сайта">
       <button
         type="button"
-        className="fixed inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="fixed inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
         aria-label="Закрыть меню"
       />
@@ -66,10 +86,15 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </button>
           </div>
 
-          {/* Currency and Cart actions */}
-          <div className="flex items-center justify-between py-4 border-b border-[#F0E6DE]/60 gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[#8C827A]">Валюта:</span>
+          {/* Language, Currency and Cart actions */}
+          <div className="py-4 border-b border-[#F0E6DE]/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#8C827A]">{t('nav_language')}:</span>
+              <LanguageSelector />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#8C827A]">{t('nav_currency')}:</span>
               <CurrencySelector
                 currentCurrency={currentCurrency}
                 currencies={currencies}
@@ -82,12 +107,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 onClose();
                 onOpenCart();
               }}
-              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-semibold text-[#8A503C]"
+              className="w-full relative inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#EED9CF] text-xs font-semibold text-[#8A503C]"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Корзина</span>
+              <span>{t('nav_cart')}</span>
               {cartCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#EF4444] text-white text-[10px] flex items-center justify-center font-bold">
+                <span className="w-5 h-5 rounded-full bg-[#EF4444] text-white text-[11px] flex items-center justify-center font-bold">
                   {cartCount}
                 </span>
               )}
@@ -101,6 +126,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 (item.href === '#catalog' && activeView === 'catalog') ||
                 (item.href !== '#catalog' && activeView === 'home' && item.href === '#top');
 
+              const label = getLocalizedLabel(item.href, item.label);
+
               return (
                 <button
                   key={item.href}
@@ -109,14 +136,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left text-base font-semibold transition-colors ${
                     item.isSpecial
                       ? activeView === 'catalog'
-                        ? 'bg-[#111827] text-white shadow-xs'
+                        ? 'bg-[#111111] text-white shadow-xs'
                         : 'border border-[#EED9CF] bg-[#FAF5EE] text-[#8A503C]'
                       : isItemActive
                       ? 'bg-[#FAF5EE] text-[#4D2C20]'
                       : 'text-[#2D2A2E] hover:bg-[#FAF5EE] hover:text-[#C2836B]'
                   }`}
                 >
-                  <span>{item.label}</span>
+                  <span>{label}</span>
                 </button>
               );
             })}
@@ -125,9 +152,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
         {/* Social Networks & Contact Bar */}
         <div className="pt-4 border-t border-[#F0E6DE] space-y-2.5">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
-            Мы в соцсетях и мессенджерах:
-          </p>
           <div className="grid grid-cols-2 gap-2">
             <a
               href={BRAND_CONFIG.instagramUrl}
@@ -156,18 +180,16 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-[#20BA5A] transition-colors shadow-2xs"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Написать в WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
 
-          <div className="text-center pt-1">
-            <a
-              href={`tel:${BRAND_CONFIG.phone}`}
-              className="inline-flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#111827] font-semibold"
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>{BRAND_CONFIG.phoneDisplay}</span>
-            </a>
-          </div>
+          <a
+            href={`tel:${BRAND_CONFIG.phone}`}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#F5EDE6] text-[#4D2C20] text-xs font-medium hover:bg-[#EED9CF] transition-colors"
+          >
+            <Phone className="w-3.5 h-3.5 text-[#C2836B]" />
+            <span>{BRAND_CONFIG.phoneDisplay}</span>
+          </a>
         </div>
       </div>
     </div>

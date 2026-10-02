@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Product } from '../../core/types/product';
-import { Star, ShoppingBag, MessageCircle, ShieldCheck, Plane, X, ChevronRight } from 'lucide-react';
+import { Star, ShoppingBag, MessageCircle, ShieldCheck, Plane } from 'lucide-react';
+import { useLanguage } from '../../core/i18n/LanguageContext';
 
 interface ProductQuickViewModalProps {
   product: Product | null;
@@ -20,13 +21,14 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
   onAddToCart,
   onQuickBuy,
 }) => {
+  const { t } = useLanguage();
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
 
   if (!product) return null;
 
   const photos = Array.isArray(product.images) && product.images.length > 0 ? product.images : [];
   const discountPercent = product.discountPercent;
-  const displayPrice = product.priceKrw > 0 ? formatPrice(product.priceKrw) : 'По запросу';
+  const displayPrice = product.priceKrw > 0 ? formatPrice(product.priceKrw) : t('product_price_on_request');
 
   const handleOrderWhatsApp = () => {
     onQuickBuy(product.name, displayPrice, product.telegramPostUrl);
@@ -67,7 +69,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             <div className="absolute bottom-3 left-3 z-10">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#111111]/90 backdrop-blur-xs text-white text-[11px] font-semibold">
                 <Plane className="w-3.5 h-3.5 text-amber-300" />
-                <span>Прямой рейс из Сеула</span>
+                <span>{t('product_flight_badge')}</span>
               </span>
             </div>
           </div>
@@ -92,7 +94,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
           )}
         </div>
 
-        {/* Product Details - Musinsa Style */}
+        {/* Product Details */}
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -101,7 +103,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                100% Genuine
+                {t('product_genuine_badge')}
               </span>
             </div>
 
@@ -111,7 +113,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
             {product.volume && (
               <p className="text-xs font-medium text-[#777777] mt-1">
-                Объем: <strong className="text-[#111111]">{product.volume}</strong>
+                {t('product_volume')} <strong className="text-[#111111]">{product.volume}</strong>
               </p>
             )}
           </div>
@@ -124,10 +126,10 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               ))}
             </div>
             <span className="font-bold text-[#111111]">{product.rating}</span>
-            <span className="text-[#888888]">({product.reviewCount} отзывов покупателей)</span>
+            <span className="text-[#888888]">({product.reviewCount} {t('product_reviews')})</span>
           </div>
 
-          {/* Musinsa Price Card */}
+          {/* Price Card */}
           <div className="p-4 rounded-xl bg-[#F7F7F7] border border-[#EAEAEA] space-y-1">
             {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
               <div className="text-xs text-[#999999] line-through">
@@ -157,7 +159,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
           {product.keyIngredients && product.keyIngredients.length > 0 && (
             <div>
               <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1.5">
-                Активные компоненты:
+                {t('product_active_ingredients')}
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {product.keyIngredients.map((ing, idx) => (
@@ -184,7 +186,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#111111] bg-white hover:bg-gray-50 text-[#111111] text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>В корзину</span>
+                <span>{t('product_add_cart')}</span>
               </button>
 
               <button
@@ -193,7 +195,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer shadow-md"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Купить в 1 клик</span>
+                <span>{t('product_quick_buy')}</span>
               </button>
             </div>
           </div>

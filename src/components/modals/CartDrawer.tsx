@@ -3,7 +3,8 @@ import { Drawer } from '../ui/Drawer';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CartItem } from '../../core/types/product';
-import { Trash2, Plus, Minus, ShoppingBag, MessageCircle, ArrowRight } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, MessageCircle } from 'lucide-react';
+import { useLanguage } from '../../core/i18n/LanguageContext';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   formatPrice,
   onCheckoutWhatsApp,
 }) => {
+  const { t } = useLanguage();
   const [clientName, setClientName] = useState('');
   const [address, setAddress] = useState('');
 
@@ -37,7 +39,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   };
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} title="Ваша корзина">
+    <Drawer isOpen={isOpen} onClose={onClose} title={t('cart_title')}>
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center py-12 space-y-4">
           <div className="w-16 h-16 rounded-full bg-[#FAF5EE] text-[#A89F97] flex items-center justify-center">
@@ -45,14 +47,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           </div>
           <div>
             <h4 className="font-serif text-lg text-[#2D2A2E] font-medium">
-              Корзина пока пуста
+              {t('cart_empty_title')}
             </h4>
             <p className="text-xs text-[#8C827A] mt-1 max-w-xs">
-              Выберите понравившиеся товары из каталога для быстрого оформления
+              {t('cart_empty_desc')}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>
-            Перейти к каталогу
+            {t('nav_catalog')}
           </Button>
         </div>
       ) : (
@@ -115,19 +117,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           <div className="border-t border-[#F0E6DE] pt-4 space-y-4">
             <div className="space-y-2">
               <Input
-                placeholder="Ваше имя"
+                placeholder={t('order_name_placeholder')}
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
               />
               <Input
-                placeholder="Город / Страна доставки"
+                placeholder={t('order_city_placeholder')}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
 
             <div className="flex items-center justify-between text-sm py-2 border-t border-[#F0E6DE]/60">
-              <span className="text-[#6C635B] font-medium">Итого к оплате:</span>
+              <span className="text-[#6C635B] font-medium">{t('cart_total')}</span>
               <span className="font-serif text-xl font-bold text-[#C2836B]">
                 {formattedTotal}
               </span>
@@ -141,14 +143,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 onClick={handleCheckout}
                 icon={<MessageCircle className="w-5 h-5" />}
               >
-                Оформить заказ в WhatsApp
+                {t('cart_checkout_whatsapp')}
               </Button>
 
               <button
                 onClick={onClear}
-                className="w-full text-center text-xs text-[#A89F97] hover:text-[#4D2C20] py-1"
+                className="w-full text-center text-xs text-[#A89F97] hover:text-[#4D2C20] py-1 cursor-pointer"
               >
-                Очистить корзину
+                {t('cart_clear')}
               </button>
             </div>
           </div>

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageCircle, Send, CheckCircle2, Package, Sparkles } from 'lucide-react';
+import { MessageCircle, CheckCircle2, Package } from 'lucide-react';
 import { buildWhatsAppUrl } from '../../core/constants/brand';
+import { useLanguage } from '../../core/i18n/LanguageContext';
 
 interface QuickOrderModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   priceFormatted,
   sourceUrl,
 }) => {
+  const { t, language } = useLanguage();
   const [name, setName] = useState('');
   const [countryCity, setCountryCity] = useState('');
   const [phoneOrTelegram, setPhoneOrTelegram] = useState('');
@@ -30,15 +32,20 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   const handleSendWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let message = `🌸 *Здравствуйте, Мухаббат! Хочу заказать косметику:*\n\n`;
-    message += `🛍️ *Товар:* ${productTitle}\n`;
-    message += `💰 *Цена:* ${priceFormatted}\n`;
-    if (name) message += `👤 *Имя:* ${name}\n`;
-    if (countryCity) message += `📍 *Город/Страна доставки:* ${countryCity}\n`;
-    if (phoneOrTelegram) message += `📱 *Контакты:* ${phoneOrTelegram}\n`;
-    if (comment) message += `💬 *Пожелание/Вопрос:* ${comment}\n`;
-    if (sourceUrl) message += `🔗 *Ссылка:* ${sourceUrl}\n`;
-    message += `\nПожалуйста, подтвердите наличие и рассчитайте доставку ✨`;
+    let message = language === 'uz'
+      ? `🌸 *Assalomu alaykum, Muhabbat! Kosmetika buyurtma qilmoqchiman:*\n\n`
+      : `🌸 *Здравствуйте, Мухаббат! Хочу заказать косметику:*\n\n`;
+
+    message += `🛍️ *${language === 'uz' ? 'Mahsulot' : 'Товар'}:* ${productTitle}\n`;
+    message += `💰 *${language === 'uz' ? 'Narx' : 'Цена'}:* ${priceFormatted}\n`;
+    if (name) message += `👤 *${language === 'uz' ? 'Ism' : 'Имя'}:* ${name}\n`;
+    if (countryCity) message += `📍 *${language === 'uz' ? 'Yetkazib berish manzili' : 'Город/Страна доставки'}:* ${countryCity}\n`;
+    if (phoneOrTelegram) message += `📱 *${language === 'uz' ? 'Aloqa' : 'Контакты'}:* ${phoneOrTelegram}\n`;
+    if (comment) message += `💬 *${language === 'uz' ? 'Izoh' : 'Пожелание/Вопрос'}:* ${comment}\n`;
+    if (sourceUrl) message += `🔗 *${language === 'uz' ? 'Havola' : 'Ссылка'}:* ${sourceUrl}\n`;
+    message += language === 'uz'
+      ? `\nIltimos, mavjudligini tasdiqlang va yetkazib berish narxini hisoblab bering ✨`
+      : `\nПожалуйста, подтвердите наличие и рассчитайте доставку ✨`;
 
     const url = buildWhatsAppUrl(message);
     setPreparedUrl(url);
@@ -57,17 +64,17 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleReset} title="Быстрый заказ косметики" maxWidth="md">
+    <Modal isOpen={isOpen} onClose={handleReset} title={t('order_modal_title')} maxWidth="md">
       {isSuccess ? (
         <div className="text-center py-6 space-y-4">
           <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-9 h-9" />
           </div>
           <h4 className="font-serif text-2xl font-medium text-[#2D2A2E]">
-            Черновик сообщения готов
+            {t('order_success_title')}
           </h4>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-[#8C827A]">
-            Проверьте данные и нажмите «Отправить» в WhatsApp. Если окно не открылось, воспользуйтесь кнопкой ниже.
+            {t('order_success_desc')}
           </p>
           <div className="mx-auto flex max-w-sm flex-col gap-2 pt-2">
             <a
@@ -77,10 +84,10 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#20BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
             >
               <MessageCircle className="h-4 w-4" />
-              Открыть WhatsApp
+              WhatsApp
             </a>
             <Button variant="ghost" onClick={handleReset} fullWidth>
-              Готово
+              OK
             </Button>
           </div>
         </div>
@@ -93,7 +100,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             </div>
             <div className="flex-1">
               <h5 className="text-xs font-semibold text-[#8A503C] uppercase tracking-wider">
-                Выбранный товар
+                {t('order_modal_selected')}
               </h5>
               <p className="text-sm font-medium text-[#2D2A2E] line-clamp-2 mt-0.5">
                 {productTitle}
@@ -101,45 +108,42 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               <span className="mt-1 inline-block text-sm font-semibold text-[#C2836B]">
                 {priceFormatted}
               </span>
-              <p className="mt-1 text-xs leading-relaxed text-[#8C827A]">
-                Актуальную цену и наличие подтвердят перед заказом.
-              </p>
             </div>
           </div>
 
           <div className="space-y-3">
             <Input
-              label="Ваше имя"
-              placeholder="Например, Анна"
+              label={t('order_name')}
+              placeholder={t('order_name_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
 
             <Input
-              label="Город и страна доставки"
-              placeholder="Например, Москва / Ташкент / Алматы"
+              label={t('order_city')}
+              placeholder={t('order_city_placeholder')}
               value={countryCity}
               onChange={(e) => setCountryCity(e.target.value)}
               required
             />
 
             <Input
-              label="Телефон / Telegram для связи"
-              placeholder="+7 / +998 / @username"
+              label={t('order_contact')}
+              placeholder={t('order_contact_placeholder')}
               value={phoneOrTelegram}
               onChange={(e) => setPhoneOrTelegram(e.target.value)}
             />
 
             <div>
               <label className="block text-xs font-medium text-[#6C3E2E] uppercase tracking-wider mb-1.5">
-                Комментарий или вопрос (необязательно)
+                {t('order_comment')}
               </label>
               <textarea
                 rows={2}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Укажите тип кожи или вопрос по товару..."
+                placeholder={t('order_comment_placeholder')}
                 className="w-full rounded-xl border border-[#EED9CF] bg-white px-4 py-2 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
               />
             </div>
@@ -153,10 +157,10 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               fullWidth
               icon={<MessageCircle className="w-5 h-5" />}
             >
-              Заказать через WhatsApp
+              {t('order_btn_whatsapp')}
             </Button>
             <p className="text-[11px] text-center text-[#8C827A] mt-2">
-              WhatsApp откроется с подготовленным сообщением. Его нужно отправить в приложении.
+              {t('order_disclaimer')}
             </p>
           </div>
         </form>

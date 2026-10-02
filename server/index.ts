@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { DbService } from './services/dbService.js';
 import { TelegramSyncWorker } from './services/telegramSyncWorker.js';
+import { VisitorStatsService } from './services/visitorStatsService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,13 +12,26 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 1. Initialize persistent database & background sync worker
+// Trust proxy for real IP detection behind Nginx / Cloudflare
+app.set('trust proxy', true);
+
+// 1. Initialize persistent database, background sync worker & visitor stats
 DbService.init();
 TelegramSyncWorker.start();
+VisitorStatsService.init();
 
 // 2. Middleware
 app.use(cors());
 app.use(express.json());
+
+// Helper to extract clean client IP
+function getClientIp(req: express.Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.socket.remoteAddress || '127.0.0.1';
+}
 
 // 3. API Routes
 
@@ -70,6 +84,38 @@ app.post('/api/telegram/sync', async (req, res) => {
       error: error.message,
     });
   }
+});
+
+// Visitor Track & Geo IP Endpoint
+app.post('/api/visitor/track', (req, res) => {
+  try {
+    const clientIp = getClientIp(req);
+    const countryCode = req.body?.countryCode || 'UZ';
+    VisitorStatsService.recordVisit(countryCode);
+    const stats = VisitorStatsService.getStats();
+
+    res.json({
+      success: true,
+      clientIp,
+      ...stats,
+    });
+  } catch (error: any) {
+    res.json({
+      success: true,
+      clientIp: getClientIp(req),
+      ...VisitorStatsService.getStats(),
+    });
+  }
+});
+
+// Visitor Stats Endpoint
+app.get('/api/visitor/stats', (req, res) => {
+  const clientIp = getClientIp(req);
+  res.json({
+    success: true,
+    clientIp,
+    ...VisitorStatsService.getStats(),
+  });
 });
 
 // 4. Production Static File Serving

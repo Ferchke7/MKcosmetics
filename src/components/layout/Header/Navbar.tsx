@@ -1,5 +1,6 @@
 import React from 'react';
 import { NAV_ITEMS } from '../../../core/constants/navigation';
+import { useLanguage } from '../../../core/i18n/LanguageContext';
 
 interface NavbarProps {
   activeView: 'home' | 'catalog';
@@ -7,6 +8,25 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
+  const { t } = useLanguage();
+
+  const getLocalizedLabel = (href: string, fallback: string) => {
+    switch (href) {
+      case '#top':
+        return t('nav_home');
+      case '#catalog':
+        return t('nav_catalog');
+      case '#delivery':
+        return t('nav_delivery');
+      case '#faq':
+        return t('nav_faq');
+      case '#contacts':
+        return t('nav_contact');
+      default:
+        return fallback;
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     if (href === '#catalog') {
@@ -23,6 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
           (item.href === '#catalog' && activeView === 'catalog') ||
           (item.href !== '#catalog' && activeView === 'home' && item.href === '#top');
 
+        const label = getLocalizedLabel(item.href, item.label);
+
         return (
           <a
             key={item.href}
@@ -31,14 +53,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
             className={`whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all xl:text-sm ${
               item.isSpecial
                 ? activeView === 'catalog'
-                  ? 'bg-[#C2836B] text-white shadow-xs'
+                  ? 'bg-[#111111] text-white shadow-xs'
                   : 'bg-[#FAF5EE] text-[#8A503C] hover:bg-[#F2E8DC]'
                 : isItemActive
                 ? 'bg-[#FAF5EE] text-[#4D2C20]'
                 : 'text-[#4D2C20] hover:text-[#C2836B] hover:bg-[#FAF5EE]'
             }`}
           >
-            {item.label}
+            {label}
           </a>
         );
       })}

@@ -4,9 +4,11 @@ import { InstagramIcon } from '../../ui/InstagramIcon';
 import { Navbar } from './Navbar';
 import { MobileMenu } from './MobileMenu';
 import { CurrencySelector } from './CurrencySelector';
+import { LanguageSelector } from './LanguageSelector';
 import { Logo } from '../../ui/Logo';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
 import { CurrencyCode, CurrencyConfig } from '../../../core/types/currency';
+import { useLanguage } from '../../../core/i18n/LanguageContext';
 
 interface HeaderProps {
   activeView: 'home' | 'catalog';
@@ -27,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   currencies,
   onSelectCurrency,
 }) => {
+  const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -65,8 +68,13 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Desktop Navbar */}
             <Navbar activeView={activeView} onNavigate={onNavigate} />
 
-            {/* Right Action Icons & Socials */}
+            {/* Right Action Icons & Selectors */}
             <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+              {/* Language Selector */}
+              <div className="hidden sm:block">
+                <LanguageSelector />
+              </div>
+
               {/* Currency Selector */}
               <div className="hidden sm:block">
                 <CurrencySelector
@@ -83,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full flex items-center justify-center text-[#E1306C] hover:bg-[#FAF5EE] transition-colors"
-                  title="Наш Instagram"
+                  title="Instagram"
                   aria-label="Instagram"
                 >
                   <InstagramIcon className="w-4 h-4" />
@@ -93,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full flex items-center justify-center text-[#229ED9] hover:bg-[#FAF5EE] transition-colors"
-                  title="Наш Telegram"
+                  title="Telegram"
                   aria-label="Telegram"
                 >
                   <Send className="w-4 h-4" />
@@ -104,11 +112,11 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenCart}
-                className="relative inline-flex h-10 w-10 sm:w-auto sm:px-3.5 items-center justify-center gap-1.5 rounded-full bg-[#FAF5EE] hover:bg-[#F2E8DC] border border-[#EED9CF] text-[#4D2C20] transition-colors shadow-2xs"
-                aria-label={`Корзина (${cartCount} товаров)`}
+                className="relative inline-flex h-10 w-10 sm:w-auto sm:px-3.5 items-center justify-center gap-1.5 rounded-full bg-[#FAF5EE] hover:bg-[#F2E8DC] border border-[#EED9CF] text-[#4D2C20] transition-colors shadow-2xs cursor-pointer"
+                aria-label={`${t('nav_cart')} (${cartCount})`}
               >
                 <ShoppingBag className="h-4 w-4 text-[#8A503C]" />
-                <span className="hidden sm:inline text-xs font-semibold">Корзина</span>
+                <span className="hidden sm:inline text-xs font-semibold">{t('nav_cart')}</span>
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 sm:static sm:top-auto sm:right-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EF4444] px-1 text-[11px] font-black text-white shadow-xs animate-scale-in">
                     {cartCount}
@@ -121,18 +129,18 @@ export const Header: React.FC<HeaderProps> = ({
                 href={BRAND_CONFIG.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Написать в WhatsApp"
+                aria-label="WhatsApp"
                 className="hidden md:inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-white shadow-xs transition-colors hover:bg-[#20BA5A] font-semibold text-xs"
               >
                 <MessageCircle className="h-4 w-4" />
-                <span>Консультация</span>
+                <span>{t('nav_contact')}</span>
               </a>
 
               {/* Mobile Menu Toggle */}
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="rounded-xl p-2 text-[#4D2C20] transition-colors hover:bg-[#FAF5EE] lg:hidden"
+                className="rounded-xl p-2 text-[#4D2C20] transition-colors hover:bg-[#FAF5EE] lg:hidden cursor-pointer"
                 aria-label="Открыть меню"
                 aria-expanded={isMobileMenuOpen}
               >

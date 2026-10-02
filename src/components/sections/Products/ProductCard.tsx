@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Eye,
 } from 'lucide-react';
+import { useLanguage } from '../../../core/i18n/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
@@ -35,6 +36,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   rank,
   layout = 'grid',
 }) => {
+  const { t } = useLanguage();
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -57,7 +59,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const displayPrice = product.priceKrw > 0
     ? formatPrice(product.priceKrw)
-    : 'По запросу';
+    : t('product_price_on_request');
 
   const handleBuyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,7 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       className="group relative flex flex-col justify-between bg-white border border-[#EBEBEB] hover:border-[#111111] transition-all duration-250 rounded-xl overflow-hidden cursor-pointer select-none hover:shadow-lg"
     >
       <div>
-        {/* Product Image Area - Musinsa Ratio */}
+        {/* Product Image Area */}
         <div className="relative aspect-[1/1] sm:aspect-[4/5] bg-[#F7F7F7] overflow-hidden">
           {photos.length > 0 ? (
             <img
@@ -97,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           )}
 
-          {/* Musinsa Ranking Number Badge (e.g. 01, 02...) */}
+          {/* Ranking Number Badge (e.g. 01, 02...) */}
           {rank !== undefined && rank <= 10 && (
             <div className="absolute top-0 left-0 z-10">
               <div className={`px-2.5 py-1 text-xs font-black tracking-tight text-white ${
@@ -122,18 +124,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
 
-          {/* Seoul Direct Flight Delivery Badge */}
+          {/* Direct Delivery Badge */}
           <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#111111]/90 backdrop-blur-xs text-white text-[10px] font-semibold tracking-tight">
               <Plane className="w-3 h-3 text-amber-300" />
-              <span>Сеул • Прямой рейс</span>
+              <span>{t('product_flight_badge')}</span>
             </span>
           </div>
 
           {/* Wishlist Heart Button */}
           <button
             onClick={handleFavoriteClick}
-            className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 z-20 ${
+            className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 z-20 cursor-pointer ${
               isFavorite
                 ? 'bg-rose-50 text-[#FF0038] shadow-sm scale-105'
                 : 'bg-white/85 backdrop-blur-xs text-[#767676] hover:text-[#FF0038] hover:bg-white shadow-2xs'
@@ -144,19 +146,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-[#FF0038] text-[#FF0038]' : ''}`} />
           </button>
 
-          {/* Image Navigation Arrows (Desktop hover) */}
+          {/* Image Navigation Arrows */}
           {photos.length > 1 && (
             <>
               <button
                 onClick={handlePrevPhoto}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNextPhoto}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -180,12 +182,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="hidden sm:flex absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 pointer-events-none">
             <div className="w-full py-2 bg-white/95 backdrop-blur-xs text-[#111111] text-[11px] font-bold uppercase tracking-wider rounded-lg shadow-md flex items-center justify-center gap-1.5 border border-gray-200">
               <Eye className="w-3.5 h-3.5" />
-              <span>Быстрый просмотр</span>
+              <span>{t('product_quick_view')}</span>
             </div>
           </div>
         </div>
 
-        {/* Product Details - Musinsa Clean Style */}
+        {/* Product Details */}
         <div className="p-3 sm:p-3.5 space-y-1.5">
           {/* Brand Name & Volume */}
           <div className="flex items-center justify-between gap-1.5">
@@ -199,7 +201,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
 
-          {/* Title (2 lines max with clean typography) */}
+          {/* Title (2 lines max) */}
           <h3 className="font-sans text-[12.5px] sm:text-[13.5px] font-medium text-[#222222] line-clamp-2 leading-[1.35] group-hover:underline group-hover:text-black">
             {product.name}
           </h3>
@@ -213,11 +215,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <span className="text-[10px] text-[#888888]">({product.reviewCount})</span>
             <span className="text-[10px] text-emerald-600 font-semibold ml-auto flex items-center gap-0.5">
               <ShieldCheck className="w-3 h-3" />
-              100% Origin
+              {t('product_genuine_badge')}
             </span>
           </div>
 
-          {/* Musinsa Price Block */}
+          {/* Price Block */}
           <div className="pt-1">
             {product.priceKrw > 0 ? (
               <div className="space-y-0.5">
@@ -239,7 +241,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </div>
             ) : (
               <div className="text-xs font-bold text-[#111111] py-0.5">
-                Цена по запросу
+                {t('product_price_on_request')}
               </div>
             )}
           </div>
@@ -252,20 +254,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           type="button"
           onClick={handleAddCartClick}
           className="inline-flex items-center justify-center gap-1 py-2 px-2 rounded-lg border border-[#E0E0E0] bg-[#FFFFFF] hover:bg-[#F5F5F5] text-[#111111] text-[11px] sm:text-xs font-bold transition-colors active:scale-95 cursor-pointer shadow-2xs"
-          title="Добавить в корзину"
+          title={t('product_add_cart')}
         >
           <ShoppingBag className="w-3.5 h-3.5 text-[#555555]" />
-          <span>В корзину</span>
+          <span>{t('product_add_cart')}</span>
         </button>
 
         <button
           type="button"
           onClick={handleBuyClick}
           className="inline-flex items-center justify-center gap-1 py-2 px-2 rounded-lg bg-[#25D366] hover:bg-[#20BA5A] text-white text-[11px] sm:text-xs font-bold transition-colors active:scale-95 cursor-pointer shadow-2xs"
-          title="Заказать через WhatsApp"
+          title={t('product_order_btn')}
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          <span>Заказать</span>
+          <span>{t('product_order_btn')}</span>
         </button>
       </div>
     </div>
