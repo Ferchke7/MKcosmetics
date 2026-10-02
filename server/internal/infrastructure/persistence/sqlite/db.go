@@ -53,7 +53,8 @@ func NewDB(dbPath string) (*DB, error) {
 }
 
 func (db *DB) migrate() error {
-	schema := `
+	// 1. Create tables IF NOT EXISTS
+	tables := `
 	CREATE TABLE IF NOT EXISTS channel_info (
 		id INTEGER PRIMARY KEY CHECK (id = 1),
 		title TEXT NOT NULL,
@@ -81,9 +82,6 @@ func (db *DB) migrate() error {
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
-
-	CREATE INDEX IF NOT EXISTS idx_posts_timestamp ON posts(timestamp DESC);
-	CREATE INDEX IF NOT EXISTS idx_posts_brand ON posts(brand);
 
 	CREATE TABLE IF NOT EXISTS visitor_stats (
 		country_code TEXT PRIMARY KEY,
@@ -134,11 +132,6 @@ func (db *DB) migrate() error {
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 
-	CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-	CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
-	CREATE INDEX IF NOT EXISTS idx_orders_cargo ON orders(cargo_batch_id);
-	CREATE INDEX IF NOT EXISTS idx_orders_assigned ON orders(assigned_to);
-
 	CREATE TABLE IF NOT EXISTS cargo_batches (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		batch_code TEXT UNIQUE NOT NULL,
@@ -170,30 +163,46 @@ func (db *DB) migrate() error {
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
-
-	CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 	`
 
-	_, err := db.Exec(schema)
-	if err != nil {
-		return err
+	if _, err := db.Exec(tables); err != nil {
+		return fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	// Safe column migrations for existing SQLite databases
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN payment_receipt_url TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN tracking_number TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN shipping_address TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN cost_price REAL NOT NULL DEFAULT 0;")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN city TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN assigned_to TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN cargo_batch_id INTEGER NOT NULL DEFAULT 0;")
+	// 2. Safe column migrations for existing SQLite databases (must run before indexes on new columns)
+	alterCols := []string{
+		"ALTER TABLE orders ADD COLUMN payment_receipt_url TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN tracking_number TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN shipping_address TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN cost_price REAL NOT NULL DEFAULT 0;",
+		"ALTER TABLE orders ADD COLUMN city TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN assigned_to TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE orders ADD COLUMN cargo_batch_id INTEGER NOT NULL DEFAULT 0;",
+		"ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;",
+	}
+	for _, query := range alterCols {
+		_, _ = db.Exec(query) // Ignore error if column already exists
+	}
 
-	_, _ = db.Exec("ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT '';")
-	_, _ = db.Exec("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;")
+	// 3. Create indexes AFTER all columns are guaranteed to exist
+	indexes := `
+	CREATE INDEX IF NOT EXISTS idx_posts_timestamp ON posts(timestamp DESC);
+	CREATE INDEX IF NOT EXISTS idx_posts_brand ON posts(brand);
+	CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+	CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_orders_cargo ON orders(cargo_batch_id);
+	CREATE INDEX IF NOT EXISTS idx_orders_assigned ON orders(assigned_to);
+	CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
+	CREATE INDEX IF NOT EXISTS idx_cargo_batches_code ON cargo_batches(batch_code);
+	`
+	if _, err := db.Exec(indexes); err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
 
-	// Ensure default admin user exists
+	// 4. Ensure default admin user exists
 	db.seedDefaultAdmin()
 	return nil
 }
