@@ -16,7 +16,7 @@ ENV GOTOOLCHAIN=local \
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build -ldflags="-s -w" -o /app/bin/server ./server/cmd/server
+RUN GOOS=linux go build -ldflags="-s -w" -o /app/bin/mkcosmetics ./server/cmd/server
 
 # Stage 3: Production Runtime (Ultra-light Alpine)
 FROM alpine:3.21
@@ -25,7 +25,7 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates tzdata curl wget && \
     mkdir -p /app/data
 
-COPY --from=backend-builder /app/bin/server /app/server
+COPY --from=backend-builder /app/bin/mkcosmetics /app/mkcosmetics
 COPY --from=frontend-builder /app/dist /app/dist
 
 ENV PORT=3001 \
@@ -35,4 +35,4 @@ ENV PORT=3001 \
 
 EXPOSE 3001
 
-CMD ["/app/server"]
+CMD ["/app/mkcosmetics"]

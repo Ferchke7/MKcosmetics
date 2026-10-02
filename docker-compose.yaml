@@ -8,10 +8,12 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./data:/app/server/data
+      - ./data:/app/data
     environment:
       - PORT=3001
-      - NODE_ENV=production
+      - DB_PATH=/app/data/mkcosmetics.db
+      - STATIC_DIR=/app/dist
+      - TELEGRAM_CHANNEL=mkcosmetkor
     networks:
       - duda-shared
 
