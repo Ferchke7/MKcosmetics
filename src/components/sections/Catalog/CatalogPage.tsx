@@ -128,10 +128,10 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               onClick={onRefresh}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 bg-white px-3 py-1.5 rounded-full border border-gray-200 transition-colors disabled:opacity-50 shadow-2xs"
-              title="Обновить товары из Telegram"
+              title="Обновить каталог"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0073E9]' : ''}`} />
-              <span>{isRefreshing ? 'Синхронизация…' : 'Обновить из Telegram'}</span>
+              <span>{isRefreshing ? 'Синхронизация…' : 'Обновить'}</span>
             </button>
           </div>
         </div>
@@ -145,10 +145,10 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                 <span>Каталог косметики из Южной Кореи</span>
               </div>
               <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
-                Все товары из Telegram ({totalCount})
+                Каталог товаров ({totalCount})
               </h1>
               <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-2xl">
-                Прямые поставки оригинальной косметики из Сеула по ценам канала @mkcosmetkor.
+                Прямые поставки оригинальной корейской косметики напрямую из Сеула.
               </p>
             </div>
 

@@ -41,150 +41,189 @@ export interface ChannelInfo {
 export class TelegramScraperService {
   private static CHANNEL_HANDLE = 'mkcosmetkor';
 
-  public static async scrapeLiveFeed(): Promise<{ channelInfo: ChannelInfo; posts: ScrapedTelegramPost[] }> {
-    const url = `https://t.me/s/${this.CHANNEL_HANDLE}`;
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
-      },
-      timeout: 12000,
-    });
-
-    const html = response.data;
-    const $ = cheerio.load(html);
-
-    // 1. Channel Profile Info
-    const title = $('.tgme_channel_info_header_title span').text().trim() || 'MK KOREA COSMETIC';
-    const username = '@' + this.CHANNEL_HANDLE;
-    const description = $('.tgme_channel_info_description').text().trim() || 'Корейская косметика премиум-класса с доставкой во все страны';
-    
-    let avatarUrl = $('.tgme_page_photo_image img').attr('src') || '';
-    if (!avatarUrl && $('.tgme_channel_info_header img').length) {
-      avatarUrl = $('.tgme_channel_info_header img').attr('src') || '';
-    }
-
-    const counters: { [key: string]: string } = {};
-    $('.tgme_channel_info_counter').each((_, el) => {
-      const val = $(el).find('.counter_value').text().trim();
-      const type = $(el).find('.counter_type').text().trim();
-      if (type && val) {
-        counters[type] = val;
-      }
-    });
-
-    const channelInfo: ChannelInfo = {
-      title,
-      username,
-      description,
-      avatarUrl,
-      subscribersCount: counters['subscribers'] || '',
-      photosCount: counters['photos'] || '',
-      videosCount: counters['videos'] || '',
+  /**
+   * Scrapes live feed with pagination to fetch all historical products.
+   */
+  public static async scrapeLiveFeed(maxPages: number = 8): Promise<{ channelInfo: ChannelInfo; posts: ScrapedTelegramPost[] }> {
+    let channelInfo: ChannelInfo = {
+      title: 'MK KOREA COSMETIC',
+      username: '@' + this.CHANNEL_HANDLE,
+      description: 'Оригинальная корейская косметика премиум-класса с прямой доставкой из Сеула',
+      avatarUrl: '',
+      subscribersCount: '',
+      photosCount: '',
+      videosCount: '',
     };
 
-    // 2. Parse Posts & Albums
-    const posts: ScrapedTelegramPost[] = [];
+    const allRawPosts: ScrapedTelegramPost[] = [];
+    const seenPostIds = new Set<string>();
+    let currentBefore: string | null = null;
 
-    $('.tgme_widget_message_wrap').each((_, elem) => {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    };
+
+    for (let page = 1; page <= maxPages; page++) {
       try {
-        const $post = $(elem).find('.tgme_widget_message');
-        const dataPost = $post.attr('data-post') || '';
-        if (!dataPost) return;
+        const url = currentBefore
+          ? `https://t.me/s/${this.CHANNEL_HANDLE}?before=${currentBefore}`
+          : `https://t.me/s/${this.CHANNEL_HANDLE}`;
 
-        const postId = dataPost.split('/')[1] || dataPost;
-        const postUrl = `https://t.me/${dataPost}`;
+        const response = await axios.get(url, { headers, timeout: 15000 });
+        const html = response.data;
+        const $ = cheerio.load(html);
 
-        // Date & Time
-        const timeElem = $post.find('time');
-        const dateStr = timeElem.attr('datetime') || new Date().toISOString();
-        const timestamp = new Date(dateStr).getTime() || Date.now();
-
-        // Views
-        const views = $post.find('.tgme_widget_message_views').text().trim();
-
-        // Author
-        const author = $post.find('.tgme_widget_message_from_author').text().trim() || 'Мухаббат Ким';
-
-        // Text content
-        const textElem = $post.find('.tgme_widget_message_text');
-        const rawHtml = textElem.html() || '';
-        const text = textElem.text().trim();
-
-        // Extract photos (including background-image and img tags)
-        const photos: string[] = [];
-
-        // Check single or grouped photo styles
-        $post.find('.tgme_widget_message_photo_wrap').each((_, photoElem) => {
-          const style = $(photoElem).attr('style') || '';
-          const match = style.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i);
-          if (match && match[1] && !photos.includes(match[1])) {
-            photos.push(match[1]);
+        // Extract channel info from first page
+        if (page === 1) {
+          const title = $('.tgme_channel_info_header_title span').text().trim() || 'MK KOREA COSMETIC';
+          const description = $('.tgme_channel_info_description').text().trim() || channelInfo.description;
+          let avatarUrl = $('.tgme_page_photo_image img').attr('src') || '';
+          if (!avatarUrl && $('.tgme_channel_info_header img').length) {
+            avatarUrl = $('.tgme_channel_info_header img').attr('src') || '';
           }
-        });
 
-        // Check any img tags
-        $post.find('img').each((_, imgElem) => {
-          const src = $(imgElem).attr('src') || '';
-          if (src && src.includes('telesco.pe') && !photos.includes(src) && !src.includes('emoji')) {
-            photos.push(src);
-          }
-        });
-
-        // Parse prices
-        const prices: TelegramPriceInfo = this.extractPrices(text);
-
-        // Parse tags
-        const tags = (text.match(/#[a-zA-Zа-яА-Я0-9_]+/g) || []).map(t => t.replace('#', ''));
-        
-        // Extract title: first line cleaned of flags/prices
-        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-        let rawTitle = lines.length > 0 ? lines[0] : '';
-        const opIdx = rawTitle.indexOf('Описание:');
-        if (opIdx > 0) rawTitle = rawTitle.substring(0, opIdx);
-        const flagMatch = rawTitle.match(/(?:🇰🇷|🇷🇺|🇺🇸|🇺🇲|🇪🇺|🇰🇿|🇺🇿|❌|✅|₩|₽|\$|€|₸|\b\d{2,3}[.,]\d{3})/i);
-        if (flagMatch && flagMatch.index !== undefined && flagMatch.index > 3) {
-          rawTitle = rawTitle.substring(0, flagMatch.index);
-        }
-        rawTitle = rawTitle.replace(/^[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+/, '').replace(/[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+$/, '').trim();
-        const productTitle = rawTitle || undefined;
-
-        // Reactions
-        const reactions: { emoji: string; count: number }[] = [];
-        $post.find('.tgme_reaction').each((_, rElem) => {
-          const rText = $(rElem).text().trim();
-          const countMatch = rText.match(/\d+/);
-          const count = countMatch ? parseInt(countMatch[0], 10) : 1;
-          const emoji = $(rElem).find('b').text() || '❤️';
-          reactions.push({ emoji, count });
-        });
-
-        if (text || photos.length > 0) {
-          posts.push({
-            id: postId,
-            channel: this.CHANNEL_HANDLE,
-            postUrl,
-            date: dateStr,
-            timestamp,
-            text,
-            htmlContent: rawHtml,
-            photos,
-            views,
-            reactions,
-            prices,
-            author,
-            tags,
-            productTitle,
+          const counters: { [key: string]: string } = {};
+          $('.tgme_channel_info_counter').each((_, el) => {
+            const val = $(el).find('.counter_value').text().trim();
+            const type = $(el).find('.counter_type').text().trim();
+            if (type && val) {
+              counters[type] = val;
+            }
           });
-        }
-      } catch (err) {
-        console.warn('Error parsing single telegram post:', err);
-      }
-    });
 
-    // Group multi-photo album messages (Telegram web preview sometimes puts album photos in subsequent sibling messages)
-    const consolidatedPosts = this.consolidateAlbums(posts);
+          channelInfo = {
+            title,
+            username: '@' + this.CHANNEL_HANDLE,
+            description,
+            avatarUrl,
+            subscribersCount: counters['subscribers'] || '',
+            photosCount: counters['photos'] || '',
+            videosCount: counters['videos'] || '',
+          };
+        }
+
+        const pagePosts: ScrapedTelegramPost[] = [];
+        let earliestIdOnPage: number | null = null;
+
+        $('.tgme_widget_message_wrap').each((_, elem) => {
+          try {
+            const $post = $(elem).find('.tgme_widget_message');
+            const dataPost = $post.attr('data-post') || '';
+            if (!dataPost) return;
+
+            const postId = dataPost.split('/')[1] || dataPost;
+            const numId = parseInt(postId, 10);
+            if (!isNaN(numId)) {
+              if (earliestIdOnPage === null || numId < earliestIdOnPage) {
+                earliestIdOnPage = numId;
+              }
+            }
+
+            if (seenPostIds.has(postId)) return;
+            seenPostIds.add(postId);
+
+            const postUrl = `https://t.me/${dataPost}`;
+            const timeElem = $post.find('time');
+            const dateStr = timeElem.attr('datetime') || new Date().toISOString();
+            const timestamp = new Date(dateStr).getTime() || Date.now();
+            const views = $post.find('.tgme_widget_message_views').text().trim();
+            const author = $post.find('.tgme_widget_message_from_author').text().trim() || 'Мухаббат Ким';
+
+            const textElem = $post.find('.tgme_widget_message_text');
+            const rawHtml = textElem.html() || '';
+            const text = textElem.text().trim();
+
+            const photos: string[] = [];
+
+            // Background-image photos
+            $post.find('.tgme_widget_message_photo_wrap').each((_, photoElem) => {
+              const style = $(photoElem).attr('style') || '';
+              const match = style.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i);
+              if (match && match[1] && !photos.includes(match[1])) {
+                photos.push(match[1]);
+              }
+            });
+
+            // Img tag photos
+            $post.find('img').each((_, imgElem) => {
+              const src = $(imgElem).attr('src') || '';
+              if (src && src.includes('telesco.pe') && !photos.includes(src) && !src.includes('emoji')) {
+                photos.push(src);
+              }
+            });
+
+            // Parse prices
+            const prices = this.extractPrices(text);
+
+            // Parse tags
+            const tags = (text.match(/#[a-zA-Zа-яА-Я0-9_]+/g) || []).map((t) => t.replace('#', ''));
+
+            // Extract title
+            const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+            let rawTitle = lines.length > 0 ? lines[0] : '';
+            const opIdx = rawTitle.indexOf('Описание:');
+            if (opIdx > 0) rawTitle = rawTitle.substring(0, opIdx);
+            const flagMatch = rawTitle.match(/(?:🇰🇷|🇷🇺|🇺🇸|🇺🇲|🇪🇺|🇰🇿|🇺🇿|❌|✅|₩|₽|\$|€|₸|\b\d{2,3}[.,]\d{3})/i);
+            if (flagMatch && flagMatch.index !== undefined && flagMatch.index > 3) {
+              rawTitle = rawTitle.substring(0, flagMatch.index);
+            }
+            rawTitle = rawTitle.replace(/^[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+/, '').replace(/[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+$/, '').trim();
+            const productTitle = rawTitle || undefined;
+
+            // Reactions
+            const reactions: { emoji: string; count: number }[] = [];
+            $post.find('.tgme_reaction').each((_, rElem) => {
+              const rText = $(rElem).text().trim();
+              const countMatch = rText.match(/\d+/);
+              const count = countMatch ? parseInt(countMatch[0], 10) : 1;
+              const emoji = $(rElem).find('b').text() || '❤️';
+              reactions.push({ emoji, count });
+            });
+
+            if (text || photos.length > 0) {
+              pagePosts.push({
+                id: postId,
+                channel: this.CHANNEL_HANDLE,
+                postUrl,
+                date: dateStr,
+                timestamp,
+                text,
+                htmlContent: rawHtml,
+                photos,
+                views,
+                reactions,
+                prices,
+                author,
+                tags,
+                productTitle,
+              });
+            }
+          } catch (err) {
+            console.warn('Error parsing single telegram post:', err);
+          }
+        });
+
+        if (pagePosts.length === 0 || !earliestIdOnPage) {
+          break; // No more older posts
+        }
+
+        allRawPosts.push(...pagePosts);
+        currentBefore = String(earliestIdOnPage);
+
+        // Small delay between page requests
+        if (page < maxPages) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
+      } catch (pageErr: any) {
+        console.warn(`Error scraping page ${page}:`, pageErr.message);
+        break;
+      }
+    }
+
+    // Consolidate album messages
+    const consolidatedPosts = this.consolidateAlbums(allRawPosts);
 
     return {
       channelInfo,

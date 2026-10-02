@@ -48,7 +48,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               Корзина пока пуста
             </h4>
             <p className="text-xs text-[#8C827A] mt-1 max-w-xs">
-              Выберите товары из каталога или Telegram-ленты для быстрого оформления
+              Выберите понравившиеся товары из каталога для быстрого оформления
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>

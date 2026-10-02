@@ -3,8 +3,9 @@ import { SectionHeading } from '../../ui/SectionHeading';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { MessageCircle, SendHorizontal } from 'lucide-react';
-import { buildWhatsAppUrl } from '../../../core/constants/brand';
+import { MessageCircle, SendHorizontal, Phone, Send } from 'lucide-react';
+import { InstagramIcon } from '../../ui/InstagramIcon';
+import { BRAND_CONFIG, buildWhatsAppUrl } from '../../../core/constants/brand';
 
 export const Contact: React.FC = () => {
   const [name, setName] = useState('');
@@ -31,17 +32,86 @@ export const Contact: React.FC = () => {
     setName('');
   };
 
+  const socialChannels = [
+    {
+      title: 'Instagram',
+      subtitle: BRAND_CONFIG.instagramHandle || '@muhabbat.kim.mk',
+      url: BRAND_CONFIG.instagramUrl || 'https://www.instagram.com/muhabbat.kim.mk/',
+      icon: InstagramIcon,
+      color: 'hover:border-[#E1306C] hover:text-[#E1306C]',
+      iconBg: 'bg-[#E1306C]/10 text-[#E1306C]',
+      btnText: 'Подписаться',
+    },
+    {
+      title: 'Telegram',
+      subtitle: BRAND_CONFIG.telegramChannel,
+      url: BRAND_CONFIG.telegramChannelUrl,
+      icon: Send,
+      color: 'hover:border-[#229ED9] hover:text-[#229ED9]',
+      iconBg: 'bg-[#229ED9]/10 text-[#229ED9]',
+      btnText: 'Написать нам',
+    },
+    {
+      title: 'WhatsApp',
+      subtitle: BRAND_CONFIG.phoneDisplay,
+      url: BRAND_CONFIG.whatsappUrl,
+      icon: MessageCircle,
+      color: 'hover:border-[#25D366] hover:text-[#25D366]',
+      iconBg: 'bg-[#25D366]/10 text-[#25D366]',
+      btnText: 'Чат в WhatsApp',
+    },
+    {
+      title: 'Телефон',
+      subtitle: BRAND_CONFIG.phoneDisplay,
+      url: `tel:${BRAND_CONFIG.phone}`,
+      icon: Phone,
+      color: 'hover:border-[#C2836B] hover:text-[#C2836B]',
+      iconBg: 'bg-[#C2836B]/10 text-[#C2836B]',
+      btnText: 'Позвонить',
+    },
+  ];
+
   return (
     <section id="contacts" className="scroll-mt-20 bg-[#F7EDE8]/40 py-16 sm:py-24">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          badge="Связаться"
+          badge="Контакты и Соцсети"
           badgeIcon={<MessageCircle className="h-3.5 w-3.5 text-[#C2836B]" />}
-          title="Остались вопросы?"
-          subtitle="Напишите нам в WhatsApp, чтобы уточнить цену, наличие или доставку."
+          title="Мы всегда на связи"
+          subtitle="Свяжитесь с нами удобным способом для консультации, подбора ухода или оформления индивидуального заказа из Кореи."
         />
 
-        <Card className="border-[#F0E6DE] bg-white p-6 shadow-soft sm:p-8">
+        {/* Social channels grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {socialChannels.map((ch) => {
+            const Icon = ch.icon;
+            return (
+              <a
+                key={ch.title}
+                href={ch.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`p-4 rounded-2xl bg-white border border-[#EED9CF] transition-all duration-200 hover:shadow-md flex flex-col items-center text-center group ${ch.color}`}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110 ${ch.iconBg}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <h4 className="font-semibold text-sm text-[#2D2A2E] group-hover:text-inherit">
+                  {ch.title}
+                </h4>
+                <p className="text-xs text-[#8C827A] mt-0.5 truncate max-w-full">
+                  {ch.subtitle}
+                </p>
+                <span className="mt-3 text-[11px] font-bold text-[#C2836B] group-hover:underline">
+                  {ch.btnText} →
+                </span>
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Fast question form */}
+        <Card className="border-[#F0E6DE] bg-white p-6 shadow-soft sm:p-8 max-w-2xl mx-auto">
           {preparedUrl ? (
             <div className="space-y-4 text-center" role="status">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 text-[#20BA5A]">
@@ -70,6 +140,15 @@ export const Contact: React.FC = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="text-center mb-4">
+                <h3 className="font-serif text-xl font-medium text-[#2D2A2E]">
+                  Быстрый вопрос консультанту
+                </h3>
+                <p className="text-xs text-[#8C827A] mt-1">
+                  Напишите ваш вопрос, и мы мгновенно ответим в WhatsApp
+                </p>
+              </div>
+
               <Input
                 label="Ваше имя (необязательно)"
                 placeholder="Как к вам обращаться"
@@ -83,10 +162,10 @@ export const Contact: React.FC = () => {
                 </label>
                 <textarea
                   id="contact-message"
-                  rows={4}
+                  rows={3}
                   value={messageText}
                   onChange={(event) => setMessageText(event.target.value)}
-                  placeholder="Напишите, чем мы можем помочь…"
+                  placeholder="Напишите, какой товар вас интересует или задайте вопрос…"
                   required
                   className="w-full rounded-xl border border-[#EED9CF] bg-white px-4 py-2.5 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
                 />
@@ -99,11 +178,8 @@ export const Contact: React.FC = () => {
                 fullWidth
                 icon={<SendHorizontal className="h-4 w-4" />}
               >
-                Продолжить в WhatsApp
+                Отправить в WhatsApp
               </Button>
-              <p className="text-center text-xs text-[#8C827A]">
-                Сообщение откроется в WhatsApp как черновик.
-              </p>
             </form>
           )}
         </Card>

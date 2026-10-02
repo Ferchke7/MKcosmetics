@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, ShoppingBag, Send } from 'lucide-react';
+import { X, ShoppingBag, Send, MessageCircle, Phone } from 'lucide-react';
+import { InstagramIcon } from '../../ui/InstagramIcon';
 import { NAV_ITEMS } from '../../../core/constants/navigation';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
 import { CurrencyCode, CurrencyConfig } from '../../../core/types/currency';
@@ -65,7 +66,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </button>
           </div>
 
-          {/* Currency and Cart fast actions in mobile menu */}
+          {/* Currency and Cart actions */}
           <div className="flex items-center justify-between py-4 border-b border-[#F0E6DE]/60 gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs text-[#8C827A]">Валюта:</span>
@@ -86,7 +87,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               <ShoppingBag className="w-4 h-4" />
               <span>Корзина</span>
               {cartCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#C2836B] text-white text-[10px] flex items-center justify-center font-bold">
+                <span className="w-4 h-4 rounded-full bg-[#EF4444] text-white text-[10px] flex items-center justify-center font-bold">
                   {cartCount}
                 </span>
               )}
@@ -108,7 +109,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left text-base font-semibold transition-colors ${
                     item.isSpecial
                       ? activeView === 'catalog'
-                        ? 'bg-[#C2836B] text-white shadow-xs'
+                        ? 'bg-[#111827] text-white shadow-xs'
                         : 'border border-[#EED9CF] bg-[#FAF5EE] text-[#8A503C]'
                       : isItemActive
                       ? 'bg-[#FAF5EE] text-[#4D2C20]'
@@ -122,17 +123,51 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </nav>
         </div>
 
-        {/* Bottom channel link */}
-        <div className="pt-4 border-t border-[#F0E6DE]">
+        {/* Social Networks & Contact Bar */}
+        <div className="pt-4 border-t border-[#F0E6DE] space-y-2.5">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+            Мы в соцсетях и мессенджерах:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={BRAND_CONFIG.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#FDF2F4] text-[#E1306C] border border-[#FAD2DA] text-xs font-bold hover:bg-[#FBE4E9] transition-colors"
+            >
+              <InstagramIcon className="w-4 h-4" />
+              <span>Instagram</span>
+            </a>
+            <a
+              href={BRAND_CONFIG.telegramChannelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#F0F8FF] text-[#229ED9] border border-[#CDE5FA] text-xs font-bold hover:bg-[#E2F0FC] transition-colors"
+            >
+              <Send className="w-4 h-4" />
+              <span>Telegram</span>
+            </a>
+          </div>
+
           <a
-            href={BRAND_CONFIG.telegramChannelUrl}
+            href={BRAND_CONFIG.whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-[#229ED9] text-white text-sm font-medium hover:bg-[#1E8BC0] transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-[#20BA5A] transition-colors shadow-2xs"
           >
-            <Send className="w-4 h-4" />
-            <span>Канал {BRAND_CONFIG.telegramChannel}</span>
+            <MessageCircle className="w-4 h-4" />
+            <span>Написать в WhatsApp</span>
           </a>
+
+          <div className="text-center pt-1">
+            <a
+              href={`tel:${BRAND_CONFIG.phone}`}
+              className="inline-flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#111827] font-semibold"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>{BRAND_CONFIG.phoneDisplay}</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

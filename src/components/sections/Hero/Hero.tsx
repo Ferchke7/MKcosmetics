@@ -21,15 +21,14 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, totalProductsCount })
         </div>
 
         <h1 className="font-serif text-4xl font-normal leading-tight tracking-tight text-[#242120] sm:text-5xl lg:text-6xl">
-          Корейская косметика
+          Оригинальная корейская косметика
           <span className="mt-1 block font-light italic text-[#A96851]">
-            из Telegram-канала в 1 клик
+            напрямую из Сеула в 1 клик
           </span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[#6C635B] sm:text-lg">
-          Прямые поставки оригинальной премиальной косметики из Сеула. Выбирайте товары из живой базы
-          канала <strong className="text-[#2D2A2E]">@mkcosmetkor</strong> и оформляйте быстрый заказ с доставкой до дверей.
+          Прямые поставки премиального корейского ухода. Выбирайте из более {totalProductsCount ? `${totalProductsCount}+` : '250+'} проверенных средств и оформляйте быстрый заказ с удобной доставкой.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -39,7 +38,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, totalProductsCount })
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#C2836B] px-7 py-3.5 text-base font-semibold tracking-wide text-white shadow-sm transition-colors hover:bg-[#A96851] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C2836B] sm:w-auto cursor-pointer"
             >
               <ShoppingBag className="h-4 w-4" />
-              <span>Каталог всех товаров {totalProductsCount ? `(${totalProductsCount})` : ''}</span>
+              <span>Каталог товаров {totalProductsCount ? `(${totalProductsCount})` : ''}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
@@ -54,10 +53,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, totalProductsCount })
           )}
 
           <a
-            href="#telegram-feed"
+            href="#contacts"
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#EED9CF] bg-[#FAF5EE] px-7 py-3.5 text-base font-medium tracking-wide text-[#4D2C20] transition-colors hover:bg-[#F2E8DC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1BEAF] sm:w-auto"
           >
-            Свежие посты
+            Контакты и соцсети
             <ArrowDown className="h-4 w-4" />
           </a>
         </div>

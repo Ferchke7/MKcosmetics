@@ -1,10 +1,8 @@
 import React from 'react';
 import { Product } from '../../../core/types/product';
 import { ProductCard } from '../Products/ProductCard';
-import { Button } from '../../ui/Button';
 import { Skeleton } from '../../ui/Skeleton';
-import { Sparkles, ArrowRight, Zap, Send } from 'lucide-react';
-import { BRAND_CONFIG } from '../../../core/constants/brand';
+import { Sparkles, ArrowRight, Zap } from 'lucide-react';
 
 interface LatestShowcaseProps {
   products: Product[];
@@ -45,26 +43,17 @@ export const LatestShowcase: React.FC<LatestShowcaseProps> = ({
               <span>Свежие поступления из Кореи</span>
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl text-[#111827] font-semibold tracking-tight">
-              Топ-10 новинок из Telegram
+              Топ-10 новинок
             </h2>
             <p className="mt-2 text-sm sm:text-base text-[#6B7280] max-w-xl">
-              Свежие предложения из канала{' '}
-              <a
-                href={BRAND_CONFIG.telegramChannelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-[#0073E9] hover:underline"
-              >
-                {BRAND_CONFIG.telegramChannel}
-              </a>
-              . Все товары в наличии с быстрой доставкой до двери.
+              Свежие поступления и популярные бестселлеры. Все товары 100% оригинальные с быстрой доставкой из Южной Кореи.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={onOpenFullCatalog}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#111827] hover:bg-[#374151] text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#111827] hover:bg-[#374151] text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer"
             >
               <span>Смотреть весь каталог ({totalCount})</span>
               <ArrowRight className="w-4 h-4" />
@@ -90,7 +79,7 @@ export const LatestShowcase: React.FC<LatestShowcaseProps> = ({
           </div>
         ) : latestTen.length === 0 ? (
           <div className="text-center py-12 bg-[#F9FAFB] rounded-3xl border border-[#E5E7EB] p-6">
-            <p className="text-sm text-[#6B7280]">Публикации пока загружаются...</p>
+            <p className="text-sm text-[#6B7280]">Товары загружаются...</p>
           </div>
         ) : (
           <div className="space-y-10">

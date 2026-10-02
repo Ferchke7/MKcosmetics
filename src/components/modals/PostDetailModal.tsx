@@ -150,7 +150,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
               </span>
             )}
             <span className="text-[11px] text-[#A89F97] uppercase tracking-widest font-semibold">
-              Публикация Telegram
+              Оригинал из Сеула 🇰🇷
             </span>
           </div>
 

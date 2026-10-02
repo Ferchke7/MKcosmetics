@@ -93,7 +93,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             </div>
             <div className="flex-1">
               <h5 className="text-xs font-semibold text-[#8A503C] uppercase tracking-wider">
-                Товар из публикации
+                Выбранный товар
               </h5>
               <p className="text-sm font-medium text-[#2D2A2E] line-clamp-2 mt-0.5">
                 {productTitle}
