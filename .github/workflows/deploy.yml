@@ -73,20 +73,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Configure SSH known hosts
+      - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat << 'EOF' > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
+            IdentityFile ~/.ssh/id_rsa
+          EOF
+          chmod 600 ~/.ssh/config
 
       - name: Sync files to remote server
         run: |
           echo "=== [1/2] Syncing changed files via rsync ==="
           rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
@@ -102,7 +107,7 @@ jobs:
       - name: Rebuild & Restart Docker Container
         run: |
           echo "=== [2/2] Running deployment and health check on remote server ==="
-          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash << 'EOF'
             set -euo pipefail
 
             echo "--> Navigating to project directory: ${{ secrets.DEPLOY_PATH }}"
