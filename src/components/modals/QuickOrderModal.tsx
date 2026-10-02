@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageCircle, CheckCircle2, Package } from 'lucide-react';
+import { MessageCircle, CheckCircle2, Package, Loader2 } from 'lucide-react';
 import { buildWhatsAppUrl } from '../../core/constants/brand';
 import { useLanguage } from '../../core/i18n/LanguageContext';
+import { adminService } from '../../services/admin/adminService';
 
 interface QuickOrderModalProps {
   isOpen: boolean;
@@ -28,14 +29,48 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   const [comment, setComment] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [preparedUrl, setPreparedUrl] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendWhatsApp = (e: React.FormEvent) => {
+  const handleSendWhatsApp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    let assignedOrderNum = '';
+    try {
+      const order = await adminService.createPublicOrder({
+        customerName: name || 'Клиент',
+        phone: phoneOrTelegram,
+        channelSource: 'quick_order',
+        type: 'quick_order',
+        items: [
+          {
+            productId: 'quick-order',
+            title: productTitle,
+            price: 0,
+            currency: 'KRW',
+            quantity: 1,
+          },
+        ],
+        notes: `Город/Страна: ${countryCity}\nПожелание: ${comment}\nТовар: ${productTitle} (${priceFormatted})\nИсточник: ${sourceUrl || ''}`,
+      });
+      if (order?.orderNumber) {
+        assignedOrderNum = order.orderNumber;
+        setOrderNumber(assignedOrderNum);
+      }
+    } catch (err) {
+      console.warn('Could not persist CRM order to backend:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
 
     let message = language === 'uz'
       ? `🌸 *Assalomu alaykum, Muhabbat! Kosmetika buyurtma qilmoqchiman:*\n\n`
       : `🌸 *Здравствуйте, Мухаббат! Хочу заказать косметику:*\n\n`;
 
+    if (assignedOrderNum) {
+      message += `📋 *${language === 'uz' ? 'Buyurtma raqami' : 'Номер заказа'}:* ${assignedOrderNum}\n`;
+    }
     message += `🛍️ *${language === 'uz' ? 'Mahsulot' : 'Товар'}:* ${productTitle}\n`;
     message += `💰 *${language === 'uz' ? 'Narx' : 'Цена'}:* ${priceFormatted}\n`;
     if (name) message += `👤 *${language === 'uz' ? 'Ism' : 'Имя'}:* ${name}\n`;
@@ -59,6 +94,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
     setPhoneOrTelegram('');
     setComment('');
     setPreparedUrl('');
+    setOrderNumber('');
     setIsSuccess(false);
     onClose();
   };
@@ -73,6 +109,11 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
           <h4 className="font-serif text-2xl font-medium text-[#2D2A2E]">
             {t('order_success_title')}
           </h4>
+          {orderNumber && (
+            <div className="inline-block px-3 py-1 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-bold text-[#8A503C]">
+              {language === 'uz' ? 'Buyurtma' : 'Заказ'} #{orderNumber}
+            </div>
+          )}
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-[#8C827A]">
             {t('order_success_desc')}
           </p>
@@ -155,9 +196,10 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               variant="whatsapp"
               size="lg"
               fullWidth
-              icon={<MessageCircle className="w-5 h-5" />}
+              disabled={isSubmitting}
+              icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
             >
-              {t('order_btn_whatsapp')}
+              {isSubmitting ? 'Оформление...' : t('order_btn_whatsapp')}
             </Button>
             <p className="text-[11px] text-center text-[#8C827A] mt-2">
               {t('order_disclaimer')}

@@ -45,6 +45,7 @@ func main() {
 	channelRepo := sqlite.NewChannelRepository(db)
 	visitorRepo := sqlite.NewVisitorRepository(db)
 	userRepo := sqlite.NewUserRepository(db)
+	orderRepo := sqlite.NewOrderRepository(db)
 
 	// 4. Infrastructure Scraper
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
@@ -54,13 +55,15 @@ func main() {
 	syncUC := usecase.NewSyncUseCase(tgScraper, productRepo, channelRepo)
 	visitorUC := usecase.NewVisitorUseCase(visitorRepo)
 	authUC := usecase.NewAuthUseCase(userRepo, jwtSecret)
-	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo)
+	orderUC := usecase.NewOrderUseCase(orderRepo)
+	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo, orderRepo)
 
 	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
 	feedHandler := handler.NewFeedHandler(feedUC, syncUC)
 	visitorHandler := handler.NewVisitorHandler(visitorUC)
 	authHandler := handler.NewAuthHandler(authUC)
+	orderHandler := handler.NewOrderHandler(orderUC)
 	adminHandler := handler.NewAdminHandler(adminUC, syncUC)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
@@ -72,6 +75,7 @@ func main() {
 		visitorHandler,
 		authHandler,
 		adminHandler,
+		orderHandler,
 		authMiddleware,
 	)
 

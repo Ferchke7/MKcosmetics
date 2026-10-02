@@ -2,9 +2,10 @@ import React from 'react';
 import { SectionHeading } from '../../ui/SectionHeading';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { CheckCircle2, HeartHandshake, MessageCircle, RotateCcw } from 'lucide-react';
+import { CheckCircle2, HeartHandshake, MessageCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { useSkinQuiz } from '../../../hooks/useSkinQuiz';
 import { QUIZ_QUESTIONS } from '../../../hooks/useSkinQuiz';
+import { adminService } from '../../../services/admin/adminService';
 
 export const ConsultationQuiz: React.FC = () => {
   const {
@@ -17,6 +18,7 @@ export const ConsultationQuiz: React.FC = () => {
     restartQuiz,
     generateConsultationUrl,
   } = useSkinQuiz();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const selectedAnswers = QUIZ_QUESTIONS.map((question) => {
     const answerId = answers[question.key];
@@ -24,7 +26,26 @@ export const ConsultationQuiz: React.FC = () => {
     return answer ? { question: question.title.replace(/^\d+\.\s*/, ''), answer: answer.label } : null;
   }).filter((answer): answer is { question: string; answer: string } => answer !== null);
 
-  const handleOpenWhatsApp = () => {
+  const handleOpenWhatsApp = async () => {
+    setIsSubmitting(true);
+    const answersSummary = selectedAnswers.map((a) => `${a.question}: ${a.answer}`).join('\n');
+    try {
+      await adminService.createPublicOrder({
+        customerName: 'Лид из Квиза (Подбор ухода)',
+        phone: '',
+        channelSource: 'skin_quiz',
+        type: 'quiz_consultation',
+        items: [],
+        totalAmount: 0,
+        currency: 'KRW',
+        notes: `Ответы на тест по подбору ухода:\n${answersSummary}`,
+      });
+    } catch (err) {
+      console.warn('Could not save quiz lead to CRM:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+
     window.open(generateConsultationUrl(), '_blank', 'noopener,noreferrer');
   };
 
@@ -118,10 +139,11 @@ export const ConsultationQuiz: React.FC = () => {
                 <Button
                   variant="whatsapp"
                   size="lg"
+                  disabled={isSubmitting}
                   onClick={handleOpenWhatsApp}
-                  icon={<MessageCircle className="h-5 w-5" />}
+                  icon={isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
                 >
-                  Продолжить в WhatsApp
+                  {isSubmitting ? 'Создание...' : 'Продолжить в WhatsApp'}
                 </Button>
                 <Button
                   variant="ghost"

@@ -3,8 +3,10 @@ import { Drawer } from '../ui/Drawer';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CartItem } from '../../core/types/product';
-import { Trash2, Plus, Minus, ShoppingBag, MessageCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, MessageCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../core/i18n/LanguageContext';
+import { buildWhatsAppUrl } from '../../core/constants/brand';
+import { adminService } from '../../services/admin/adminService';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -29,13 +31,66 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   formatPrice,
   onCheckoutWhatsApp,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [clientName, setClientName] = useState('');
   const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCheckout = () => {
-    const url = onCheckoutWhatsApp(clientName, address);
-    window.open(url, '_blank');
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    let orderNumber = '';
+
+    const totalKrw = items.reduce((sum, item) => sum + item.product.priceKrw * item.quantity, 0);
+
+    try {
+      const order = await adminService.createPublicOrder({
+        customerName: clientName || 'Клиент корзины',
+        phone: phone || '',
+        channelSource: 'cart',
+        type: 'cart',
+        items: items.map((i) => ({
+          productId: i.product.id,
+          title: i.product.name,
+          price: i.product.priceKrw,
+          currency: 'KRW',
+          quantity: i.quantity,
+          photoUrl: i.product.images?.[0] || '',
+        })),
+        totalAmount: totalKrw,
+        currency: 'KRW',
+        notes: `Адрес / Город: ${address || 'Не указан'}\nТелефон: ${phone || 'Не указан'}\nИтого: ${formattedTotal}`,
+      });
+      if (order?.orderNumber) {
+        orderNumber = order.orderNumber;
+      }
+    } catch (err) {
+      console.warn('Could not save cart order to CRM:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    let text = language === 'uz'
+      ? `🌸 *Assalomu alaykum, Muhabbat! MK KOREA COSMETIC savatchasidan buyurtma:*\n\n`
+      : `🌸 *Здравствуйте, Мухаббат! Хочу оформить заказ в MK KOREA COSMETIC:*\n\n`;
+
+    if (orderNumber) {
+      text += `📋 *${language === 'uz' ? 'Buyurtma raqami' : 'Номер заказа'}:* ${orderNumber}\n\n`;
+    }
+
+    items.forEach((item, index) => {
+      text += `${index + 1}. *${item.product.name}*\n   ${language === 'uz' ? 'Miqdor' : 'Кол-во'}: ${item.quantity} шт. | ${formatPrice(item.product.priceKrw * item.quantity)}\n`;
+    });
+    text += `\n💰 *${language === 'uz' ? 'Jami' : 'Итого'}:* ${formattedTotal}\n`;
+    if (clientName) text += `👤 *${language === 'uz' ? 'Ism' : 'Имя'}:* ${clientName}\n`;
+    if (phone) text += `📱 *${language === 'uz' ? 'Telefon' : 'Телефон'}:* ${phone}\n`;
+    if (address) text += `📍 *${language === 'uz' ? 'Manzil' : 'Адрес / Страна доставки'}:* ${address}\n`;
+    text += language === 'uz'
+      ? `\nIltimos, mavjudligini tasdiqlang va yetkazib berish narxini hisoblab bering ✨`
+      : `\nПожалуйста, подтвердите наличие и стоимость доставки ✨`;
+
+    const url = buildWhatsAppUrl(text);
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -122,6 +177,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 onChange={(e) => setClientName(e.target.value)}
               />
               <Input
+                placeholder={t('order_contact_placeholder') || 'Телефон / Telegram'}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <Input
                 placeholder={t('order_city_placeholder')}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -140,10 +200,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 variant="whatsapp"
                 size="lg"
                 fullWidth
+                disabled={isSubmitting}
                 onClick={handleCheckout}
-                icon={<MessageCircle className="w-5 h-5" />}
+                icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
               >
-                {t('cart_checkout_whatsapp')}
+                {isSubmitting ? 'Оформление...' : t('cart_checkout_whatsapp')}
               </Button>
 
               <button

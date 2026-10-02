@@ -51,7 +51,13 @@ func (h *VisitorHandler) Track(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(stats)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"clientIp":    ip,
+		"totalVisits": stats.TotalVisits,
+		"countries":   stats.Countries,
+		"lastUpdated": stats.LastUpdated,
+	})
 }
 
 func (h *VisitorHandler) GetStats(w http.ResponseWriter, r *http.Request) {
@@ -61,8 +67,15 @@ func (h *VisitorHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ip := extractClientIP(r)
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(stats)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"clientIp":    ip,
+		"totalVisits": stats.TotalVisits,
+		"countries":   stats.Countries,
+		"lastUpdated": stats.LastUpdated,
+	})
 }
 
 func extractClientIP(r *http.Request) string {

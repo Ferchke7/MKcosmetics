@@ -19,9 +19,19 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  ClipboardList,
+  Phone,
+  MessageSquare,
+  DollarSign,
+  Filter,
+  Check,
+  ChevronDown,
+  ShoppingBag,
+  HeartHandshake,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
-import { adminService, AdminStats } from '../../services/admin/adminService';
+import { adminService, AdminStats, Order } from '../../services/admin/adminService';
 import { TelegramPost } from '../../core/types/telegram';
 import { ProductEditModal } from './ProductEditModal';
 
@@ -31,7 +41,7 @@ interface AdminDashboardProps {
   onRefreshFeed: () => Promise<void>;
 }
 
-type TabType = 'overview' | 'products' | 'sync' | 'visitors' | 'settings';
+type TabType = 'overview' | 'orders' | 'products' | 'sync' | 'visitors' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackToShop,
@@ -44,6 +54,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Stats State
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // Orders State (CRM)
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersTotal, setOrdersTotal] = useState(0);
+  const [ordersStatusCounts, setOrdersStatusCounts] = useState<Record<string, number>>({});
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderTypeFilter, setOrderTypeFilter] = useState('all');
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [editingNotesOrderId, setEditingNotesOrderId] = useState<number | null>(null);
+  const [editingNotesText, setEditingNotesText] = useState('');
+  const [deleteOrderConfirmId, setDeleteOrderConfirmId] = useState<number | null>(null);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   // Products Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,9 +100,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  // Load CRM Orders
+  const fetchOrders = async () => {
+    if (!token) return;
+    setIsLoadingOrders(true);
+    try {
+      const data = await adminService.getAdminOrders(
+        orderStatusFilter === 'all' ? '' : orderStatusFilter,
+        orderSearchQuery,
+        100,
+        0,
+        token
+      );
+      setOrders(data.orders || []);
+      setOrdersTotal(data.total || 0);
+      setOrdersStatusCounts(data.statusCounts || {});
+    } catch (err) {
+      console.error('Failed to load CRM orders:', err);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
   }, [token]);
+
+  useEffect(() => {
+    if (activeTab === 'orders' || activeTab === 'overview') {
+      fetchOrders();
+    }
+  }, [activeTab, orderStatusFilter, orderSearchQuery, token]);
+
+  // Order Handlers
+  const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
+    if (!token) return;
+    try {
+      await adminService.updateOrderStatus(orderId, newStatus, token);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o))
+      );
+      await fetchStats();
+    } catch (err: any) {
+      alert(err.message || 'Ошибка обновления статуса');
+    }
+  };
+
+  const handleStartEditNotes = (order: Order) => {
+    setEditingNotesOrderId(order.id);
+    setEditingNotesText(order.notes || '');
+  };
+
+  const handleSaveNotes = async (orderId: number) => {
+    if (!token) return;
+    setIsSavingNotes(true);
+    try {
+      await adminService.updateOrderNotes(orderId, editingNotesText, token);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, notes: editingNotesText } : o))
+      );
+      setEditingNotesOrderId(null);
+    } catch (err: any) {
+      alert(err.message || 'Ошибка сохранения заметки');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: number) => {
+    if (!token) return;
+    try {
+      await adminService.deleteOrder(orderId, token);
+      setDeleteOrderConfirmId(null);
+      await fetchOrders();
+      await fetchStats();
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления заказа');
+    }
+  };
 
   // Product CRUD Handlers
   const handleOpenAddModal = () => {
@@ -252,6 +350,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('orders')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'orders'
+                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ClipboardList className="w-4 h-4" />
+                <span>Заказы & Лиды CRM</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {(ordersStatusCounts['new'] || 0) > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-black font-bold animate-pulse">
+                    +{ordersStatusCounts['new']}
+                  </span>
+                )}
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  activeTab === 'orders' ? 'bg-[#141312]/20 text-[#141312]' : 'bg-white/10 text-[#C4BDB5]'
+                }`}>
+                  {ordersTotal || orders.length}
+                </span>
+              </div>
+            </button>
+
+            <button
               onClick={() => setActiveTab('products')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                 activeTab === 'products'
@@ -327,11 +451,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-6 max-w-6xl">
               <div>
                 <h1 className="text-xl font-bold text-white font-serif">Обзор CRM платформы</h1>
-                <p className="text-xs text-[#A8A29E]">Ключевые показатели магазина и трафика</p>
+                <p className="text-xs text-[#A8A29E]">Ключевые показатели магазина, заказов и трафика</p>
               </div>
 
               {/* KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
+                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
+                    <span className="text-xs uppercase tracking-wider font-semibold">Заказов & Лидов CRM</span>
+                    <ClipboardList className="w-4 h-4 text-[#D4AF37]" />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-white font-serif">
+                      {stats?.totalOrders !== undefined ? stats.totalOrders : ordersTotal}
+                    </span>
+                    {(ordersStatusCounts['new'] || 0) > 0 && (
+                      <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        {ordersStatusCounts['new']} новых
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#78716C] mt-1">Быстрый заказ, корзина, квиз</p>
+                </div>
+
                 <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
                   <div className="flex items-center justify-between text-[#A8A29E] mb-2">
                     <span className="text-xs uppercase tracking-wider font-semibold">Товаров в каталоге</span>
@@ -347,9 +489,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <Users className="w-4 h-4 text-[#D4AF37]" />
                   </div>
                   <div className="text-2xl font-bold text-white font-serif">
-                    {stats?.totalVisits ? stats.totalVisits.toLocaleString() : '3,316+'}
+                    {stats?.totalVisits ? stats.totalVisits.toLocaleString() : '0'}
                   </div>
-                  <p className="text-[11px] text-green-400 mt-1">Органический трафик</p>
+                  <p className="text-[11px] text-green-400 mt-1">Живой органический трафик</p>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
@@ -358,21 +500,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <Globe className="w-4 h-4 text-[#D4AF37]" />
                   </div>
                   <div className="text-2xl font-bold text-white font-serif">
-                    {stats?.countries?.length || 7}
+                    {stats?.countries?.length || 0}
                   </div>
-                  <p className="text-[11px] text-[#78716C] mt-1">Узбекистан, РФ, СНГ, Корея</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
-                    <span className="text-xs uppercase tracking-wider font-semibold">Telegram статус</span>
-                    <RefreshCw className="w-4 h-4 text-green-400" />
-                  </div>
-                  <div className="text-sm font-bold text-green-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    Активен (каждые 3 мин)
-                  </div>
-                  <p className="text-[11px] text-[#78716C] mt-1">@mkcosmetkor</p>
+                  <p className="text-[11px] text-[#78716C] mt-1">Реальные IP посетителей</p>
                 </div>
               </div>
 
@@ -413,6 +543,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       );
                     })}
+                    {(!stats?.countries || stats.countries.length === 0) && (
+                      <p className="text-xs text-[#78716C] py-4 text-center">Ожидание первых визитов пользователей...</p>
+                    )}
                   </div>
                 </div>
 
@@ -427,10 +560,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <div className="space-y-2.5">
                     <button
-                      onClick={handleOpenAddModal}
-                      className="w-full py-3 px-4 rounded-xl bg-[#D4AF37] text-[#141312] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#E5C158] transition-colors"
+                      onClick={() => setActiveTab('orders')}
+                      className="w-full py-3 px-4 rounded-xl bg-[#D4AF37] text-[#141312] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#E5C158] transition-colors shadow-lg shadow-[#D4AF37]/10"
                     >
-                      <Plus className="w-4 h-4" />
+                      <ClipboardList className="w-4 h-4" />
+                      Перейти к заказам & лидам
+                    </button>
+
+                    <button
+                      onClick={handleOpenAddModal}
+                      className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-[#D4AF37]" />
                       Добавить новый товар
                     </button>
 
@@ -439,7 +580,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       disabled={isSyncing}
                       className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors disabled:opacity-50"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#D4AF37]' : ''}`} />
                       Синхронизировать Telegram
                     </button>
 
@@ -458,6 +599,300 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: CRM ORDERS & LEADS */}
+          {activeTab === 'orders' && (
+            <div className="space-y-6 max-w-7xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-xl font-bold text-white font-serif">Заказы & Лиды CRM</h1>
+                  <p className="text-xs text-[#A8A29E]">
+                    Управление входящими заявками, статусами отправки и заметками менеджера
+                  </p>
+                </div>
+                <button
+                  onClick={fetchOrders}
+                  disabled={isLoadingOrders}
+                  className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold flex items-center gap-2 transition-all self-start sm:self-auto disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />
+                  Обновить список
+                </button>
+              </div>
+
+              {/* Status Filter Buttons */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
+                {[
+                  { id: 'all', label: 'Все заявки', count: ordersTotal },
+                  { id: 'new', label: '🟡 Новые', count: ordersStatusCounts['new'] || 0, highlight: true },
+                  { id: 'processing', label: '🔵 В обработке', count: ordersStatusCounts['processing'] || 0 },
+                  { id: 'paid', label: '🟣 Оплачены', count: ordersStatusCounts['paid'] || 0 },
+                  { id: 'shipped', label: '🚚 Отправлены', count: ordersStatusCounts['shipped'] || 0 },
+                  { id: 'delivered', label: '🟢 Доставлены', count: ordersStatusCounts['delivered'] || 0 },
+                  { id: 'cancelled', label: '⚪ Отменены', count: ordersStatusCounts['cancelled'] || 0 },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => setOrderStatusFilter(st.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                      orderStatusFilter === st.id
+                        ? 'bg-[#D4AF37] text-[#141312] shadow-md'
+                        : 'bg-white/5 text-[#A8A29E] hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    <span>{st.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      orderStatusFilter === st.id
+                        ? 'bg-[#141312]/20 text-[#141312]'
+                        : st.highlight && st.count > 0
+                        ? 'bg-amber-500/20 text-amber-300 font-bold'
+                        : 'bg-white/10 text-[#C4BDB5]'
+                    }`}>
+                      {st.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Search & Channel Filters */}
+              <div className="p-4 rounded-2xl bg-[#1C1A18] border border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 relative">
+                  <Search className="w-4 h-4 text-[#78716C] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    placeholder="Поиск по номеру заказа (MK-...), имени клиента или телефону..."
+                    className="w-full bg-[#141312] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+
+                <div>
+                  <select
+                    value={orderTypeFilter}
+                    onChange={(e) => setOrderTypeFilter(e.target.value)}
+                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
+                  >
+                    <option value="all">Все источники каналов</option>
+                    <option value="quick_order">⚡ Быстрый заказ</option>
+                    <option value="cart">🛒 Корзина магазина</option>
+                    <option value="quiz_consultation">💆‍♀️ Подбор ухода (Квиз)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Orders Table & Cards */}
+              <div className="bg-[#1C1A18] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+                {isLoadingOrders ? (
+                  <div className="p-12 text-center text-[#A8A29E] flex flex-col items-center justify-center gap-3">
+                    <RefreshCw className="w-6 h-6 animate-spin text-[#D4AF37]" />
+                    <span className="text-xs">Загрузка заказов из базы SQLite...</span>
+                  </div>
+                ) : orders.filter(o => orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter).length === 0 ? (
+                  <div className="p-12 text-center text-[#78716C] space-y-2">
+                    <ClipboardList className="w-8 h-8 mx-auto text-[#78716C] opacity-40" />
+                    <p className="text-sm font-medium text-white">Заказы не найдены</p>
+                    <p className="text-xs text-[#78716C]">
+                      Новые заявки из форм сайта и WhatsApp будут автоматически появляться здесь в реальном времени.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {orders
+                      .filter(o => orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter)
+                      .map((order) => {
+                        const isNew = order.status === 'new';
+                        const statusColors: Record<string, string> = {
+                          new: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+                          processing: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+                          paid: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+                          shipped: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+                          delivered: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+                          cancelled: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
+                        };
+
+                        const channelBadges: Record<string, { label: string; icon: any; color: string }> = {
+                          quick_order: { label: 'Быстрый заказ', icon: Zap, color: 'text-amber-400' },
+                          cart: { label: 'Корзина', icon: ShoppingBag, color: 'text-emerald-400' },
+                          quiz_consultation: { label: 'Подбор ухода', icon: HeartHandshake, color: 'text-rose-400' },
+                          skin_quiz: { label: 'Подбор ухода', icon: HeartHandshake, color: 'text-rose-400' },
+                        };
+
+                        const channel = channelBadges[order.type] || channelBadges[order.channelSource] || {
+                          label: order.channelSource || 'Заказ',
+                          icon: ClipboardList,
+                          color: 'text-[#D4AF37]',
+                        };
+                        const ChannelIcon = channel.icon;
+
+                        const cleanPhone = (order.phone || '').replace(/[^\d+]/g, '');
+                        const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : null;
+
+                        return (
+                          <div
+                            key={order.id}
+                            className={`p-5 sm:p-6 transition-colors hover:bg-white/[0.02] ${
+                              isNew ? 'bg-amber-500/[0.03] border-l-4 border-l-amber-400' : ''
+                            }`}
+                          >
+                            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                              {/* Left Info: Order Number, Customer, Channel, Timestamp */}
+                              <div className="space-y-3 flex-1">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                  <span className="font-mono text-sm font-bold text-white px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">
+                                    {order.orderNumber}
+                                  </span>
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 border border-white/5 ${channel.color}`}>
+                                    <ChannelIcon className="w-3.5 h-3.5" />
+                                    <span>{channel.label}</span>
+                                  </span>
+                                  <span className="text-[11px] text-[#78716C] flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(order.createdAt).toLocaleString()}
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-4 text-xs">
+                                  <div className="text-white font-medium">
+                                    <span className="text-[#78716C] text-[11px] block">Клиент:</span>
+                                    <span className="font-semibold text-sm">{order.customerName || 'Не указано'}</span>
+                                  </div>
+
+                                  {order.phone && (
+                                    <div>
+                                      <span className="text-[#78716C] text-[11px] block">Телефон / Контакт:</span>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <a
+                                          href={`tel:${cleanPhone}`}
+                                          className="text-[#D4AF37] hover:underline font-mono"
+                                        >
+                                          {order.phone}
+                                        </a>
+                                        {waUrl && (
+                                          <a
+                                            href={waUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-2 py-0.5 rounded-md bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/30 text-[10px] font-bold flex items-center gap-1"
+                                            title="Написать в WhatsApp"
+                                          >
+                                            <MessageSquare className="w-3 h-3" />
+                                            WhatsApp
+                                          </a>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Order Items or Details */}
+                                {order.items && order.items.length > 0 && (
+                                  <div className="pt-2">
+                                    <span className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-semibold block mb-1.5">
+                                      Состав заказа ({order.items.length} поз.):
+                                    </span>
+                                    <div className="space-y-1.5">
+                                      {order.items.map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="flex items-center gap-3 p-2 rounded-xl bg-black/20 border border-white/5 text-xs"
+                                        >
+                                          {item.photoUrl ? (
+                                            <img
+                                              src={item.photoUrl}
+                                              alt=""
+                                              className="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-black"
+                                            />
+                                          ) : (
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] text-[#78716C] flex-shrink-0">
+                                              MK
+                                            </div>
+                                          )}
+                                          <div className="flex-1 min-w-0">
+                                            <div className="text-white font-medium truncate">{item.title}</div>
+                                            <div className="text-[11px] text-[#78716C]">
+                                              Кол-во: <strong className="text-[#D4AF37]">{item.quantity} шт.</strong>
+                                              {item.price > 0 && ` • ₩ ${item.price.toLocaleString()}`}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Notes / Comments */}
+                                {order.notes && (
+                                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-[#C4BDB5] whitespace-pre-line leading-relaxed">
+                                    <span className="text-[10px] uppercase font-bold text-[#A8A29E] block mb-0.5">
+                                      Комментарии / Данные заявки:
+                                    </span>
+                                    {order.notes}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Right Info: Status Dropdown, Total Amount, Manager Actions */}
+                              <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-3 lg:w-64 flex-shrink-0 border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
+                                {/* Total Amount */}
+                                {order.totalAmount > 0 && (
+                                  <div className="text-left lg:text-right">
+                                    <span className="text-[10px] text-[#78716C] block uppercase">Сумма заказа:</span>
+                                    <span className="text-lg font-bold text-[#D4AF37] font-serif">
+                                      ₩ {order.totalAmount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Status Selector */}
+                                <div className="w-full sm:w-auto lg:w-full space-y-1">
+                                  <span className="text-[10px] text-[#78716C] block uppercase font-semibold">
+                                    Статус заказа:
+                                  </span>
+                                  <select
+                                    value={order.status}
+                                    onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                    className={`w-full text-xs font-bold rounded-xl px-3 py-2 border focus:outline-none cursor-pointer transition-colors ${
+                                      statusColors[order.status] || 'bg-white/5 text-white border-white/10'
+                                    }`}
+                                  >
+                                    <option value="new" className="bg-[#1C1A18] text-amber-400">🟡 Новый заказ (New)</option>
+                                    <option value="processing" className="bg-[#1C1A18] text-blue-400">🔵 В обработке (Processing)</option>
+                                    <option value="paid" className="bg-[#1C1A18] text-purple-400">🟣 Оплачен (Paid)</option>
+                                    <option value="shipped" className="bg-[#1C1A18] text-orange-400">🚚 Отправлен из Кореи (Shipped)</option>
+                                    <option value="delivered" className="bg-[#1C1A18] text-emerald-400">🟢 Доставлен клиенту (Delivered)</option>
+                                    <option value="cancelled" className="bg-[#1C1A18] text-zinc-400">⚪ Отменен (Cancelled)</option>
+                                  </select>
+                                </div>
+
+                                {/* Actions: Edit Notes / Delete */}
+                                <div className="flex items-center gap-2 pt-1 w-full justify-end">
+                                  <button
+                                    onClick={() => handleStartEditNotes(order)}
+                                    className="py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-[#C4BDB5] hover:text-white border border-white/5 flex items-center gap-1.5 transition-colors"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                    <span>Заметка</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => setDeleteOrderConfirmId(order.id)}
+                                    className="p-1.5 rounded-lg text-[#78716C] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                    title="Удалить заявку"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -751,7 +1186,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     Сводка по странам мира
                   </h2>
                   <span className="text-xs text-[#A8A29E]">
-                    Всего: {stats?.totalVisits?.toLocaleString() || '3,316'} визитов
+                    Всего: {stats?.totalVisits !== undefined ? stats.totalVisits.toLocaleString() : '0'} визитов
                   </span>
                 </div>
 
@@ -932,6 +1367,83 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </button>
               <button
                 onClick={() => handleDeleteProduct(deleteConfirmId)}
+                className="py-2 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Notes Edit Modal */}
+      {editingNotesOrderId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/10 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Edit2 className="w-5 h-5 text-[#D4AF37]" />
+                <h3 className="text-base font-bold text-white">Заметки менеджера</h3>
+              </div>
+              <span className="font-mono text-xs text-[#A8A29E]">
+                Заказ #{orders.find((o) => o.id === editingNotesOrderId)?.orderNumber}
+              </span>
+            </div>
+
+            <textarea
+              rows={5}
+              value={editingNotesText}
+              onChange={(e) => setEditingNotesText(e.target.value)}
+              placeholder="Внутренний комментарий (статус оплаты, трек-номер, пожелания клиента)..."
+              className="w-full bg-[#141312] border border-white/10 rounded-2xl p-3.5 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
+            />
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => setEditingNotesOrderId(null)}
+                disabled={isSavingNotes}
+                className="py-2 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#A8A29E] hover:bg-white/5"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => handleSaveNotes(editingNotesOrderId)}
+                disabled={isSavingNotes}
+                className="py-2 px-5 rounded-xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#141312] text-xs font-bold shadow-lg shadow-[#D4AF37]/20 disabled:opacity-50"
+              >
+                {isSavingNotes ? 'Сохранение...' : 'Сохранить заметку'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Order Confirmation Modal */}
+      {deleteOrderConfirmId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white">Удалить заявку?</h3>
+            </div>
+            <p className="text-xs text-[#A8A29E]">
+              Вы уверены, что хотите удалить заявку{' '}
+              <strong className="text-white">
+                #{orders.find((o) => o.id === deleteOrderConfirmId)?.orderNumber || deleteOrderConfirmId}
+              </strong>{' '}
+              из CRM базы?
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setDeleteOrderConfirmId(null)}
+                className="py-2 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#A8A29E] hover:bg-white/5"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => handleDeleteOrder(deleteOrderConfirmId)}
                 className="py-2 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20"
               >
                 Удалить

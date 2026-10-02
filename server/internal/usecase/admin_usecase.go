@@ -13,23 +13,28 @@ type AdminUseCase struct {
 	productRepo repository.ProductRepository
 	visitorRepo repository.VisitorRepository
 	channelRepo repository.ChannelRepository
+	orderRepo   repository.OrderRepository
 }
 
 func NewAdminUseCase(
 	productRepo repository.ProductRepository,
 	visitorRepo repository.VisitorRepository,
 	channelRepo repository.ChannelRepository,
+	orderRepo repository.OrderRepository,
 ) *AdminUseCase {
 	return &AdminUseCase{
 		productRepo: productRepo,
 		visitorRepo: visitorRepo,
 		channelRepo: channelRepo,
+		orderRepo:   orderRepo,
 	}
 }
 
 type DashboardStats struct {
 	TotalProducts int64                `json:"totalProducts"`
 	TotalVisits   int64                `json:"totalVisits"`
+	TotalOrders   int64                `json:"totalOrders"`
+	OrderCounts   map[string]int       `json:"orderCounts"`
 	Countries     []entity.CountryStat `json:"countries"`
 	ChannelInfo   *entity.ChannelInfo  `json:"channelInfo"`
 	RecentLogs    []entity.VisitorLog  `json:"recentLogs"`
@@ -40,6 +45,8 @@ func (uc *AdminUseCase) GetDashboardStats(ctx context.Context) (*DashboardStats,
 	visitorStats, _ := uc.visitorRepo.GetStats(ctx)
 	channelInfo, _ := uc.channelRepo.Get(ctx)
 	logs, _ := uc.visitorRepo.GetRecentLogs(ctx, 20)
+	orderCount, _ := uc.orderRepo.Count(ctx)
+	orderCounts, _ := uc.orderRepo.CountByStatus(ctx)
 
 	totalVisits := int64(0)
 	var countries []entity.CountryStat
@@ -51,6 +58,8 @@ func (uc *AdminUseCase) GetDashboardStats(ctx context.Context) (*DashboardStats,
 	return &DashboardStats{
 		TotalProducts: int64(prodCount),
 		TotalVisits:   totalVisits,
+		TotalOrders:   int64(orderCount),
+		OrderCounts:   orderCounts,
 		Countries:     countries,
 		ChannelInfo:   channelInfo,
 		RecentLogs:    logs,

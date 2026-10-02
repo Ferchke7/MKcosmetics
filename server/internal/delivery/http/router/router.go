@@ -25,6 +25,7 @@ func NewRouter(
 	visitorHandler *handler.VisitorHandler,
 	authHandler *handler.AuthHandler,
 	adminHandler *handler.AdminHandler,
+	orderHandler *handler.OrderHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -61,6 +62,12 @@ func NewRouter(
 			v.Get("/stats", visitorHandler.GetStats)
 		})
 
+		// Public Orders & Tracking
+		api.Route("/orders", func(o chi.Router) {
+			o.Post("/", orderHandler.CreateOrder)
+			o.Get("/track/{orderNumber}", orderHandler.TrackOrder)
+		})
+
 		// Authentication Routes (100% Open Source JWT Auth)
 		api.Route("/auth", func(a chi.Router) {
 			a.Post("/login", authHandler.Login)
@@ -83,6 +90,13 @@ func NewRouter(
 				p.Post("/", adminHandler.CreateProduct)
 				p.Put("/{id}", adminHandler.UpdateProduct)
 				p.Delete("/{id}", adminHandler.DeleteProduct)
+			})
+
+			admin.Route("/orders", func(o chi.Router) {
+				o.Get("/", orderHandler.GetAdminOrders)
+				o.Put("/{id}/status", orderHandler.UpdateStatus)
+				o.Put("/{id}/notes", orderHandler.UpdateNotes)
+				o.Delete("/{id}", orderHandler.DeleteOrder)
 			})
 		})
 	})

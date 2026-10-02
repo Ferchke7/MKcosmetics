@@ -106,6 +106,25 @@ func (db *DB) migrate() error {
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		last_login TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS orders (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		order_number TEXT UNIQUE NOT NULL,
+		customer_name TEXT NOT NULL,
+		phone TEXT NOT NULL,
+		channel_source TEXT NOT NULL DEFAULT 'web',
+		type TEXT NOT NULL DEFAULT 'order',
+		items_json TEXT NOT NULL DEFAULT '[]',
+		total_amount REAL NOT NULL DEFAULT 0,
+		currency TEXT NOT NULL DEFAULT 'UZS',
+		status TEXT NOT NULL DEFAULT 'new',
+		notes TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+	CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
 	`
 
 	_, err := db.Exec(schema)
@@ -263,23 +282,5 @@ func (db *DB) seedFromJSONIfFresh(dataDir string) {
 				log.Printf("🌱 Successfully seeded %d products into SQLite!", inserted)
 			}
 		}
-	}
-
-	// 3. Seed default base visitor stats
-	defaultCountries := map[string]int{
-		"UZ": 1420,
-		"RU": 890,
-		"KZ": 410,
-		"KR": 325,
-		"US": 115,
-		"TR": 85,
-		"KG": 70,
-	}
-	for code, visits := range defaultCountries {
-		_, _ = db.Exec(`
-			INSERT INTO visitor_stats (country_code, visits, updated_at)
-			VALUES (?, ?, CURRENT_TIMESTAMP)
-			ON CONFLICT(country_code) DO NOTHING
-		`, code, visits)
 	}
 }
