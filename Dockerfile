@@ -9,10 +9,14 @@ RUN npm run build
 # Stage 2: Build Backend (Go)
 FROM golang:1.24-alpine AS backend-builder
 WORKDIR /app
+ENV GOTOOLCHAIN=local \
+    GOPROXY=https://proxy.golang.org,direct \
+    CGO_ENABLED=0
+
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/server ./server/cmd/server
+RUN GOOS=linux go build -ldflags="-s -w" -o /app/bin/server ./server/cmd/server
 
 # Stage 3: Production Runtime (Ultra-light Alpine)
 FROM alpine:3.21
