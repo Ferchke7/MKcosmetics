@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { MobileMenu } from './MobileMenu';
 import { CurrencySelector } from './CurrencySelector';
 import { LanguageSelector } from './LanguageSelector';
+import { SocialChannelsBar } from './SocialChannelsBar';
 import { Logo } from '../../ui/Logo';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
 import { CurrencyCode, CurrencyConfig } from '../../../core/types/currency';
@@ -49,11 +50,12 @@ export const Header: React.FC<HeaderProps> = ({
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-lg shadow-soft border-b border-[#F0E6DE]/80 py-2'
-            : 'bg-white/85 backdrop-blur-sm py-2.5 border-b border-[#F0E6DE]/40'
+            ? 'bg-white/95 backdrop-blur-lg shadow-soft border-b border-[#F0E6DE]/80'
+            : 'bg-white/90 backdrop-blur-sm border-b border-[#F0E6DE]/60'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Main Navigation Row */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo */}
             <a
@@ -82,30 +84,6 @@ export const Header: React.FC<HeaderProps> = ({
                   currencies={currencies}
                   onSelect={onSelectCurrency}
                 />
-              </div>
-
-              {/* Social Icons (Instagram & Telegram) */}
-              <div className="hidden xl:flex items-center gap-1.5 border-l border-r border-[#EED9CF] px-2.5">
-                <a
-                  href={BRAND_CONFIG.instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#E1306C] hover:bg-[#FAF5EE] transition-colors"
-                  title="Instagram"
-                  aria-label="Instagram"
-                >
-                  <InstagramIcon className="w-4 h-4" />
-                </a>
-                <a
-                  href={BRAND_CONFIG.telegramChannelUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#229ED9] hover:bg-[#FAF5EE] transition-colors"
-                  title="Telegram"
-                  aria-label="Telegram"
-                >
-                  <Send className="w-4 h-4" />
-                </a>
               </div>
 
               {/* Cart Button with Counter */}
@@ -149,6 +127,9 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Social Channels Bar immediately after the main header row */}
+        <SocialChannelsBar />
       </header>
 
       <MobileMenu
