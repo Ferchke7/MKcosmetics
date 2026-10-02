@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"mkcosmetics/server/internal/delivery/http/handler"
+	"mkcosmetics/server/internal/delivery/http/middleware"
 	"mkcosmetics/server/internal/delivery/http/router"
 	"mkcosmetics/server/internal/infrastructure/persistence/sqlite"
 	"mkcosmetics/server/internal/infrastructure/scraper"
@@ -25,6 +26,7 @@ func main() {
 	dbPath := getEnv("DB_PATH", "./data/mkcosmetics.db")
 	channelUsername := getEnv("TELEGRAM_CHANNEL", "mkcosmetkor")
 	staticDir := getEnv("STATIC_DIR", "./dist")
+	jwtSecret := getEnv("JWT_SECRET", "mkcosmetics-secret-key-2026-auth")
 	syncMinutes, _ := strconv.Atoi(getEnv("SYNC_INTERVAL_MINUTES", "3"))
 	if syncMinutes <= 0 {
 		syncMinutes = 3
@@ -42,6 +44,7 @@ func main() {
 	productRepo := sqlite.NewProductRepository(db)
 	channelRepo := sqlite.NewChannelRepository(db)
 	visitorRepo := sqlite.NewVisitorRepository(db)
+	userRepo := sqlite.NewUserRepository(db)
 
 	// 4. Infrastructure Scraper
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
@@ -50,14 +53,27 @@ func main() {
 	feedUC := usecase.NewFeedUseCase(productRepo, channelRepo)
 	syncUC := usecase.NewSyncUseCase(tgScraper, productRepo, channelRepo)
 	visitorUC := usecase.NewVisitorUseCase(visitorRepo)
+	authUC := usecase.NewAuthUseCase(userRepo, jwtSecret)
+	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo)
 
-	// 6. HTTP Handlers
+	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
 	feedHandler := handler.NewFeedHandler(feedUC, syncUC)
 	visitorHandler := handler.NewVisitorHandler(visitorUC)
+	authHandler := handler.NewAuthHandler(authUC)
+	adminHandler := handler.NewAdminHandler(adminUC, syncUC)
+	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
-	r := router.NewRouter(router.Config{StaticDir: staticDir}, healthHandler, feedHandler, visitorHandler)
+	r := router.NewRouter(
+		router.Config{StaticDir: staticDir},
+		healthHandler,
+		feedHandler,
+		visitorHandler,
+		authHandler,
+		adminHandler,
+		authMiddleware,
+	)
 
 	// 8. Start Telegram Background Sync Worker
 	ctx, cancel := context.WithCancel(context.Background())

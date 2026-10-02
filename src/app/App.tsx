@@ -4,6 +4,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useCurrency } from '../hooks/useCurrency';
 import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
+import { useAuth } from '../core/auth/AuthContext';
 import { TelegramPost } from '../core/types/telegram';
 import { Product } from '../core/types/product';
 
@@ -20,6 +21,10 @@ import { DeliveryInfo } from '../components/sections/DeliveryInfo/DeliveryInfo';
 import { FAQ } from '../components/sections/FAQ/FAQ';
 import { Contact } from '../components/sections/Contact/Contact';
 
+// Admin & CRM
+import { AdminLogin } from '../components/admin/AdminLogin';
+import { AdminDashboard } from '../components/admin/AdminDashboard';
+
 // Modals
 import { QuickOrderModal } from '../components/modals/QuickOrderModal';
 import { PostDetailModal } from '../components/modals/PostDetailModal';
@@ -27,10 +32,13 @@ import { ProductQuickViewModal } from '../components/modals/ProductQuickViewModa
 import { CartDrawer } from '../components/modals/CartDrawer';
 
 export function App() {
-  // 1. Navigation View State: 'home' | 'catalog'
-  const [currentView, setCurrentView] = useState<'home' | 'catalog'>('home');
+  // 1. Navigation View State: 'home' | 'catalog' | 'admin'
+  const [currentView, setCurrentView] = useState<'home' | 'catalog' | 'admin'>('home');
 
-  // 2. Telegram Feed hook (loads live/cache posts)
+  // 2. Auth Context
+  const { isAuthenticated } = useAuth();
+
+  // 3. Telegram Feed hook (loads live/cache posts)
   const {
     posts: telegramPosts,
     isLoading: isTgLoading,
@@ -38,7 +46,7 @@ export function App() {
     refreshFeed,
   } = useTelegramFeed();
 
-  // 3. Currency hook
+  // 4. Currency hook
   const {
     currency,
     setCurrency,
@@ -46,7 +54,7 @@ export function App() {
     allCurrencies,
   } = useCurrency();
 
-  // 4. Cart hook
+  // 5. Cart hook
   const {
     items: cartItems,
     totalCount: cartCount,
@@ -60,10 +68,10 @@ export function App() {
     generateWhatsAppOrderLink,
   } = useCart(formatPrice);
 
-  // 5. Wishlist hook
+  // 6. Wishlist hook
   const { isFavorite, toggleWishlist } = useWishlist();
 
-  // 6. Products hook (derived directly from Telegram posts)
+  // 7. Products hook (derived directly from Telegram posts)
   const {
     products,
     allProducts,
@@ -88,7 +96,7 @@ export function App() {
     hasActiveFilters,
   } = useProducts(telegramPosts);
 
-  // 7. Modals state
+  // 8. Modals state
   const [quickOrderData, setQuickOrderData] = useState<{
     isOpen: boolean;
     productTitle: string;
@@ -103,11 +111,16 @@ export function App() {
   const [detailPost, setDetailPost] = useState<TelegramPost | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  // Listen to hash changes for SPA direct links (#catalog, #products, #top)
+  // Listen to hash and URL changes for SPA direct links (#admin, #catalog, #products, #top)
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#catalog' || hash === '#products') {
+      const pathname = window.location.pathname.toLowerCase();
+
+      if (hash === '#admin' || pathname.startsWith('/admin')) {
+        setCurrentView('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#catalog' || hash === '#products') {
         setCurrentView('catalog');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -117,16 +130,23 @@ export function App() {
 
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
-  const handleNavigate = (view: 'home' | 'catalog', targetAnchor?: string) => {
+  const handleNavigate = (view: 'home' | 'catalog' | 'admin', targetAnchor?: string) => {
     setCurrentView(view);
-    if (view === 'catalog') {
+    if (view === 'admin') {
+      window.location.hash = 'admin';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'catalog') {
       window.location.hash = 'catalog';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      if (targetAnchor && targetAnchor !== '#catalog') {
+      if (targetAnchor && targetAnchor !== '#catalog' && targetAnchor !== '#admin') {
         window.location.hash = targetAnchor.replace('#', '');
         const elem = document.querySelector(targetAnchor);
         if (elem) {
@@ -152,6 +172,20 @@ export function App() {
   const handleOpenProductDetails = (product: Product) => {
     setQuickViewProduct(product);
   };
+
+  // ADMIN VIEW ROUTING
+  if (currentView === 'admin') {
+    if (!isAuthenticated) {
+      return <AdminLogin onBackToShop={() => handleNavigate('home', '#top')} />;
+    }
+    return (
+      <AdminDashboard
+        onBackToShop={() => handleNavigate('home', '#top')}
+        posts={telegramPosts}
+        onRefreshFeed={refreshFeed}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#242120]">

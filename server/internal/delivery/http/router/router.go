@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 
 	"mkcosmetics/server/internal/delivery/http/handler"
+	appMiddleware "mkcosmetics/server/internal/delivery/http/middleware"
 )
 
 type Config struct {
@@ -22,6 +23,9 @@ func NewRouter(
 	healthHandler *handler.HealthHandler,
 	feedHandler *handler.FeedHandler,
 	visitorHandler *handler.VisitorHandler,
+	authHandler *handler.AuthHandler,
+	adminHandler *handler.AdminHandler,
+	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -46,6 +50,7 @@ func NewRouter(
 	r.Route("/api", func(api chi.Router) {
 		api.Get("/health", healthHandler.HealthCheck)
 
+		// Public Telegram & Visitor feeds
 		api.Route("/telegram", func(tg chi.Router) {
 			tg.Get("/feed", feedHandler.GetFeed)
 			tg.Post("/sync", feedHandler.Sync)
@@ -54,6 +59,31 @@ func NewRouter(
 		api.Route("/visitor", func(v chi.Router) {
 			v.Post("/track", visitorHandler.Track)
 			v.Get("/stats", visitorHandler.GetStats)
+		})
+
+		// Authentication Routes (100% Open Source JWT Auth)
+		api.Route("/auth", func(a chi.Router) {
+			a.Post("/login", authHandler.Login)
+			a.Group(func(protected chi.Router) {
+				protected.Use(authMiddleware.RequireAuth)
+				protected.Get("/me", authHandler.Me)
+				protected.Post("/change-password", authHandler.ChangePassword)
+			})
+		})
+
+		// Protected Admin & CRM Routes
+		api.Route("/admin", func(admin chi.Router) {
+			admin.Use(authMiddleware.RequireAuth)
+
+			admin.Get("/stats", adminHandler.GetDashboard)
+			admin.Get("/visitors", adminHandler.GetVisitorLogs)
+			admin.Post("/sync", adminHandler.TriggerSync)
+
+			admin.Route("/products", func(p chi.Router) {
+				p.Post("/", adminHandler.CreateProduct)
+				p.Put("/{id}", adminHandler.UpdateProduct)
+				p.Delete("/{id}", adminHandler.DeleteProduct)
+			})
 		})
 	})
 
@@ -82,7 +112,7 @@ func setupSPAServer(r *chi.Mux, staticDir string) {
 			return
 		}
 
-		// Fallback to index.html for SPA client-side routes (e.g. /all-products, /product/123)
+		// Fallback to index.html for SPA client-side routes (e.g. /admin, /catalog)
 		indexPath := filepath.Join(staticDir, "index.html")
 		http.ServeFile(w, req, indexPath)
 	})

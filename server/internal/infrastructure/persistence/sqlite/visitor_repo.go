@@ -129,3 +129,39 @@ func (r *visitorRepository) GetStats(ctx context.Context) (*entity.VisitorStats,
 		LastUpdated: latestTime,
 	}, nil
 }
+
+func (r *visitorRepository) GetRecentLogs(ctx context.Context, limit int) ([]entity.VisitorLog, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	query := `
+		SELECT id, ip, country_code, visited_at
+		FROM visitor_logs
+		ORDER BY visited_at DESC
+		LIMIT ?;
+	`
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var logs []entity.VisitorLog
+	for rows.Next() {
+		var (
+			l          entity.VisitorLog
+			visitedStr string
+		)
+		if err := rows.Scan(&l.ID, &l.IP, &l.CountryCode, &visitedStr); err != nil {
+			return nil, err
+		}
+		if t, err := time.Parse(time.RFC3339, visitedStr); err == nil {
+			l.VisitedAt = t
+		} else {
+			l.VisitedAt = time.Now()
+		}
+		logs = append(logs, l)
+	}
+
+	return logs, nil
+}

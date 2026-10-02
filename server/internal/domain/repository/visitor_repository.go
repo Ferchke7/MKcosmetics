@@ -9,4 +9,5 @@ import (
 type VisitorRepository interface {
 	RecordVisit(ctx context.Context, countryCode string, ip string) error
 	GetStats(ctx context.Context) (*entity.VisitorStats, error)
+	GetRecentLogs(ctx context.Context, limit int) ([]entity.VisitorLog, error)
 }

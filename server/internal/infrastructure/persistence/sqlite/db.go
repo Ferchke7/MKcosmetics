@@ -97,10 +97,41 @@ func (db *DB) migrate() error {
 		country_code TEXT NOT NULL,
 		visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT UNIQUE NOT NULL,
+		password_hash TEXT NOT NULL,
+		role TEXT NOT NULL DEFAULT 'admin',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		last_login TIMESTAMP
+	);
 	`
 
 	_, err := db.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Ensure default admin user exists
+	db.seedDefaultAdmin()
+	return nil
+}
+
+func (db *DB) seedDefaultAdmin() {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users;").Scan(&count)
+	if err == nil && count == 0 {
+		hash, err := HashPassword("admin")
+		if err == nil {
+			_, _ = db.Exec(`
+				INSERT INTO users (username, password_hash, role, created_at)
+				VALUES ('admin', ?, 'admin', CURRENT_TIMESTAMP)
+				ON CONFLICT(username) DO NOTHING;
+			`, hash)
+			log.Println("👤 Default admin user created (Username: 'admin', Password: 'admin')")
+		}
+	}
 }
 
 func findDataFile(dataDir, filename string) string {

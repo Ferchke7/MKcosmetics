@@ -204,6 +204,12 @@ func (r *productRepository) FindByID(ctx context.Context, id string) (*entity.Pr
 	return &p, nil
 }
 
+func (r *productRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM posts WHERE id = ?;`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
 func (r *productRepository) Count(ctx context.Context) (int, error) {
 	var count int
 	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM posts").Scan(&count)

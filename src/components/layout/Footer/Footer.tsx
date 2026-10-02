@@ -148,8 +148,16 @@ export const Footer: React.FC = () => {
           <div>
             © {new Date().getFullYear()} {BRAND_CONFIG.brandName}. Все права защищены.
           </div>
-          <div>
-            Основатель и эксперт по K-Beauty: Мухаббат Ким
+          <div className="flex items-center gap-4">
+            <span>Основатель: Мухаббат Ким</span>
+            <span className="text-[#334155]">•</span>
+            <a
+              href="#admin"
+              className="inline-flex items-center gap-1.5 text-amber-500/80 hover:text-amber-400 font-medium transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>CRM & Админка</span>
+            </a>
           </div>
         </div>
       </div>

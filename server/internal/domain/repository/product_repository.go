@@ -11,5 +11,6 @@ type ProductRepository interface {
 	SaveBatch(ctx context.Context, posts []*entity.ProductPost) (int, error)
 	FindAll(ctx context.Context) ([]*entity.ProductPost, error)
 	FindByID(ctx context.Context, id string) (*entity.ProductPost, error)
+	Delete(ctx context.Context, id string) error
 	Count(ctx context.Context) (int, error)
 }
