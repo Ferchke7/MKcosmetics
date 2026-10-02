@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"mkcosmetics/server/internal/domain/entity"
+	"mkcosmetics/server/internal/infrastructure/persistence/sqlite/seed"
 	_ "modernc.org/sqlite"
 )
 
@@ -124,105 +125,111 @@ func (db *DB) seedFromJSONIfFresh(dataDir string) {
 		return
 	}
 
-	// 1. Seed channel.json if exists
-	channelFile := findDataFile(dataDir, "channel.json")
-	if channelFile != "" {
-		if channelBytes, err := os.ReadFile(channelFile); err == nil {
-			var ch entity.ChannelInfo
-			if err := json.Unmarshal(channelBytes, &ch); err == nil {
-				_, _ = db.Exec(`
-					INSERT INTO channel_info (id, title, username, avatar_url, subscribers_count, description, updated_at)
-					VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-					ON CONFLICT(id) DO UPDATE SET
-						title=excluded.title,
-						username=excluded.username,
-						avatar_url=excluded.avatar_url,
-						subscribers_count=excluded.subscribers_count,
-						description=excluded.description,
-						updated_at=CURRENT_TIMESTAMP
-				`, ch.Title, ch.Username, ch.AvatarURL, ch.SubscribersCount, ch.Description)
-				log.Printf("🌱 Seeded channel info into SQLite: %s (@%s)", ch.Title, ch.Username)
-			}
+	// 1. Seed channel info (from embedded seed or disk)
+	channelBytes := seed.ChannelJSON
+	if len(channelBytes) == 0 {
+		if channelFile := findDataFile(dataDir, "channel.json"); channelFile != "" {
+			channelBytes, _ = os.ReadFile(channelFile)
+		}
+	}
+	if len(channelBytes) > 0 {
+		var ch entity.ChannelInfo
+		if err := json.Unmarshal(channelBytes, &ch); err == nil {
+			_, _ = db.Exec(`
+				INSERT INTO channel_info (id, title, username, avatar_url, subscribers_count, description, updated_at)
+				VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+				ON CONFLICT(id) DO UPDATE SET
+					title=excluded.title,
+					username=excluded.username,
+					avatar_url=excluded.avatar_url,
+					subscribers_count=excluded.subscribers_count,
+					description=excluded.description,
+					updated_at=CURRENT_TIMESTAMP
+			`, ch.Title, ch.Username, ch.AvatarURL, ch.SubscribersCount, ch.Description)
+			log.Printf("🌱 Seeded channel info into SQLite: %s (@%s)", ch.Title, ch.Username)
 		}
 	}
 
-	// 2. Seed posts.json if exists
-	postsFile := findDataFile(dataDir, "posts.json")
-	if postsFile != "" {
-		if postsBytes, err := os.ReadFile(postsFile); err == nil {
-			type rawSeedPost struct {
-				ID              string        `json:"id"`
-				PostURL         string        `json:"postUrl"`
-				Date            string        `json:"date"`
-				Timestamp       int64         `json:"timestamp"`
-				ProductTitle    string        `json:"productTitle"`
-				Brand           string        `json:"brand"`
-				Text            string        `json:"text"`
-				Prices          entity.Prices `json:"prices"`
-				Photos          []string      `json:"photos"`
-				Tags            []string      `json:"tags"`
-				DiscountPercent int           `json:"discountPercent"`
-				IsBestseller    bool          `json:"isBestseller"`
-				Views           interface{}   `json:"views"`
+	// 2. Seed posts (from embedded seed or disk)
+	postsBytes := seed.PostsJSON
+	if len(postsBytes) == 0 {
+		if postsFile := findDataFile(dataDir, "posts.json"); postsFile != "" {
+			postsBytes, _ = os.ReadFile(postsFile)
+		}
+	}
+	if len(postsBytes) > 0 {
+		type rawSeedPost struct {
+			ID              string        `json:"id"`
+			PostURL         string        `json:"postUrl"`
+			Date            string        `json:"date"`
+			Timestamp       int64         `json:"timestamp"`
+			ProductTitle    string        `json:"productTitle"`
+			Brand           string        `json:"brand"`
+			Text            string        `json:"text"`
+			Prices          entity.Prices `json:"prices"`
+			Photos          []string      `json:"photos"`
+			Tags            []string      `json:"tags"`
+			DiscountPercent int           `json:"discountPercent"`
+			IsBestseller    bool          `json:"isBestseller"`
+			Views           interface{}   `json:"views"`
+		}
+
+		var rawPosts []rawSeedPost
+		if err := json.Unmarshal(postsBytes, &rawPosts); err == nil && len(rawPosts) > 0 {
+			tx, err := db.Begin()
+			if err != nil {
+				return
 			}
-
-			var rawPosts []rawSeedPost
-			if err := json.Unmarshal(postsBytes, &rawPosts); err == nil && len(rawPosts) > 0 {
-				tx, err := db.Begin()
-				if err != nil {
-					return
-				}
-				stmt, err := tx.Prepare(`
-					INSERT INTO posts (
-						id, post_url, date, timestamp, product_title, brand, text,
-						prices_json, photos_json, tags_json, discount_percent, is_bestseller, views, created_at, updated_at
-					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-					ON CONFLICT(id) DO UPDATE SET
-						product_title=excluded.product_title,
-						brand=excluded.brand,
-						text=excluded.text,
-						prices_json=excluded.prices_json,
-						photos_json=excluded.photos_json,
-						tags_json=excluded.tags_json,
-						discount_percent=excluded.discount_percent,
-						is_bestseller=excluded.is_bestseller,
-						views=excluded.views,
-						updated_at=CURRENT_TIMESTAMP
-				`)
-				if err == nil {
-					defer stmt.Close()
-					inserted := 0
-					for _, p := range rawPosts {
-						postID := p.ID
-						if !strings.HasPrefix(postID, "mkcosmetkor_") {
-							postID = "mkcosmetkor_" + postID
-						}
-						pricesJSON, _ := json.Marshal(p.Prices)
-						photosJSON, _ := json.Marshal(p.Photos)
-						tagsJSON, _ := json.Marshal(p.Tags)
-						isBest := 0
-						if p.IsBestseller {
-							isBest = 1
-						}
-						viewsNum := 0
-						if vStr, ok := p.Views.(string); ok {
-							viewsNum, _ = strconv.Atoi(strings.TrimSpace(vStr))
-						} else if vFloat, ok := p.Views.(float64); ok {
-							viewsNum = int(vFloat)
-						}
-
-						_, err := stmt.Exec(
-							postID, p.PostURL, p.Date, p.Timestamp, p.ProductTitle, p.Brand, p.Text,
-							string(pricesJSON), string(photosJSON), string(tagsJSON),
-							p.DiscountPercent, isBest, viewsNum,
-						)
-						if err == nil {
-							inserted++
-						}
+			stmt, err := tx.Prepare(`
+				INSERT INTO posts (
+					id, post_url, date, timestamp, product_title, brand, text,
+					prices_json, photos_json, tags_json, discount_percent, is_bestseller, views, created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+				ON CONFLICT(id) DO UPDATE SET
+					product_title=excluded.product_title,
+					brand=excluded.brand,
+					text=excluded.text,
+					prices_json=excluded.prices_json,
+					photos_json=excluded.photos_json,
+					tags_json=excluded.tags_json,
+					discount_percent=excluded.discount_percent,
+					is_bestseller=excluded.is_bestseller,
+					views=excluded.views,
+					updated_at=CURRENT_TIMESTAMP
+			`)
+			if err == nil {
+				defer stmt.Close()
+				inserted := 0
+				for _, p := range rawPosts {
+					postID := p.ID
+					if !strings.HasPrefix(postID, "mkcosmetkor_") {
+						postID = "mkcosmetkor_" + postID
 					}
-					_ = tx.Commit()
-					log.Printf("🌱 Successfully seeded %d products from posts.json into SQLite!", inserted)
+					pricesJSON, _ := json.Marshal(p.Prices)
+					photosJSON, _ := json.Marshal(p.Photos)
+					tagsJSON, _ := json.Marshal(p.Tags)
+					isBest := 0
+					if p.IsBestseller {
+						isBest = 1
+					}
+					viewsNum := 0
+					if vStr, ok := p.Views.(string); ok {
+						viewsNum, _ = strconv.Atoi(strings.TrimSpace(vStr))
+					} else if vFloat, ok := p.Views.(float64); ok {
+						viewsNum = int(vFloat)
+					}
+
+					_, err := stmt.Exec(
+						postID, p.PostURL, p.Date, p.Timestamp, p.ProductTitle, p.Brand, p.Text,
+						string(pricesJSON), string(photosJSON), string(tagsJSON),
+						p.DiscountPercent, isBest, viewsNum,
+					)
+					if err == nil {
+						inserted++
+					}
 				}
+				_ = tx.Commit()
+				log.Printf("🌱 Successfully seeded %d products into SQLite!", inserted)
 			}
 		}
 	}
