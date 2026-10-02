@@ -26,8 +26,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Server data & runtime cache (optional)
+# Server data & runtime cache
 server/data/*.tmp
+*.db
+*.db-shm
+*.db-wal
+data/
+bin/
 
 # Editor & IDE files
 .vscode/*

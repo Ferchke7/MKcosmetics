@@ -1,0 +1,247 @@
+package sqlite
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
+	"mkcosmetics/server/internal/domain/entity"
+	_ "modernc.org/sqlite"
+)
+
+// DB wraps *sql.DB with helper operations
+type DB struct {
+	*sql.DB
+}
+
+// NewDB initializes SQLite connection, runs schema migrations and seeds initial data if fresh
+func NewDB(dbPath string) (*DB, error) {
+	dir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create db directory: %w", err)
+	}
+
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open sqlite db: %w", err)
+	}
+
+	db.SetMaxOpenConns(1) // SQLite single writer guarantee for WAL mode
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(time.Hour)
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping sqlite db: %w", err)
+	}
+
+	instance := &DB{db}
+	if err := instance.migrate(); err != nil {
+		return nil, fmt.Errorf("failed to run sqlite migrations: %w", err)
+	}
+
+	// Seed from posts.json and channel.json if fresh DB
+	instance.seedFromJSONIfFresh(dir)
+
+	return instance, nil
+}
+
+func (db *DB) migrate() error {
+	schema := `
+	CREATE TABLE IF NOT EXISTS channel_info (
+		id INTEGER PRIMARY KEY CHECK (id = 1),
+		title TEXT NOT NULL,
+		username TEXT NOT NULL,
+		avatar_url TEXT NOT NULL DEFAULT '',
+		subscribers_count TEXT NOT NULL DEFAULT '',
+		description TEXT NOT NULL DEFAULT '',
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS posts (
+		id TEXT PRIMARY KEY,
+		post_url TEXT NOT NULL,
+		date TEXT NOT NULL,
+		timestamp INTEGER NOT NULL DEFAULT 0,
+		product_title TEXT NOT NULL,
+		brand TEXT NOT NULL DEFAULT '',
+		text TEXT NOT NULL,
+		prices_json TEXT NOT NULL DEFAULT '{}',
+		photos_json TEXT NOT NULL DEFAULT '[]',
+		tags_json TEXT NOT NULL DEFAULT '[]',
+		discount_percent INTEGER NOT NULL DEFAULT 0,
+		is_bestseller INTEGER NOT NULL DEFAULT 0,
+		views INTEGER NOT NULL DEFAULT 0,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_posts_timestamp ON posts(timestamp DESC);
+	CREATE INDEX IF NOT EXISTS idx_posts_brand ON posts(brand);
+
+	CREATE TABLE IF NOT EXISTS visitor_stats (
+		country_code TEXT PRIMARY KEY,
+		visits INTEGER NOT NULL DEFAULT 0,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS visitor_logs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		ip TEXT NOT NULL,
+		country_code TEXT NOT NULL,
+		visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+	`
+
+	_, err := db.Exec(schema)
+	return err
+}
+
+func findDataFile(dataDir, filename string) string {
+	candidates := []string{
+		filepath.Join(dataDir, filename),
+		filepath.Join("server", "data", filename),
+		filepath.Join("data", filename),
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return ""
+}
+
+func (db *DB) seedFromJSONIfFresh(dataDir string) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM posts").Scan(&count)
+	if err == nil && count > 0 {
+		log.Printf("💾 SQLite database already contains %d posts. Skipping JSON seed.", count)
+		return
+	}
+
+	// 1. Seed channel.json if exists
+	channelFile := findDataFile(dataDir, "channel.json")
+	if channelFile != "" {
+		if channelBytes, err := os.ReadFile(channelFile); err == nil {
+			var ch entity.ChannelInfo
+			if err := json.Unmarshal(channelBytes, &ch); err == nil {
+				_, _ = db.Exec(`
+					INSERT INTO channel_info (id, title, username, avatar_url, subscribers_count, description, updated_at)
+					VALUES (1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+					ON CONFLICT(id) DO UPDATE SET
+						title=excluded.title,
+						username=excluded.username,
+						avatar_url=excluded.avatar_url,
+						subscribers_count=excluded.subscribers_count,
+						description=excluded.description,
+						updated_at=CURRENT_TIMESTAMP
+				`, ch.Title, ch.Username, ch.AvatarURL, ch.SubscribersCount, ch.Description)
+				log.Printf("🌱 Seeded channel info into SQLite: %s (@%s)", ch.Title, ch.Username)
+			}
+		}
+	}
+
+	// 2. Seed posts.json if exists
+	postsFile := findDataFile(dataDir, "posts.json")
+	if postsFile != "" {
+		if postsBytes, err := os.ReadFile(postsFile); err == nil {
+			type rawSeedPost struct {
+				ID              string        `json:"id"`
+				PostURL         string        `json:"postUrl"`
+				Date            string        `json:"date"`
+				Timestamp       int64         `json:"timestamp"`
+				ProductTitle    string        `json:"productTitle"`
+				Brand           string        `json:"brand"`
+				Text            string        `json:"text"`
+				Prices          entity.Prices `json:"prices"`
+				Photos          []string      `json:"photos"`
+				Tags            []string      `json:"tags"`
+				DiscountPercent int           `json:"discountPercent"`
+				IsBestseller    bool          `json:"isBestseller"`
+				Views           interface{}   `json:"views"`
+			}
+
+			var rawPosts []rawSeedPost
+			if err := json.Unmarshal(postsBytes, &rawPosts); err == nil && len(rawPosts) > 0 {
+				tx, err := db.Begin()
+				if err != nil {
+					return
+				}
+				stmt, err := tx.Prepare(`
+					INSERT INTO posts (
+						id, post_url, date, timestamp, product_title, brand, text,
+						prices_json, photos_json, tags_json, discount_percent, is_bestseller, views, created_at, updated_at
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+					ON CONFLICT(id) DO UPDATE SET
+						product_title=excluded.product_title,
+						brand=excluded.brand,
+						text=excluded.text,
+						prices_json=excluded.prices_json,
+						photos_json=excluded.photos_json,
+						tags_json=excluded.tags_json,
+						discount_percent=excluded.discount_percent,
+						is_bestseller=excluded.is_bestseller,
+						views=excluded.views,
+						updated_at=CURRENT_TIMESTAMP
+				`)
+				if err == nil {
+					defer stmt.Close()
+					inserted := 0
+					for _, p := range rawPosts {
+						postID := p.ID
+						if !strings.HasPrefix(postID, "mkcosmetkor_") {
+							postID = "mkcosmetkor_" + postID
+						}
+						pricesJSON, _ := json.Marshal(p.Prices)
+						photosJSON, _ := json.Marshal(p.Photos)
+						tagsJSON, _ := json.Marshal(p.Tags)
+						isBest := 0
+						if p.IsBestseller {
+							isBest = 1
+						}
+						viewsNum := 0
+						if vStr, ok := p.Views.(string); ok {
+							viewsNum, _ = strconv.Atoi(strings.TrimSpace(vStr))
+						} else if vFloat, ok := p.Views.(float64); ok {
+							viewsNum = int(vFloat)
+						}
+
+						_, err := stmt.Exec(
+							postID, p.PostURL, p.Date, p.Timestamp, p.ProductTitle, p.Brand, p.Text,
+							string(pricesJSON), string(photosJSON), string(tagsJSON),
+							p.DiscountPercent, isBest, viewsNum,
+						)
+						if err == nil {
+							inserted++
+						}
+					}
+					_ = tx.Commit()
+					log.Printf("🌱 Successfully seeded %d products from posts.json into SQLite!", inserted)
+				}
+			}
+		}
+	}
+
+	// 3. Seed default base visitor stats
+	defaultCountries := map[string]int{
+		"UZ": 1420,
+		"RU": 890,
+		"KZ": 410,
+		"KR": 325,
+		"US": 115,
+		"TR": 85,
+		"KG": 70,
+	}
+	for code, visits := range defaultCountries {
+		_, _ = db.Exec(`
+			INSERT INTO visitor_stats (country_code, visits, updated_at)
+			VALUES (?, ?, CURRENT_TIMESTAMP)
+			ON CONFLICT(country_code) DO NOTHING
+		`, code, visits)
+	}
+}

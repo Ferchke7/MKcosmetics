@@ -8,9 +8,10 @@
     "client:dev": "vite",
     "client:build": "vite build",
     "client:preview": "vite preview",
-    "server:dev": "tsx watch server/index.ts",
+    "server:dev": "go run ./server/cmd/server",
+    "server:build": "go build -o bin/server ./server/cmd/server",
     "build": "vite build",
-    "start": "tsx server/index.ts"
+    "start": "go run ./server/cmd/server"
   },
   "dependencies": {
     "axios": "^1.7.9",

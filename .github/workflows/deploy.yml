@@ -34,6 +34,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Setup Go 1.24
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
       - name: Start server & test health check
         run: |
           set -euo pipefail
@@ -99,6 +105,8 @@ jobs:
             --exclude='.github/' \
             --exclude='node_modules/' \
             --exclude='dist/' \
+            --exclude='bin/' \
+            --exclude='*.db*' \
             --exclude='data/' \
             --exclude='data' \
             --exclude='server/data/' \
