@@ -2,17 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { Product, ProductSortOption } from '../../../core/types/product';
 import { ProductCard } from '../Products/ProductCard';
 import { Skeleton } from '../../ui/Skeleton';
-import { BRAND_CONFIG } from '../../../core/constants/brand';
 import {
   Search,
-  Zap,
   ArrowLeft,
-  RotateCcw,
-  Flame,
   X,
   ChevronDown,
   Sparkles,
   SlidersHorizontal,
+  RotateCcw,
+  Tag,
+  Check,
+  Plane,
 } from 'lucide-react';
 
 interface CatalogPageProps {
@@ -25,7 +25,7 @@ interface CatalogPageProps {
   discountCount: number;
   isLoading: boolean;
   isRefreshing: boolean;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   selectedCategory: string;
@@ -51,15 +51,16 @@ interface CatalogPageProps {
 
 const ITEMS_PER_PAGE = 20;
 
-const QUICK_CATEGORIES = [
-  { id: 'all', label: 'Все товары' },
-  { id: 'discount', label: '🔥 Со скидкой', isDiscount: true },
-  { id: 'sets', label: 'Наборы' },
-  { id: 'hydration-serums', label: 'Сыворотки и ампулы' },
-  { id: 'anti-aging', label: 'Антивозрастной уход' },
-  { id: 'peeling-cleansing', label: 'Очищение и пилинги' },
-  { id: 'sun-care', label: 'SPF защита' },
-  { id: 'premium-luxury', label: 'Люкс бренды' },
+// Musinsa Beauty Categories
+const MUSINSA_CATEGORIES = [
+  { id: 'all', kor: '전체', label: 'Все товары' },
+  { id: 'discount', kor: '단독특가', label: '🔥 Спецскидки', isDiscount: true },
+  { id: 'sets', kor: '기획세트', label: 'Наборы & Боксы' },
+  { id: 'hydration-serums', kor: '세럼/앰플', label: 'Сыворотки и эссенции' },
+  { id: 'anti-aging', kor: '안티에이징', label: 'Лифтинг и упругость' },
+  { id: 'peeling-cleansing', kor: '클렌징/팩', label: 'Очищение и маски' },
+  { id: 'sun-care', kor: '선케어', label: 'SPF Защита' },
+  { id: 'premium-luxury', kor: '프리미엄', label: 'Люкс бренды' },
 ];
 
 export const CatalogPage: React.FC<CatalogPageProps> = ({
@@ -71,8 +72,6 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   filteredCount,
   discountCount,
   isLoading,
-  isRefreshing,
-  onRefresh,
   searchQuery,
   onSearchChange,
   selectedCategory,
@@ -96,76 +95,94 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   onBackToHome,
 }) => {
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
+  const [priceRangeFilter, setPriceRangeFilter] = useState<'all' | 'under30k' | '30k-60k' | 'over60k'>('all');
 
   // Reset pagination when search or filters change
   React.useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
-  }, [searchQuery, selectedCategory, selectedBrand, sortBy, onlyDiscount, onlyWithPrice]);
+  }, [searchQuery, selectedCategory, selectedBrand, sortBy, onlyDiscount, onlyWithPrice, priceRangeFilter]);
+
+  // Apply optional local price range filter
+  const processedProducts = useMemo(() => {
+    if (priceRangeFilter === 'all') return products;
+
+    return products.filter((p) => {
+      if (p.priceKrw <= 0) return true;
+      if (priceRangeFilter === 'under30k') return p.priceKrw < 30000;
+      if (priceRangeFilter === '30k-60k') return p.priceKrw >= 30000 && p.priceKrw <= 60000;
+      if (priceRangeFilter === 'over60k') return p.priceKrw > 60000;
+      return true;
+    });
+  }, [products, priceRangeFilter]);
 
   const visibleProducts = useMemo(() => {
-    return products.slice(0, visibleCount);
-  }, [products, visibleCount]);
+    return processedProducts.slice(0, visibleCount);
+  }, [processedProducts, visibleCount]);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
   };
 
+  const isAnyFilterActive = hasActiveFilters || priceRangeFilter !== 'all';
+
+  const handleResetAll = () => {
+    setPriceRangeFilter('all');
+    onResetFilters();
+  };
+
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pt-24 pb-20">
+    <div className="bg-[#FFFFFF] min-h-screen pt-24 pb-24 text-[#111111]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Navigation & Refresh Bar */}
-        <div className="flex items-center justify-between gap-4 py-3 border-b border-gray-200/80 mb-6">
+        
+        {/* Top Breadcrumb & Back Navigation */}
+        <div className="flex items-center justify-between gap-4 py-3 border-b border-[#EEEEEE] mb-6">
           <button
             onClick={onBackToHome}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#111827] hover:text-[#0073E9] transition-colors py-1.5 px-3 rounded-full bg-white border border-gray-200 shadow-2xs"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#111111] hover:text-[#555555] transition-colors py-1.5 px-3 rounded-lg bg-[#F5F5F5] hover:bg-[#EBEBEB] cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Главная страница</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>← Главная</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 bg-white px-3 py-1.5 rounded-full border border-gray-200 transition-colors disabled:opacity-50 shadow-2xs"
-              title="Обновить каталог"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0073E9]' : ''}`} />
-              <span>{isRefreshing ? 'Синхронизация…' : 'Обновить'}</span>
-            </button>
+          <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase text-[#888888]">
+            <span>MUSINSA BEAUTY</span>
+            <span>•</span>
+            <span className="text-[#111111]">ORIGINAL 100%</span>
           </div>
         </div>
 
-        {/* Coupang Header Title Banner */}
-        <div className="bg-white rounded-3xl border border-gray-200/80 p-5 sm:p-8 mb-6 shadow-2xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Musinsa Header Title & Search */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-[#111111]">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0073E9]/10 text-[#0073E9] text-[11px] font-bold uppercase tracking-wider mb-2">
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Каталог косметики из Южной Кореи</span>
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest text-[#777777] mb-1">
+                <span>무신사 뷰티 스토어</span>
+                <span>/</span>
+                <span>SEOUL DIRECT</span>
               </div>
-              <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
-                Каталог товаров ({totalCount})
+              <h1 className="font-sans text-3xl sm:text-4xl font-black tracking-tight text-[#111111]">
+                BEAUTY CATALOG
               </h1>
-              <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-2xl">
-                Прямые поставки оригинальной корейской косметики напрямую из Сеула.
+              <p className="mt-1 text-xs sm:text-sm text-[#666666]">
+                Оригинальная корейская косметика напрямую из Сеула • В наличии <strong className="text-[#111111] font-bold">{totalCount}</strong> позиций
               </p>
             </div>
 
-            {/* Fast Coupang Search */}
+            {/* Fast Musinsa Search Bar */}
             <div className="relative w-full md:w-80 lg:w-96">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Поиск по бренду, названию..."
-                className="w-full rounded-2xl border border-gray-300 bg-white py-2.5 pl-10 pr-9 text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:border-[#0073E9] focus:outline-none focus:ring-2 focus:ring-[#0073E9]/20"
+                placeholder="Поиск бренда, средства, типа кожи..."
+                className="w-full rounded-xl border border-[#DCDCDC] bg-[#FAFAFA] py-2.5 pl-10 pr-9 text-xs sm:text-sm text-[#111111] placeholder-[#888888] focus:border-[#111111] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#111111]"
               />
               {searchQuery && (
                 <button
                   onClick={() => onSearchChange('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111] cursor-pointer"
+                  aria-label="Очистить поиск"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -173,9 +190,9 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             </div>
           </div>
 
-          {/* Coupang Category Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pt-5 mt-5 border-t border-gray-100 no-scrollbar">
-            {QUICK_CATEGORIES.map((cat) => {
+          {/* Musinsa Categories Horizontal Tab Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto py-3.5 border-b border-[#EEEEEE] no-scrollbar">
+            {MUSINSA_CATEGORIES.map((cat) => {
               const isActive = cat.isDiscount
                 ? onlyDiscount
                 : selectedCategory === cat.id && !onlyDiscount;
@@ -191,111 +208,196 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                       onCategoryChange(cat.id);
                     }
                   }}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${
                     isActive
                       ? cat.isDiscount
-                        ? 'bg-rose-500 text-white shadow-xs'
-                        : 'bg-[#111827] text-white shadow-xs'
+                        ? 'bg-[#FF0038] text-white shadow-sm'
+                        : 'bg-[#111111] text-white shadow-sm'
                       : cat.isDiscount
-                      ? 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100'
-                      : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      ? 'bg-[#FFF0F3] text-[#FF0038] hover:bg-[#FFE0E6] border border-[#FFCCD5]'
+                      : 'bg-[#F7F7F7] text-[#444444] hover:bg-[#EBEBEB] hover:text-[#111111]'
                   }`}
                 >
-                  {cat.label}
-                  {cat.isDiscount && discountCount > 0 && ` (${discountCount})`}
+                  <span className="opacity-60 text-[10px] uppercase font-mono">{cat.kor}</span>
+                  <span>{cat.label}</span>
+                  {cat.isDiscount && discountCount > 0 && (
+                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
+                      {discountCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Coupang Controls Bar (Brand Filter, Sort, Status) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200/80 mb-6 shadow-2xs">
-          {/* Brand & Toggles */}
-          <div className="flex flex-wrap items-center gap-2.5">
+        {/* Musinsa Filter & Sorting Control Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAFAFA] p-3.5 sm:p-4 rounded-xl border border-[#EEEEEE] mb-6">
+          {/* Left: Brand Dropdown, Price Filter Pills, Toggles */}
+          <div className="flex flex-wrap items-center gap-2">
             {/* Brand Dropdown */}
             <div className="relative">
               <select
                 value={selectedBrand}
                 onChange={(e) => onBrandChange(e.target.value)}
-                className="appearance-none rounded-xl bg-gray-50 border border-gray-200 py-2 pl-3 pr-8 text-xs font-bold text-gray-800 focus:border-[#0073E9] focus:outline-none cursor-pointer"
+                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
               >
-                <option value="all">Все бренды ({allBrands.length})</option>
+                <option value="all">Бренд (전체 브랜드 {allBrands.length})</option>
                 {allBrands.map(({ brand, count }) => (
                   <option key={brand} value={brand}>
                     {brand} ({count})
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
             </div>
 
-            {/* Discount Only Pill */}
+            {/* Price Range Selector */}
+            <div className="relative hidden sm:block">
+              <select
+                value={priceRangeFilter}
+                onChange={(e) => setPriceRangeFilter(e.target.value as any)}
+                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
+              >
+                <option value="all">Все цены</option>
+                <option value="under30k">До 30,000 ₩</option>
+                <option value="30k-60k">30,000 ₩ — 60,000 ₩</option>
+                <option value="over60k">От 60,000 ₩</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
+            </div>
+
+            {/* Discount Pill */}
             <button
               onClick={() => onToggleDiscount(!onlyDiscount)}
-              className={`rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${
+              className={`rounded-lg px-3 py-2 text-xs font-bold border transition-colors cursor-pointer ${
                 onlyDiscount
-                  ? 'bg-rose-500 text-white border-rose-500'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-[#FF0038] text-white border-[#FF0038]'
+                  : 'bg-white border-[#D5D5D5] text-[#333333] hover:bg-[#F0F0F0]'
               }`}
             >
-              🔥 Только скидки ({discountCount})
+              🔥 SALE ({discountCount})
             </button>
 
-            {/* With Price Only Pill */}
+            {/* In-Stock with Price */}
             <button
               onClick={() => onToggleWithPrice(!onlyWithPrice)}
-              className={`rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${
+              className={`rounded-lg px-3 py-2 text-xs font-bold border transition-colors cursor-pointer ${
                 onlyWithPrice
-                  ? 'bg-[#0073E9] text-white border-[#0073E9]'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-[#111111] text-white border-[#111111]'
+                  : 'bg-white border-[#D5D5D5] text-[#333333] hover:bg-[#F0F0F0]'
               }`}
             >
               С точной ценой
             </button>
           </div>
 
-          {/* Sort Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium hidden sm:inline">Сортировка:</span>
+          {/* Right: Musinsa Sorting Dropdown & Items Count */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-[#777777]">
+              {processedProducts.length} 상품
+            </span>
+
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
-                className="appearance-none rounded-xl bg-gray-50 border border-gray-200 py-2 pl-3 pr-8 text-xs font-bold text-gray-800 focus:border-[#0073E9] focus:outline-none cursor-pointer"
+                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
               >
-                <option value="popular">🏆 По популярности</option>
-                <option value="newest">🆕 Сначала новинки</option>
-                <option value="price-asc">📉 Сначала дешевле</option>
-                <option value="price-desc">📈 Сначала дороже</option>
-                <option value="discount">🔥 По скидке %</option>
-                <option value="name-asc">🔤 По названию (А-Я)</option>
+                <option value="popular">무신사 랭킹순 (По рейтингу)</option>
+                <option value="newest">신상품순 (Сначала новые)</option>
+                <option value="discount">할인율 높은순 (По скидке %)</option>
+                <option value="price-asc">낮은 가격순 (Сначала недорогие)</option>
+                <option value="price-desc">높은 가격순 (Сначала премиум)</option>
+                <option value="name-asc">상품명순 (По алфавиту)</option>
+                <option value="oldest">Сначала ранние</option>
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
             </div>
           </div>
         </div>
 
-        {/* Filters status header */}
-        {hasActiveFilters && (
-          <div className="flex items-center justify-between px-2 mb-4 text-xs text-gray-500">
-            <span>Найдено товаров: <strong className="text-gray-900">{filteredCount}</strong> из {totalCount}</span>
+        {/* Active Filters Pill Bar (Musinsa Style) */}
+        {isAnyFilterActive && (
+          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-[#F8F9FA] rounded-xl border border-[#EEEEEE]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#777777] mr-1">
+              Активные фильтры:
+            </span>
+
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
+                <span>Поиск: «{searchQuery}»</span>
+                <button onClick={() => onSearchChange('')} className="hover:text-red-500 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {selectedBrand !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
+                <span>Бренд: {selectedBrand}</span>
+                <button onClick={() => onBrandChange('all')} className="hover:text-red-500 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {selectedCategory !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
+                <span>Категория: {MUSINSA_CATEGORIES.find((c) => c.id === selectedCategory)?.label || selectedCategory}</span>
+                <button onClick={() => onCategoryChange('all')} className="hover:text-red-500 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {onlyDiscount && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFF0F3] border border-[#FFCCD5] text-xs font-bold text-[#FF0038]">
+                <span>Только со скидкой</span>
+                <button onClick={() => onToggleDiscount(false)} className="hover:text-red-700 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {onlyWithPrice && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
+                <span>С точной ценой</span>
+                <button onClick={() => onToggleWithPrice(false)} className="hover:text-red-500 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {priceRangeFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
+                <span>
+                  {priceRangeFilter === 'under30k' && '< 30,000 ₩'}
+                  {priceRangeFilter === '30k-60k' && '30,000 — 60,000 ₩'}
+                  {priceRangeFilter === 'over60k' && '> 60,000 ₩'}
+                </span>
+                <button onClick={() => setPriceRangeFilter('all')} className="hover:text-red-500 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
             <button
-              onClick={onResetFilters}
-              className="inline-flex items-center gap-1 font-bold text-[#0073E9] hover:underline"
+              onClick={handleResetAll}
+              className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[#777777] hover:text-[#111111] hover:underline cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
-              Сбросить фильтры
+              <span>Сбросить всё (초기화)</span>
             </button>
           </div>
         )}
 
-        {/* Products Grid (Coupang 5-columns / 4-columns) */}
+        {/* Loading Skeletons */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5">
-            {[...Array(15)].map((_, index) => (
-              <div key={index} className="space-y-3 rounded-2xl border border-gray-200 bg-white p-3">
-                <Skeleton className="aspect-square rounded-xl" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
+            {[...Array(15)].map((_, i) => (
+              <div key={i} className="space-y-2 rounded-xl border border-[#EBEBEB] bg-white p-3">
+                <Skeleton className="aspect-[4/5] rounded-lg" />
                 <Skeleton className="h-3 w-1/3" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
@@ -306,33 +408,35 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-3xl border border-gray-200 p-8 shadow-2xs space-y-4">
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
+        ) : visibleProducts.length === 0 ? (
+          /* Empty State */
+          <div className="text-center py-20 bg-[#FAFAFA] rounded-2xl border border-dashed border-[#D5D5D5] p-8">
+            <div className="w-16 h-16 rounded-full bg-[#EEEEEE] text-[#777777] flex items-center justify-center mx-auto mb-4">
               <Search className="w-7 h-7" />
             </div>
-            <h3 className="font-sans text-xl font-bold text-gray-900">
+            <h3 className="font-sans text-xl font-bold text-[#111111]">
               Товары не найдены
             </h3>
-            <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#777777] max-w-md mx-auto">
               Попробуйте изменить поисковый запрос, выбрать другой бренд или сбросить фильтры.
             </p>
-            {hasActiveFilters && (
-              <button
-                onClick={onResetFilters}
-                className="px-5 py-2.5 rounded-full bg-[#111827] text-white text-xs font-bold hover:bg-gray-800 transition-colors"
-              >
-                Сбросить фильтры
-              </button>
-            )}
+            <button
+              onClick={handleResetAll}
+              className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs font-bold tracking-wide hover:bg-[#333333] transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Показать все товары ({totalCount})</span>
+            </button>
           </div>
         ) : (
-          <div className="space-y-10">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5">
-              {visibleProducts.map((product) => (
+          /* Musinsa 5-Column Responsive Product Grid */
+          <div className="space-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              {visibleProducts.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  rank={sortBy === 'popular' ? index + 1 : undefined}
                   formatPrice={formatPrice}
                   isFavorite={isFavorite(product.id)}
                   onToggleFavorite={onToggleFavorite}
@@ -343,22 +447,32 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               ))}
             </div>
 
-            {/* Coupang Load More Button */}
-            {visibleCount < products.length && (
-              <div className="text-center pt-4 space-y-2">
-                <p className="text-xs text-gray-500 font-medium">
-                  Показано {visibleCount} из {products.length} товаров
+            {/* Musinsa Pagination & Load More */}
+            {visibleCount < processedProducts.length && (
+              <div className="flex flex-col items-center justify-center pt-8 border-t border-[#EEEEEE] space-y-3">
+                <p className="text-xs text-[#777777] font-medium">
+                  Показано <strong className="text-[#111111]">{visibleCount}</strong> из <strong className="text-[#111111]">{processedProducts.length}</strong> товаров
                 </p>
+
+                {/* Progress bar */}
+                <div className="w-48 h-1 bg-[#EBEBEB] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#111111] transition-all duration-300"
+                    style={{ width: `${Math.min(100, (visibleCount / processedProducts.length) * 100)}%` }}
+                  />
+                </div>
+
                 <button
                   onClick={handleLoadMore}
-                  className="px-8 py-3.5 rounded-2xl bg-white border border-gray-300 hover:border-gray-900 text-gray-900 font-bold text-xs sm:text-sm transition-all shadow-2xs active:scale-95"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#111111] hover:bg-[#333333] text-white text-xs sm:text-sm font-bold tracking-wider transition-all duration-200 active:scale-95 shadow-md cursor-pointer"
                 >
-                  Показать еще ({Math.min(ITEMS_PER_PAGE, products.length - visibleCount)} товаров)
+                  <span>Показать еще ({Math.min(ITEMS_PER_PAGE, processedProducts.length - visibleCount)})</span>
                 </button>
               </div>
             )}
           </div>
         )}
+
       </div>
     </div>
   );

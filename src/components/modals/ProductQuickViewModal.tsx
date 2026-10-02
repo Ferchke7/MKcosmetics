@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
 import { Product } from '../../core/types/product';
-import { Star, ShoppingBag, MessageCircle, Check, Send, Sparkles } from 'lucide-react';
-import { buildWhatsAppUrl } from '../../core/constants/brand';
+import { Star, ShoppingBag, MessageCircle, ShieldCheck, Plane, X, ChevronRight } from 'lucide-react';
 
 interface ProductQuickViewModalProps {
   product: Product | null;
@@ -27,37 +24,65 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
   if (!product) return null;
 
+  const photos = Array.isArray(product.images) && product.images.length > 0 ? product.images : [];
+  const discountPercent = product.discountPercent;
+  const displayPrice = product.priceKrw > 0 ? formatPrice(product.priceKrw) : 'По запросу';
+
   const handleOrderWhatsApp = () => {
-    onQuickBuy(product.name, formatPrice(product.priceKrw), product.telegramPostUrl);
+    onQuickBuy(product.name, displayPrice, product.telegramPostUrl);
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start text-[#111111]">
         {/* Gallery */}
         <div className="space-y-3">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-[#FAF5EE] border border-[#F0E6DE] relative">
-            <img
-              src={product.images[selectedImgIndex] || product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-            {product.isBestseller && (
-              <div className="absolute top-3 left-3">
-                <Badge variant="gold" size="sm" icon={<Sparkles className="w-3 h-3" />}>
-                  Хит продаж
-                </Badge>
+          <div className="aspect-[4/5] rounded-xl overflow-hidden bg-[#F7F7F7] border border-[#EAEAEA] relative">
+            {photos.length > 0 ? (
+              <img
+                src={photos[selectedImgIndex] || photos[0]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-bold">
+                MK KOREA COSMETIC
               </div>
             )}
+
+            {/* Badges */}
+            <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+              {discountPercent && discountPercent > 0 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-sm bg-[#FF0038] text-white text-xs font-black tracking-tight shadow-sm">
+                  -{discountPercent}%
+                </span>
+              )}
+              {product.isBestseller && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-sm bg-[#111111] text-white text-[10px] font-black uppercase tracking-wider">
+                  BESTSELLER
+                </span>
+              )}
+            </div>
+
+            <div className="absolute bottom-3 left-3 z-10">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#111111]/90 backdrop-blur-xs text-white text-[11px] font-semibold">
+                <Plane className="w-3.5 h-3.5 text-amber-300" />
+                <span>Прямой рейс из Сеула</span>
+              </span>
+            </div>
           </div>
-          {product.images.length > 1 && (
-            <div className="flex gap-2">
-              {product.images.map((img, idx) => (
+
+          {/* Thumbnails */}
+          {photos.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {photos.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImgIndex(idx)}
-                  className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                    selectedImgIndex === idx ? 'border-[#C2836B] scale-95' : 'border-transparent opacity-70 hover:opacity-100'
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                    selectedImgIndex === idx
+                      ? 'border-[#111111] ring-1 ring-[#111111]'
+                      : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
@@ -67,59 +92,78 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
           )}
         </div>
 
-        {/* Product Details */}
+        {/* Product Details - Musinsa Style */}
         <div className="space-y-4">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#A96851]">
-              {product.brand}
-            </span>
-            <h2 className="font-serif text-xl sm:text-2xl text-[#2D2A2E] font-medium mt-1 leading-snug">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-[#777777]">
+                {product.brand}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                100% Genuine
+              </span>
+            </div>
+
+            <h2 className="font-sans text-xl sm:text-2xl font-black text-[#111111] mt-1.5 leading-snug">
               {product.name}
             </h2>
+
             {product.volume && (
-              <p className="text-xs text-[#8C827A] mt-1">Объем: {product.volume}</p>
+              <p className="text-xs font-medium text-[#777777] mt-1">
+                Объем: <strong className="text-[#111111]">{product.volume}</strong>
+              </p>
             )}
           </div>
 
           {/* Rating */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs">
             <div className="flex text-amber-400">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-current" />
+                <Star key={i} className="w-3.5 h-3.5 fill-current" />
               ))}
             </div>
-            <span className="text-xs font-bold text-[#2D2A2E]">{product.rating}</span>
-            <span className="text-xs text-[#8C827A]">({product.reviewCount} отзывов)</span>
+            <span className="font-bold text-[#111111]">{product.rating}</span>
+            <span className="text-[#888888]">({product.reviewCount} отзывов покупателей)</span>
           </div>
 
-          {/* Price */}
-          <div className="flex items-baseline gap-3 p-3 rounded-2xl bg-[#FAF5EE] border border-[#EED9CF]">
-            <span className="text-2xl font-bold text-[#C2836B]">
-              {formatPrice(product.priceKrw)}
-            </span>
-            {product.originalPriceKrw && (
-              <span className="text-sm line-through text-[#A89F97]">
+          {/* Musinsa Price Card */}
+          <div className="p-4 rounded-xl bg-[#F7F7F7] border border-[#EAEAEA] space-y-1">
+            {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
+              <div className="text-xs text-[#999999] line-through">
                 {formatPrice(product.originalPriceKrw)}
-              </span>
+              </div>
             )}
+            <div className="flex items-baseline gap-2">
+              {discountPercent && discountPercent > 0 && (
+                <span className="text-[#FF0038] font-black text-2xl tracking-tight">
+                  {discountPercent}%
+                </span>
+              )}
+              <span className="text-2xl font-black text-[#111111] tracking-tight">
+                {displayPrice}
+              </span>
+            </div>
           </div>
 
           {/* Description */}
-          <p className="text-xs text-[#6C635B] leading-relaxed">
-            {product.description}
-          </p>
+          {product.description && (
+            <p className="text-xs sm:text-sm text-[#555555] leading-relaxed max-h-36 overflow-y-auto pr-1">
+              {product.description}
+            </p>
+          )}
 
           {/* Key Ingredients */}
           {product.keyIngredients && product.keyIngredients.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#4D2C20] mb-1.5">
-                Ключевые ингредиенты:
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1.5">
+                Активные компоненты:
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {product.keyIngredients.map((ing, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 rounded-lg bg-[#FAF5EE] text-[#6C3E2E] text-[11px] font-medium border border-[#EED9CF]"
+                    className="px-2.5 py-1 rounded-md bg-[#F5F5F5] text-[#111111] text-[11px] font-semibold border border-[#E0E0E0]"
                   >
                     {ing}
                   </span>
@@ -128,47 +172,30 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             </div>
           )}
 
-          {/* How to use */}
-          {product.howToUse && (
-            <div className="p-3 rounded-xl bg-[#EEF5F1] text-[#345243] text-xs leading-relaxed border border-[#CCE3D6]">
-              <span className="font-semibold block mb-0.5">Способ применения:</span>
-              {product.howToUse}
-            </div>
-          )}
-
           {/* Actions */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-3 border-t border-[#EEEEEE]">
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="primary"
+              <button
+                type="button"
                 onClick={() => {
                   onAddToCart(product);
                   onClose();
                 }}
-                icon={<ShoppingBag className="w-4 h-4" />}
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#111111] bg-white hover:bg-gray-50 text-[#111111] text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
               >
-                В корзину
-              </Button>
-              <Button
-                variant="whatsapp"
-                onClick={handleOrderWhatsApp}
-                icon={<MessageCircle className="w-4 h-4" />}
-              >
-                Купить в 1 клик
-              </Button>
-            </div>
+                <ShoppingBag className="w-4 h-4" />
+                <span>В корзину</span>
+              </button>
 
-            {product.telegramPostUrl && (
-              <a
-                href={product.telegramPostUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 py-2 text-xs text-[#229ED9] hover:text-[#1E8BC0] font-medium"
+              <button
+                type="button"
+                onClick={handleOrderWhatsApp}
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer shadow-md"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Смотреть обзор в Telegram</span>
-              </a>
-            )}
+                <MessageCircle className="w-4 h-4" />
+                <span>Купить в 1 клик</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

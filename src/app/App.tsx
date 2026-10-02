@@ -150,12 +150,7 @@ export function App() {
   };
 
   const handleOpenProductDetails = (product: Product) => {
-    const rawPost = telegramPosts.find((p) => p.id === product.id);
-    if (rawPost) {
-      setDetailPost(rawPost);
-    } else {
-      setQuickViewProduct(product);
-    }
+    setQuickViewProduct(product);
   };
 
   return (
