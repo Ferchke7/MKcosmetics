@@ -63,6 +63,7 @@ func main() {
 	cargoUC := usecase.NewCargoUseCase(cargoRepo, orderRepo)
 	variantUC := usecase.NewVariantUseCase(variantRepo)
 	staffUC := usecase.NewStaffUseCase(userRepo, orderRepo)
+	salesUC := usecase.NewSalesUseCase(orderRepo, productRepo, variantRepo, cargoRepo)
 
 	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
@@ -78,6 +79,7 @@ func main() {
 	variantHandler := handler.NewVariantHandler(variantUC)
 	staffHandler := handler.NewStaffHandler(staffUC)
 	exportHandler := handler.NewExportHandler(orderUC)
+	salesHandler := handler.NewSalesHandler(salesUC)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -95,6 +97,7 @@ func main() {
 		variantHandler,
 		staffHandler,
 		exportHandler,
+		salesHandler,
 		authMiddleware,
 	)
 

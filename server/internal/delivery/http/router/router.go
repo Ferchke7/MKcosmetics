@@ -32,6 +32,7 @@ func NewRouter(
 	variantHandler *handler.VariantHandler,
 	staffHandler *handler.StaffHandler,
 	exportHandler *handler.ExportHandler,
+	salesHandler *handler.SalesHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -149,6 +150,12 @@ func NewRouter(
 				s.Post("/", staffHandler.Create)
 				s.Put("/{id}", staffHandler.Update)
 				s.Delete("/{id}", staffHandler.Delete)
+			})
+
+			// Advanced Unit Economics & Sales Analysis
+			admin.Route("/sales", func(sl chi.Router) {
+				sl.Get("/unit-economics", salesHandler.GetUnitEconomics)
+				sl.Get("/export-ledger", salesHandler.ExportLedgerCSV)
 			})
 		})
 	})

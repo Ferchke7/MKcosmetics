@@ -43,6 +43,7 @@ import {
   LineChart,
   BarChart3,
   Briefcase,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { adminService, AdminStats, Order } from '../../services/admin/adminService';
@@ -50,6 +51,7 @@ import { TelegramPost } from '../../core/types/telegram';
 import { ProductEditModal } from './ProductEditModal';
 import { OrderProcessingModal } from './OrderProcessingModal';
 import { AnalyticsEChartsView } from './AnalyticsEChartsView';
+import { SalesUnitEconomicsView } from './SalesUnitEconomicsView';
 import { LogisticsCargoView } from './LogisticsCargoView';
 import { InventoryVariantsView } from './InventoryVariantsView';
 import { StaffManagementView } from './StaffManagementView';
@@ -61,7 +63,7 @@ interface AdminDashboardProps {
   onRefreshFeed: () => Promise<void>;
 }
 
-type TabType = 'overview' | 'orders' | 'cargo' | 'variants' | 'staff' | 'products' | 'sync' | 'visitors' | 'settings';
+type TabType = 'overview' | 'sales' | 'orders' | 'cargo' | 'variants' | 'staff' | 'products' | 'sync' | 'visitors' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackToShop,
@@ -389,6 +391,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('sales')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'sales'
+                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <span>Продажи & Юнит-Экономика</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('orders')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                 activeTab === 'orders'
@@ -524,6 +538,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB 1: OVERVIEW & ECHARTS ANALYTICS */}
           {activeTab === 'overview' && (
             <AnalyticsEChartsView token={token || ''} />
+          )}
+
+          {/* TAB: ADVANCED SALES & UNIT ECONOMICS */}
+          {activeTab === 'sales' && (
+            <SalesUnitEconomicsView token={token || ''} />
           )}
 
           {/* TAB 2: CRM ORDERS & LEADS */}

@@ -612,4 +612,141 @@ export const adminService = {
     }
     return data;
   },
+
+  // Unit Economics & Sales Analysis
+  async getUnitEconomics(days: number = 30, token: string): Promise<UnitEconomicsData> {
+    const res = await fetch(`${API_BASE}/admin/sales/unit-economics?days=${days}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Ошибка загрузки юнит-экономики');
+    }
+    return res.json();
+  },
+
+  async exportUnitSalesLedger(days: number = 30, token: string): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/admin/sales/export-ledger?days=${days}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      throw new Error('Ошибка выгрузки журнала продаж');
+    }
+    return res.blob();
+  },
 };
+
+export interface ProductUnitStat {
+  productId: string;
+  productTitle: string;
+  brand: string;
+  photoUrl?: string;
+  unitsSold: number;
+  totalRevenueKRW: number;
+  totalCostKRW: number;
+  totalCargoCostKRW: number;
+  avgSellingPriceKRW: number;
+  avgCostPriceKRW: number;
+  avgCargoPerUnitKRW: number;
+  unitMarginKRW: number;
+  totalMarginKRW: number;
+  grossMarginPct: number;
+  markupPct: number;
+  marginClass: 'high' | 'standard' | 'low' | 'loss';
+  breakEvenUnits: number;
+  ordersCount: number;
+}
+
+export interface AbcXyzItem {
+  productId: string;
+  productTitle: string;
+  brand: string;
+  unitsSold: number;
+  revenueKRW: number;
+  marginKRW: number;
+  revenueSharePct: number;
+  cumulativeShare: number;
+  abcGroup: 'A' | 'B' | 'C';
+  variationCoeff: number;
+  xyzGroup: 'X' | 'Y' | 'Z';
+  matrixCode: string;
+  recommendation: string;
+}
+
+export interface PnLPeriod {
+  periodLabel: string;
+  grossRevenueKRW: number;
+  discountsKRW: number;
+  netRevenueKRW: number;
+  cogsKRW: number;
+  logisticsKRW: number;
+  commissionsKRW: number;
+  grossProfitKRW: number;
+  operatingProfit: number;
+  grossMarginPct: number;
+  netMarginPct: number;
+  ordersCount: number;
+  unitsCount: number;
+}
+
+export interface CohortData {
+  cohortMonth: string;
+  newCustomersCount: number;
+  totalOrders: number;
+  totalRevenueKRW: number;
+  avgCustomerLtvKRW: number;
+  retentionRates: number[];
+}
+
+export interface UnitSaleLedgerItem {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  date: string;
+  customerName: string;
+  phone: string;
+  city: string;
+  productId: string;
+  productTitle: string;
+  brand: string;
+  quantity: number;
+  unitPriceKRW: number;
+  unitCostKRW: number;
+  unitCargoKRW: number;
+  unitMarginKRW: number;
+  totalMarginKRW: number;
+  marginPct: number;
+  assignedTo: string;
+  paymentMethod: string;
+  channelSource: string;
+}
+
+export interface UnitEconomicsSummary {
+  periodDays: number;
+  totalUnitsSold: number;
+  totalOrders: number;
+  totalRevenueKRW: number;
+  totalCostKRW: number;
+  totalCargoCostKRW: number;
+  totalGrossProfitKRW: number;
+  avgSellingPriceKRW: number;
+  avgCostPriceKRW: number;
+  avgCargoCostPerUnitKRW: number;
+  avgMarginPerUnitKRW: number;
+  overallMarginPct: number;
+  overallMarkupPct: number;
+  topProfitableProduct: string;
+  topVolumeProduct: string;
+}
+
+export interface UnitEconomicsData {
+  summary: UnitEconomicsSummary;
+  waterfallData: Array<{ name: string; value: number; type: string }>;
+  productsEconomics: ProductUnitStat[];
+  abcXyzMatrix: AbcXyzItem[];
+  abcXyzCounts: Record<string, number>;
+  pnlStatements: PnLPeriod[];
+  cohorts: CohortData[];
+  recentLedger: UnitSaleLedgerItem[];
+}
+
