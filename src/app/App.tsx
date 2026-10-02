@@ -6,7 +6,6 @@ import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import { TelegramPost } from '../core/types/telegram';
 import { Product } from '../core/types/product';
-import { ProductService } from '../services/product/productService';
 
 // Layout
 import { Header } from '../components/layout/Header/Header';
@@ -14,7 +13,7 @@ import { Footer } from '../components/layout/Footer/Footer';
 
 // Sections
 import { Hero } from '../components/sections/Hero/Hero';
-import { TelegramFeed } from '../components/sections/TelegramFeed/TelegramFeed';
+import { LatestShowcase } from '../components/sections/Showcase/LatestShowcase';
 import { CatalogPage } from '../components/sections/Catalog/CatalogPage';
 import { ConsultationQuiz } from '../components/sections/ConsultationQuiz/ConsultationQuiz';
 import { DeliveryInfo } from '../components/sections/DeliveryInfo/DeliveryInfo';
@@ -36,14 +35,6 @@ export function App() {
     posts: telegramPosts,
     isLoading: isTgLoading,
     isRefreshing: isTgRefreshing,
-    searchQuery: tgSearch,
-    setSearchQuery: setTgSearch,
-    allTags: tgTags,
-    selectedTag: tgSelectedTag,
-    setSelectedTag: setTgSelectedTag,
-    dataSource,
-    updatedAt,
-    error: feedError,
     refreshFeed,
   } = useTelegramFeed();
 
@@ -159,7 +150,6 @@ export function App() {
   };
 
   const handleOpenProductDetails = (product: Product) => {
-    // If we have a matching raw telegram post, open PostDetailModal, otherwise ProductQuickViewModal
     const rawPost = telegramPosts.find((p) => p.id === product.id);
     if (rawPost) {
       setDetailPost(rawPost);
@@ -222,23 +212,18 @@ export function App() {
               totalProductsCount={allProducts.length}
             />
 
-            <TelegramFeed
-              posts={telegramPosts}
+            {/* Top 10 Latest Products Showcase */}
+            <LatestShowcase
+              products={allProducts}
+              totalCount={allProducts.length}
               isLoading={isTgLoading}
-              isRefreshing={isTgRefreshing}
-              dataSource={dataSource}
-              updatedAt={updatedAt}
-              error={feedError}
-              onRefresh={refreshFeed}
-              searchQuery={tgSearch}
-              onSearchChange={setTgSearch}
-              allTags={tgTags}
-              selectedTag={tgSelectedTag}
-              onSelectTag={setTgSelectedTag}
-              onOpenDetails={setDetailPost}
-              onQuickOrder={handleOpenQuickOrder}
-              onOpenCatalog={() => handleNavigate('catalog')}
-              totalProductsCount={allProducts.length}
+              formatPrice={formatPrice}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleWishlist}
+              onAddToCart={addToCart}
+              onQuickView={handleOpenProductDetails}
+              onQuickBuy={handleOpenQuickOrder}
+              onOpenFullCatalog={() => handleNavigate('catalog')}
             />
 
             <ConsultationQuiz />

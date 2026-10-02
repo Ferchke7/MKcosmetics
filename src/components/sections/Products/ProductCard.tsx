@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { Product } from '../../../core/types/product';
-import { Card } from '../../ui/Card';
-import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
 import {
   Star,
   Heart,
   ShoppingBag,
   MessageCircle,
-  Eye,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   Send,
-  Package,
+  Zap,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface ProductCardProps {
@@ -70,293 +66,181 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onAddToCart(product);
   };
 
-  if (layout === 'list') {
-    return (
-      <Card
-        className="group flex flex-col sm:flex-row items-stretch bg-white border-[#F0E6DE] hover:border-[#EED9CF] transition-all duration-300 overflow-hidden"
-        onClick={() => onQuickView(product)}
-      >
-        {/* Photo Box */}
-        <div className="relative w-full sm:w-64 aspect-[4/3] sm:aspect-auto shrink-0 bg-[#FAF5EE] overflow-hidden">
+  return (
+    <div
+      onClick={() => onQuickView(product)}
+      className="group relative flex flex-col justify-between bg-white rounded-2xl border border-[#E5E7EB] hover:border-[#111827]/30 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-full"
+    >
+      <div>
+        {/* Product Image Box */}
+        <div className="relative aspect-square bg-[#F9FAFB] overflow-hidden">
           {photos.length > 0 ? (
             <img
               src={photos[activePhotoIdx]}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FAF5EE] to-[#EED9CF] text-[#8A503C]">
-              <Send className="w-10 h-10 opacity-30" />
+            <div className="w-full h-full flex items-center justify-center bg-[#F3F4F6] text-[#9CA3AF]">
+              <Send className="w-8 h-8 opacity-30" />
             </div>
           )}
 
-          {photos.length > 1 && (
-            <>
-              <button
-                onClick={handlePrevPhoto}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors z-20"
-                aria-label="Предыдущее фото"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleNextPhoto}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors z-20"
-                aria-label="Следующее фото"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </>
-          )}
-
-          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+          {/* Badges Top Left (Coupang discount & bestseller tag) */}
+          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
             {discountPercent && discountPercent > 0 && (
-              <span className="px-2.5 py-1 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-xs">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#EF4444] text-white text-[11px] font-black tracking-tight shadow-sm">
                 -{discountPercent}%
               </span>
             )}
             {product.isBestseller && (
-              <Badge variant="gold" size="sm" icon={<Sparkles className="w-3 h-3" />}>
-                Хит
-              </Badge>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#F59E0B] text-white text-[10px] font-bold shadow-2xs">
+                ★ ХИТ
+              </span>
             )}
           </div>
 
+          {/* Direct delivery badge (Coupang Rocket style) */}
+          <div className="absolute bottom-2.5 left-2.5 z-10">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0073E9]/90 backdrop-blur-xs text-white text-[10px] font-bold shadow-xs">
+              <Zap className="w-3 h-3 fill-current text-yellow-300" />
+              Доставка из Сеула
+            </span>
+          </div>
+
+          {/* Favorite button Top Right */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onToggleFavorite(product.id);
             }}
-            className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all z-10 ${
+            className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all z-10 ${
               isFavorite
                 ? 'bg-rose-50 text-rose-500 shadow-sm'
-                : 'bg-white/80 backdrop-blur-xs text-[#8C827A] hover:text-rose-500 hover:bg-white shadow-xs'
+                : 'bg-white/80 backdrop-blur-xs text-[#9CA3AF] hover:text-rose-500 hover:bg-white shadow-2xs'
             }`}
-            title="Добавить в избранное"
+            title="В избранное"
           >
             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold text-[#A96851] uppercase tracking-wider">
-                {product.brand}
-              </span>
-              {product.volume && (
-                <span className="text-[11px] text-[#8C827A] bg-[#FAF5EE] px-2 py-0.5 rounded-md border border-[#EED9CF]">
-                  {product.volume}
-                </span>
-              )}
-            </div>
-
-            <h3 className="font-serif text-lg sm:text-xl font-medium text-[#2D2A2E] leading-snug group-hover:text-[#C2836B] transition-colors cursor-pointer">
-              {product.name}
-            </h3>
-
-            <p className="text-xs sm:text-sm text-[#6C635B] line-clamp-3 leading-relaxed">
-              {product.shortDescription || product.description}
-            </p>
-
-            {/* Tags */}
-            {product.tags && product.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {product.tags.slice(0, 4).map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10px] text-[#8A503C] bg-[#FAF7F2] px-2 py-0.5 rounded-full border border-[#F0E6DE]"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="pt-4 mt-4 border-t border-[#F0E6DE] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-[#C2836B]">
-                {displayPrice}
-              </span>
-              {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
-                <span className="text-xs line-through text-[#A89F97]">
-                  {formatPrice(product.originalPriceKrw)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleAddCartClick}
-                icon={<ShoppingBag className="w-4 h-4" />}
-              >
-                В корзину
-              </Button>
-              <Button
-                variant="whatsapp"
-                size="sm"
-                onClick={handleBuyClick}
-                icon={<MessageCircle className="w-4 h-4" />}
-              >
-                Заказать
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      className="flex flex-col justify-between h-full group bg-white border-[#F0E6DE] hover:border-[#EED9CF] transition-all duration-300"
-      onClick={() => onQuickView(product)}
-    >
-      <div>
-        {/* Product Image Box */}
-        <div className="relative aspect-[4/3] bg-[#FAF5EE] overflow-hidden cursor-pointer">
-          {photos.length > 0 ? (
-            <img
-              src={photos[activePhotoIdx]}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FAF5EE] to-[#EED9CF] text-[#8A503C]">
-              <Send className="w-10 h-10 opacity-30" />
-            </div>
-          )}
-
-          {/* Multiple Photos Navigation */}
+          {/* Photo navigation arrows (subtle on hover) */}
           {photos.length > 1 && (
             <>
               <button
                 onClick={handlePrevPhoto}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors z-20 opacity-0 group-hover:opacity-100"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNextPhoto}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-colors z-20 opacity-0 group-hover:opacity-100"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded-full">
-                {photos.slice(0, 6).map((_, idx) => (
+              {/* Dots indicator */}
+              <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-10 bg-black/40 backdrop-blur-xs px-1.5 py-0.5 rounded-full">
+                {photos.slice(0, 5).map((_, idx) => (
                   <span
                     key={idx}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      idx === activePhotoIdx ? 'w-3 bg-white' : 'bg-white/50'
+                    className={`w-1 h-1 rounded-full transition-all ${
+                      idx === activePhotoIdx ? 'w-2.5 bg-white' : 'bg-white/60'
                     }`}
                   />
                 ))}
               </div>
             </>
           )}
-
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
-            {discountPercent && discountPercent > 0 && (
-              <span className="px-2.5 py-1 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-xs">
-                -{discountPercent}% Скидка
-              </span>
-            )}
-            {product.isBestseller && (
-              <Badge variant="gold" size="sm" icon={<Sparkles className="w-3 h-3" />}>
-                Хит
-              </Badge>
-            )}
-            {product.isNew && (
-              <Badge variant="sage" size="sm">
-                Новинка
-              </Badge>
-            )}
-          </div>
-
-          {/* Favorite */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite(product.id);
-            }}
-            className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all z-10 ${
-              isFavorite
-                ? 'bg-rose-50 text-rose-500 shadow-sm'
-                : 'bg-white/80 backdrop-blur-xs text-[#8C827A] hover:text-rose-500 hover:bg-white shadow-xs'
-            }`}
-            title="Добавить в избранное"
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
         </div>
 
-        {/* Product Info */}
-        <div className="p-4 sm:p-5 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#A96851] uppercase tracking-wider">
+        {/* Product Details (Coupang style: Brand -> Title -> Rating -> Price) */}
+        <div className="p-3.5 sm:p-4 space-y-1.5">
+          {/* Brand & Volume */}
+          <div className="flex items-center justify-between gap-1 text-[11px]">
+            <span className="font-bold text-[#6B7280] uppercase tracking-wider truncate">
               {product.brand}
             </span>
             {product.volume && (
-              <span className="text-[10px] text-[#8C827A] bg-[#FAF5EE] px-2 py-0.5 rounded-md border border-[#EED9CF]">
+              <span className="text-[10px] text-[#4B5563] bg-[#F3F4F6] px-1.5 py-0.5 rounded font-medium shrink-0">
                 {product.volume}
               </span>
             )}
           </div>
 
-          <h3
-            className="font-serif text-sm sm:text-base font-medium text-[#2D2A2E] line-clamp-2 leading-snug group-hover:text-[#C2836B] transition-colors cursor-pointer"
-            onClick={() => onQuickView(product)}
-          >
+          {/* Product Title (clean 2 lines) */}
+          <h3 className="font-sans text-[13px] sm:text-[14px] font-semibold text-[#111827] line-clamp-2 leading-[1.35] group-hover:text-[#0073E9] transition-colors">
             {product.name}
           </h3>
 
-          <p className="text-xs text-[#6C635B] line-clamp-2 leading-relaxed">
-            {product.shortDescription || product.description}
-          </p>
-
-          {/* Price */}
-          <div className="flex items-baseline gap-2 pt-1">
-            <span className="text-base sm:text-lg font-bold text-[#C2836B]">
-              {displayPrice}
+          {/* Rating & Reviews */}
+          <div className="flex items-center gap-1 pt-0.5 text-xs">
+            <div className="flex text-amber-400">
+              <Star className="w-3.5 h-3.5 fill-current" />
+            </div>
+            <span className="font-bold text-[#111827] text-[11px]">{product.rating}</span>
+            <span className="text-[11px] text-[#9CA3AF]">({product.reviewCount})</span>
+            <span className="text-[10px] text-emerald-600 font-medium ml-auto flex items-center gap-0.5">
+              <ShieldCheck className="w-3 h-3" />
+              Оригинал
             </span>
-            {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
-              <span className="text-xs line-through text-[#A89F97]">
-                {formatPrice(product.originalPriceKrw)}
-              </span>
+          </div>
+
+          {/* Price Block (Coupang style) */}
+          <div className="pt-1">
+            {product.priceKrw > 0 ? (
+              <div>
+                {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
+                  <div className="text-[11px] text-[#9CA3AF] line-through leading-none mb-0.5">
+                    {formatPrice(product.originalPriceKrw)}
+                  </div>
+                )}
+                <div className="flex items-baseline gap-1.5">
+                  {discountPercent && discountPercent > 0 && (
+                    <span className="text-[#EF4444] font-black text-base sm:text-lg">
+                      {discountPercent}%
+                    </span>
+                  )}
+                  <span className="text-base sm:text-lg font-black text-[#111827] tracking-tight">
+                    {displayPrice}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs font-bold text-[#0073E9] py-1">
+                Цена по запросу
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-2 border-t border-[#F0E6DE]/60 grid grid-cols-2 gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
+      {/* Action Buttons (Coupang Fast Buy & Cart) */}
+      <div className="p-3.5 sm:p-4 pt-0 grid grid-cols-2 gap-2">
+        <button
+          type="button"
           onClick={handleAddCartClick}
-          icon={<ShoppingBag className="w-3.5 h-3.5" />}
+          className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] hover:bg-[#F3F4F6] text-[#374151] text-xs font-semibold transition-colors active:scale-95 shadow-2xs"
+          title="Добавить в корзину"
         >
-          В корзину
-        </Button>
+          <ShoppingBag className="w-3.5 h-3.5 text-[#6B7280]" />
+          <span>В корзину</span>
+        </button>
 
-        <Button
-          variant="whatsapp"
-          size="sm"
+        <button
+          type="button"
           onClick={handleBuyClick}
-          icon={<MessageCircle className="w-3.5 h-3.5" />}
+          className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-bold transition-colors active:scale-95 shadow-2xs"
+          title="Быстрый заказ в WhatsApp"
         >
-          Заказать
-        </Button>
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span>Заказать</span>
+        </button>
       </div>
-    </Card>
+    </div>
   );
 };

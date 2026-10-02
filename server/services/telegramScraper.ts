@@ -138,9 +138,17 @@ export class TelegramScraperService {
         // Parse tags
         const tags = (text.match(/#[a-zA-Zа-яА-Я0-9_]+/g) || []).map(t => t.replace('#', ''));
         
-        // Extract title
+        // Extract title: first line cleaned of flags/prices
         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-        const productTitle = lines.length > 0 ? lines[0].replace(/^[👑✨🌸💥💎🔥✔️❌\s]+/, '').trim() : undefined;
+        let rawTitle = lines.length > 0 ? lines[0] : '';
+        const opIdx = rawTitle.indexOf('Описание:');
+        if (opIdx > 0) rawTitle = rawTitle.substring(0, opIdx);
+        const flagMatch = rawTitle.match(/(?:🇰🇷|🇷🇺|🇺🇸|🇺🇲|🇪🇺|🇰🇿|🇺🇿|❌|✅|₩|₽|\$|€|₸|\b\d{2,3}[.,]\d{3})/i);
+        if (flagMatch && flagMatch.index !== undefined && flagMatch.index > 3) {
+          rawTitle = rawTitle.substring(0, flagMatch.index);
+        }
+        rawTitle = rawTitle.replace(/^[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+/, '').replace(/[👑✨🌸💥💎🔥✔️❌▫️•—\-–\s]+$/, '').trim();
+        const productTitle = rawTitle || undefined;
 
         // Reactions
         const reactions: { emoji: string; count: number }[] = [];
@@ -189,11 +197,9 @@ export class TelegramScraperService {
 
     for (let i = 0; i < posts.length; i++) {
       const current = posts[i];
-      // If a post has no text and only photos, check if it belongs to adjacent post
       if (!current.text && current.photos.length > 0 && result.length > 0) {
         const prev = result[result.length - 1];
         if (Math.abs(prev.timestamp - current.timestamp) < 60000) {
-          // Merge photos into previous post
           for (const ph of current.photos) {
             if (!prev.photos.includes(ph)) {
               prev.photos.push(ph);
@@ -211,18 +217,8 @@ export class TelegramScraperService {
   private static extractPrices(text: string): TelegramPriceInfo {
     const prices: TelegramPriceInfo = {};
 
-    // Current KRW
-    const krwMatch = text.match(/(?:✔️|цена|стоимость)?\s*([0-9.,]+)\s*(?:вон|₩|krw|won)/i);
-    if (krwMatch) {
-      const numStr = krwMatch[1].replace(/[.,]/g, '');
-      const parsed = parseInt(numStr, 10);
-      if (!isNaN(parsed) && parsed > 500) {
-        prices.krw = parsed;
-      }
-    }
-
-    // Original Crossed KRW (with ❌)
-    const oldKrwMatch = text.match(/❌\s*([0-9.,]+)\s*(?:вон|₩)/i);
+    // 1. Original Crossed KRW (with ❌)
+    const oldKrwMatch = text.match(/❌\s*([0-9.,]+)\s*(?:вон|₩|won)/i);
     if (oldKrwMatch) {
       const numStr = oldKrwMatch[1].replace(/[.,]/g, '');
       const parsed = parseInt(numStr, 10);
@@ -231,8 +227,27 @@ export class TelegramScraperService {
       }
     }
 
-    // RUB
-    const rubMatch = text.match(/(?:✔️)?\s*([0-9\s.,]+)\s*(?:₽|руб|rub)/i);
+    // 2. Active Sale KRW (preceded by ✅ or ✔️)
+    const saleKrwMatch = text.match(/(?:✅|✔️)\s*([0-9.,]+)\s*(?:вон|₩|won)/i);
+    if (saleKrwMatch) {
+      const numStr = saleKrwMatch[1].replace(/[.,]/g, '');
+      const parsed = parseInt(numStr, 10);
+      if (!isNaN(parsed) && parsed > 500) {
+        prices.krw = parsed;
+      }
+    } else {
+      const generalKrwMatch = text.match(/(?<!❌\s*)([0-9.,]+)\s*(?:вон|₩|won)/i);
+      if (generalKrwMatch) {
+        const numStr = generalKrwMatch[1].replace(/[.,]/g, '');
+        const parsed = parseInt(numStr, 10);
+        if (!isNaN(parsed) && parsed > 500) {
+          prices.krw = parsed;
+        }
+      }
+    }
+
+    // 3. RUB
+    const rubMatch = text.match(/(?:✅|✔️)?\s*([0-9\s.,]+)\s*(?:₽|руб|rub)/i);
     if (rubMatch) {
       const numStr = rubMatch[1].replace(/[^\d]/g, '');
       const parsed = parseInt(numStr, 10);
@@ -241,8 +256,8 @@ export class TelegramScraperService {
       }
     }
 
-    // USD
-    const usdMatch = text.match(/(?:✔️)?\s*([0-9.,]+)\s*(?:\$|usd|долл)/i);
+    // 4. USD
+    const usdMatch = text.match(/(?:✅|✔️)?\s*([0-9.,]+)\s*(?:\$|usd|долл)/i);
     if (usdMatch) {
       const numStr = usdMatch[1].replace(/[^\d.]/g, '');
       const parsed = parseFloat(numStr);
@@ -251,8 +266,8 @@ export class TelegramScraperService {
       }
     }
 
-    // EUR
-    const eurMatch = text.match(/(?:✔️)?\s*([0-9.,]+)\s*(?:€|eur|евро)/i);
+    // 5. EUR
+    const eurMatch = text.match(/(?:✅|✔️)?\s*([0-9.,]+)\s*(?:€|eur|евро)/i);
     if (eurMatch) {
       const numStr = eurMatch[1].replace(/[^\d.]/g, '');
       const parsed = parseFloat(numStr);
@@ -261,8 +276,8 @@ export class TelegramScraperService {
       }
     }
 
-    // KZT
-    const kztMatch = text.match(/(?:✔️)?\s*([0-9\s.,]+)\s*(?:т|тг|kzt|тенге)/i);
+    // 6. KZT
+    const kztMatch = text.match(/(?:✅|✔️)?\s*([0-9\s.,]+)\s*(?:т|тг|kzt|тенге)/i);
     if (kztMatch) {
       const numStr = kztMatch[1].replace(/[^\d]/g, '');
       const parsed = parseInt(numStr, 10);

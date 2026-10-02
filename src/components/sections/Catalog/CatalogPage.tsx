@@ -1,22 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Product, ProductSortOption } from '../../../core/types/product';
 import { ProductCard } from '../Products/ProductCard';
-import { Button } from '../../ui/Button';
 import { Skeleton } from '../../ui/Skeleton';
 import { BRAND_CONFIG } from '../../../core/constants/brand';
 import {
   Search,
-  SlidersHorizontal,
-  Send,
-  Sparkles,
+  Zap,
   ArrowLeft,
   RotateCcw,
-  LayoutGrid,
-  List,
   Flame,
-  CheckCircle2,
   X,
   ChevronDown,
+  Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface CatalogPageProps {
@@ -53,7 +49,18 @@ interface CatalogPageProps {
   onBackToHome: () => void;
 }
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 20;
+
+const QUICK_CATEGORIES = [
+  { id: 'all', label: 'Все товары' },
+  { id: 'discount', label: '🔥 Со скидкой', isDiscount: true },
+  { id: 'sets', label: 'Наборы' },
+  { id: 'hydration-serums', label: 'Сыворотки и ампулы' },
+  { id: 'anti-aging', label: 'Антивозрастной уход' },
+  { id: 'peeling-cleansing', label: 'Очищение и пилинги' },
+  { id: 'sun-care', label: 'SPF защита' },
+  { id: 'premium-luxury', label: 'Люкс бренды' },
+];
 
 export const CatalogPage: React.FC<CatalogPageProps> = ({
   products,
@@ -88,10 +95,9 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   onQuickBuy,
   onBackToHome,
 }) => {
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
 
-  // Reset pagination when filter/search changes
+  // Reset pagination when search or filters change
   React.useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
   }, [searchQuery, selectedCategory, selectedBrand, sortBy, onlyDiscount, onlyWithPrice]);
@@ -105,308 +111,224 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   };
 
   return (
-    <div className="bg-[#FAF7F2] min-h-screen pt-28 pb-20">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24 pb-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Top Breadcrumbs & Back Button */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        {/* Navigation & Refresh Bar */}
+        <div className="flex items-center justify-between gap-4 py-3 border-b border-gray-200/80 mb-6">
           <button
             onClick={onBackToHome}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-[#8A503C] hover:text-[#C2836B] transition-colors py-1.5 px-3 rounded-full bg-[#FAF5EE] border border-[#EED9CF]"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#111827] hover:text-[#0073E9] transition-colors py-1.5 px-3 rounded-full bg-white border border-gray-200 shadow-2xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Вернуться на главную</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Главная страница</span>
           </button>
 
           <div className="flex items-center gap-2">
             <button
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 text-xs text-[#6C635B] hover:text-[#2D2A2E] bg-white px-3 py-1.5 rounded-full border border-[#EED9CF] transition-colors disabled:opacity-50 shadow-xs"
-              title="Синхронизировать с Telegram"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 bg-white px-3 py-1.5 rounded-full border border-gray-200 transition-colors disabled:opacity-50 shadow-2xs"
+              title="Обновить товары из Telegram"
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#C2836B]' : ''}`} />
+              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0073E9]' : ''}`} />
               <span>{isRefreshing ? 'Синхронизация…' : 'Обновить из Telegram'}</span>
             </button>
           </div>
         </div>
 
-        {/* Header Banner */}
-        <div className="relative rounded-3xl bg-gradient-to-br from-[#F5EDE6] via-[#FAF5EE] to-[#FAF7F2] border border-[#EED9CF] p-6 sm:p-10 mb-8 overflow-hidden shadow-xs">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[#E8A598]/20 blur-3xl" />
-
-          <div className="relative z-10 max-w-3xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-[#EED9CF] text-xs font-semibold text-[#8A503C] shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
-              <span>Каталог товаров • 100% оригинал из Сеула</span>
+        {/* Coupang Header Title Banner */}
+        <div className="bg-white rounded-3xl border border-gray-200/80 p-5 sm:p-8 mb-6 shadow-2xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0073E9]/10 text-[#0073E9] text-[11px] font-bold uppercase tracking-wider mb-2">
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>Каталог косметики из Южной Кореи</span>
+              </div>
+              <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
+                Все товары из Telegram ({totalCount})
+              </h1>
+              <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-2xl">
+                Прямые поставки оригинальной косметики из Сеула по ценам канала @mkcosmetkor.
+              </p>
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-[#242120] leading-tight">
-              Все товары из Telegram
-            </h1>
-
-            <p className="text-sm sm:text-base text-[#6C635B] leading-relaxed max-w-2xl">
-              Полный актуальный ассортимент из нашего канала{' '}
-              <a
-                href={BRAND_CONFIG.telegramChannelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-[#229ED9] hover:underline"
-              >
-                {BRAND_CONFIG.telegramChannel}
-              </a>
-              . Выбирайте товары, добавляйте в корзину или оформляйте заказ в WhatsApp напрямую.
-            </p>
-
-            <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-[#8C827A]">
-              <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1 rounded-lg border border-[#F0E6DE]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Всего товаров в базе: <strong className="text-[#2D2A2E]">{totalCount}</strong>
-              </span>
-              {discountCount > 0 && (
+            {/* Fast Coupang Search */}
+            <div className="relative w-full md:w-80 lg:w-96">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Поиск по бренду, названию..."
+                className="w-full rounded-2xl border border-gray-300 bg-white py-2.5 pl-10 pr-9 text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:border-[#0073E9] focus:outline-none focus:ring-2 focus:ring-[#0073E9]/20"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => onToggleDiscount(!onlyDiscount)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border transition-colors ${
-                    onlyDiscount
-                      ? 'bg-rose-500 text-white border-rose-500'
-                      : 'bg-white/80 text-[#8A503C] border-[#F0E6DE] hover:bg-[#FAF5EE]'
-                  }`}
+                  onClick={() => onSearchChange('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  <Flame className="w-3.5 h-3.5" />
-                  Со скидкой: <strong>{discountCount}</strong>
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
+
+          {/* Coupang Category Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pt-5 mt-5 border-t border-gray-100 no-scrollbar">
+            {QUICK_CATEGORIES.map((cat) => {
+              const isActive = cat.isDiscount
+                ? onlyDiscount
+                : selectedCategory === cat.id && !onlyDiscount;
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    if (cat.isDiscount) {
+                      onToggleDiscount(!onlyDiscount);
+                    } else {
+                      onToggleDiscount(false);
+                      onCategoryChange(cat.id);
+                    }
+                  }}
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+                    isActive
+                      ? cat.isDiscount
+                        ? 'bg-rose-500 text-white shadow-xs'
+                        : 'bg-[#111827] text-white shadow-xs'
+                      : cat.isDiscount
+                      ? 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100'
+                      : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {cat.label}
+                  {cat.isDiscount && discountCount > 0 && ` (${discountCount})`}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Search & Main Controls */}
-        <div className="space-y-4 mb-8">
-          {/* Search Input */}
-          <div className="relative w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8C827A]" />
-            <input
-              type="search"
-              aria-label="Поиск по всему каталогу"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Поиск по названию, бренду (Medi-Peel, Manyo, Sulwhasoo...), ингредиентам или описанию..."
-              className="w-full rounded-2xl border border-[#EED9CF] bg-white py-3.5 pl-12 pr-10 text-sm sm:text-base text-[#2D2A2E] placeholder-[#A89F97] shadow-xs focus:border-[#C2836B] focus:outline-none focus:ring-2 focus:ring-[#C2836B]/20 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => onSearchChange('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-[#8C827A] hover:text-[#2D2A2E] rounded-full hover:bg-[#FAF5EE]"
-                title="Очистить поиск"
+        {/* Coupang Controls Bar (Brand Filter, Sort, Status) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200/80 mb-6 shadow-2xs">
+          {/* Brand & Toggles */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Brand Dropdown */}
+            <div className="relative">
+              <select
+                value={selectedBrand}
+                onChange={(e) => onBrandChange(e.target.value)}
+                className="appearance-none rounded-xl bg-gray-50 border border-gray-200 py-2 pl-3 pr-8 text-xs font-bold text-gray-800 focus:border-[#0073E9] focus:outline-none cursor-pointer"
               >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+                <option value="all">Все бренды ({allBrands.length})</option>
+                {allBrands.map(({ brand, count }) => (
+                  <option key={brand} value={brand}>
+                    {brand} ({count})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            </div>
 
-          {/* Quick Tag Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {/* Discount Only Pill */}
             <button
-              onClick={() => {
-                onCategoryChange('all');
-                onToggleDiscount(false);
-              }}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-                selectedCategory === 'all' && !onlyDiscount
-                  ? 'bg-[#8A503C] text-white shadow-xs'
-                  : 'bg-white border border-[#EED9CF] text-[#6C3E2E] hover:bg-[#FAF5EE]'
+              onClick={() => onToggleDiscount(!onlyDiscount)}
+              className={`rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${
+                onlyDiscount
+                  ? 'bg-rose-500 text-white border-rose-500'
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Все товары ({totalCount})
+              🔥 Только скидки ({discountCount})
             </button>
 
-            {discountCount > 0 && (
-              <button
-                onClick={() => onToggleDiscount(!onlyDiscount)}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-                  onlyDiscount
-                    ? 'bg-rose-500 text-white shadow-xs'
-                    : 'bg-white border border-rose-200 text-rose-600 hover:bg-rose-50'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5" />
-                Скидки и акции ({discountCount})
-              </button>
-            )}
-
-            {allTags.slice(0, 10).map(({ tag, count }) => (
-              <button
-                key={tag}
-                onClick={() => {
-                  onCategoryChange(selectedCategory === tag ? 'all' : tag);
-                }}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-medium transition-all ${
-                  selectedCategory === tag
-                    ? 'bg-[#C2836B] text-white shadow-xs'
-                    : 'bg-white border border-[#EED9CF] text-[#6C3E2E] hover:bg-[#FAF5EE]'
-                }`}
-              >
-                #{tag} ({count})
-              </button>
-            ))}
+            {/* With Price Only Pill */}
+            <button
+              onClick={() => onToggleWithPrice(!onlyWithPrice)}
+              className={`rounded-xl px-3 py-2 text-xs font-bold border transition-colors ${
+                onlyWithPrice
+                  ? 'bg-[#0073E9] text-white border-[#0073E9]'
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              С точной ценой
+            </button>
           </div>
 
-          {/* Filter & Sort Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#EED9CF] shadow-xs">
-            {/* Brand and Filter Selects */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Brand Filter */}
-              <div className="relative">
-                <select
-                  value={selectedBrand}
-                  onChange={(e) => onBrandChange(e.target.value)}
-                  className="appearance-none rounded-xl bg-[#FAF7F2] border border-[#EED9CF] py-2 pl-3 pr-8 text-xs font-semibold text-[#4D2C20] focus:border-[#C2836B] focus:outline-none cursor-pointer"
-                >
-                  <option value="all">Все бренды ({allBrands.length})</option>
-                  {allBrands.map(({ brand, count }) => (
-                    <option key={brand} value={brand}>
-                      {brand} ({count})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C827A]" />
-              </div>
-
-              {/* Price Filter Checkbox */}
-              <button
-                onClick={() => onToggleWithPrice(!onlyWithPrice)}
-                className={`rounded-xl px-3 py-2 text-xs font-semibold border transition-colors ${
-                  onlyWithPrice
-                    ? 'bg-[#FAF5EE] border-[#C2836B] text-[#8A503C]'
-                    : 'bg-[#FAF7F2] border-[#EED9CF] text-[#6C635B] hover:text-[#2D2A2E]'
-                }`}
+          {/* Sort Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium hidden sm:inline">Сортировка:</span>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
+                className="appearance-none rounded-xl bg-gray-50 border border-gray-200 py-2 pl-3 pr-8 text-xs font-bold text-gray-800 focus:border-[#0073E9] focus:outline-none cursor-pointer"
               >
-                Только с точной ценой
-              </button>
-            </div>
-
-            {/* Sort & Layout Controls */}
-            <div className="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-[#F0E6DE]">
-              {/* Sorting Select */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#8C827A] hidden sm:inline">Сортировка:</span>
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
-                    className="appearance-none rounded-xl bg-[#FAF7F2] border border-[#EED9CF] py-2 pl-3 pr-8 text-xs font-semibold text-[#4D2C20] focus:border-[#C2836B] focus:outline-none cursor-pointer"
-                  >
-                    <option value="newest">🆕 Сначала новые</option>
-                    <option value="oldest">⏳ Сначала старые</option>
-                    <option value="price-asc">📉 Сначала дешевле</option>
-                    <option value="price-desc">📈 Сначала дороже</option>
-                    <option value="discount">🔥 Сначала со скидкой</option>
-                    <option value="popular">👁️ По популярности</option>
-                    <option value="name-asc">🔤 По названию (А-Я)</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C827A]" />
-                </div>
-              </div>
-
-              {/* Grid / List Switcher */}
-              <div className="flex items-center bg-[#FAF7F2] p-0.5 rounded-xl border border-[#EED9CF]">
-                <button
-                  onClick={() => setLayoutMode('grid')}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    layoutMode === 'grid'
-                      ? 'bg-white text-[#8A503C] shadow-xs'
-                      : 'text-[#8C827A] hover:text-[#2D2A2E]'
-                  }`}
-                  title="Отображение сеткой"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setLayoutMode('list')}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    layoutMode === 'list'
-                      ? 'bg-white text-[#8A503C] shadow-xs'
-                      : 'text-[#8C827A] hover:text-[#2D2A2E]'
-                  }`}
-                  title="Отображение списком"
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
+                <option value="popular">🏆 По популярности</option>
+                <option value="newest">🆕 Сначала новинки</option>
+                <option value="price-asc">📉 Сначала дешевле</option>
+                <option value="price-desc">📈 Сначала дороже</option>
+                <option value="discount">🔥 По скидке %</option>
+                <option value="name-asc">🔤 По названию (А-Я)</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             </div>
           </div>
-
-          {/* Active Filters Summary Bar */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-[#8C827A]">
-              <div>
-                Найдено товаров: <strong className="text-[#2D2A2E]">{filteredCount}</strong> из {totalCount}
-              </div>
-              <button
-                onClick={onResetFilters}
-                className="inline-flex items-center gap-1 font-semibold text-[#8A503C] hover:text-[#C2836B] transition-colors"
-              >
-                <RotateCcw className="w-3 h-3" />
-                Сбросить все фильтры
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Product Grid / List */}
+        {/* Filters status header */}
+        {hasActiveFilters && (
+          <div className="flex items-center justify-between px-2 mb-4 text-xs text-gray-500">
+            <span>Найдено товаров: <strong className="text-gray-900">{filteredCount}</strong> из {totalCount}</span>
+            <button
+              onClick={onResetFilters}
+              className="inline-flex items-center gap-1 font-bold text-[#0073E9] hover:underline"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Сбросить фильтры
+            </button>
+          </div>
+        )}
+
+        {/* Products Grid (Coupang 5-columns / 4-columns) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, index) => (
-              <div key={index} className="space-y-3 rounded-2xl border border-[#F0E6DE] bg-white p-4">
-                <Skeleton className="aspect-[4/3] rounded-xl" />
-                <Skeleton className="h-4 w-1/3" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5">
+            {[...Array(15)].map((_, index) => (
+              <div key={index} className="space-y-3 rounded-2xl border border-gray-200 bg-white p-3">
+                <Skeleton className="aspect-square rounded-xl" />
+                <Skeleton className="h-3 w-1/3" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <Skeleton className="h-9 rounded-xl" />
-                  <Skeleton className="h-9 rounded-xl" />
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <Skeleton className="h-8 rounded-lg" />
+                  <Skeleton className="h-8 rounded-lg" />
                 </div>
               </div>
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="space-y-4 rounded-3xl border border-[#F0E6DE] bg-white px-5 py-16 text-center shadow-xs">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF5EE] text-[#A89F97]">
-              <Search className="h-8 w-8" />
+          <div className="text-center py-16 bg-white rounded-3xl border border-gray-200 p-8 shadow-2xs space-y-4">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
+              <Search className="w-7 h-7" />
             </div>
-            <h3 className="font-serif text-2xl font-medium text-[#2D2A2E]">
-              {hasActiveFilters ? 'Товары не найдены' : 'Товаров пока нет'}
+            <h3 className="font-sans text-xl font-bold text-gray-900">
+              Товары не найдены
             </h3>
-            <p className="mx-auto max-w-md text-sm text-[#6C635B] leading-relaxed">
-              {hasActiveFilters
-                ? 'Попробуйте изменить поисковый запрос, выбрать другой бренд или сбросить фильтры.'
-                : 'Свежие поставки косметики публикуются в нашем Telegram-канале.'}
+            <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
+              Попробуйте изменить поисковый запрос, выбрать другой бренд или сбросить фильтры.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              {hasActiveFilters && (
-                <Button variant="outline" size="md" onClick={onResetFilters}>
-                  Сбросить фильтры
-                </Button>
-              )}
-              <a
-                href={BRAND_CONFIG.telegramChannelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#229ED9] px-6 py-3 text-sm font-medium text-white shadow-xs hover:bg-[#1E8BC0] transition-colors"
+            {hasActiveFilters && (
+              <button
+                onClick={onResetFilters}
+                className="px-5 py-2.5 rounded-full bg-[#111827] text-white text-xs font-bold hover:bg-gray-800 transition-colors"
               >
-                <Send className="h-4 w-4" />
-                Перейти в Telegram-канал
-              </a>
-            </div>
+                Сбросить фильтры
+              </button>
+            )}
           </div>
         ) : (
-          <div className="space-y-8">
-            <div
-              className={
-                layoutMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                  : 'space-y-4'
-              }
-            >
+          <div className="space-y-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5">
               {visibleProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -417,24 +339,22 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                   onAddToCart={onAddToCart}
                   onQuickView={onQuickView}
                   onQuickBuy={onQuickBuy}
-                  layout={layoutMode}
                 />
               ))}
             </div>
 
-            {/* Pagination / Load More */}
+            {/* Coupang Load More Button */}
             {visibleCount < products.length && (
-              <div className="text-center pt-6 space-y-3">
-                <p className="text-xs text-[#8C827A]">
+              <div className="text-center pt-4 space-y-2">
+                <p className="text-xs text-gray-500 font-medium">
                   Показано {visibleCount} из {products.length} товаров
                 </p>
-                <Button
-                  variant="outline"
-                  size="lg"
+                <button
                   onClick={handleLoadMore}
+                  className="px-8 py-3.5 rounded-2xl bg-white border border-gray-300 hover:border-gray-900 text-gray-900 font-bold text-xs sm:text-sm transition-all shadow-2xs active:scale-95"
                 >
                   Показать еще ({Math.min(ITEMS_PER_PAGE, products.length - visibleCount)} товаров)
-                </Button>
+                </button>
               </div>
             )}
           </div>

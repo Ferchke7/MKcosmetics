@@ -1,10 +1,10 @@
 import { Product, ProductCategory, SkinConcern, ProductSortOption } from '../../core/types/product';
 import { TelegramPost } from '../../core/types/telegram';
-import { sanitizeTelegramText } from '../../utils/textSanitizer';
+import { sanitizeTelegramText, cleanProductTitle } from '../../utils/textSanitizer';
 
 export class ProductService {
   /**
-   * Converts a scraped Telegram post into a structured Product object.
+   * Converts a scraped Telegram post into a clean Coupang-style Product object.
    */
   public static telegramPostToProduct(post: TelegramPost): Product {
     const sanitized = sanitizeTelegramText(post.text, post.productTitle);
@@ -12,54 +12,57 @@ export class ProductService {
       ? post.photos
       : ['https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=800'];
 
-    const priceKrw = post.prices?.krw || 0;
-    const originalPriceKrw = post.prices?.originalKrw;
-    const discountPercent =
+    const priceKrw = sanitized.priceKrw ?? post.prices?.krw ?? 0;
+    const originalPriceKrw = sanitized.originalPriceKrw ?? post.prices?.originalKrw;
+    const discountPercent = sanitized.discountPercent ?? (
       originalPriceKrw && priceKrw && originalPriceKrw > priceKrw
         ? Math.round(((originalPriceKrw - priceKrw) / originalPriceKrw) * 100)
-        : undefined;
+        : undefined
+    );
 
     const lowerText = `${post.text || ''} ${(post.tags || []).join(' ')} ${sanitized.title}`.toLowerCase();
 
     // Determine category
     let category: ProductCategory = 'all';
-    if (lowerText.includes('anti-age') || lowerText.includes('омолож') || lowerText.includes('морщин') || lowerText.includes('лифтинг')) {
+    if (lowerText.includes('anti-age') || lowerText.includes('омолож') || lowerText.includes('морщин') || lowerText.includes('лифтинг') || lowerText.includes('pst-cell')) {
       category = 'anti-aging';
     } else if (lowerText.includes('очищен') || lowerText.includes('пилинг') || lowerText.includes('пенка') || lowerText.includes('гидрофил')) {
       category = 'peeling-cleansing';
-    } else if (lowerText.includes('набор') || lowerText.includes('сет') || lowerText.includes('set')) {
+    } else if (lowerText.includes('набор') || lowerText.includes('сет') || lowerText.includes('set') || lowerText.includes('6pcs') || lowerText.includes('special set')) {
       category = 'sets';
-    } else if (lowerText.includes('сыворотк') || lowerText.includes('серум') || lowerText.includes('увлажн') || lowerText.includes('ампул')) {
+    } else if (lowerText.includes('сыворотк') || lowerText.includes('серум') || lowerText.includes('увлажн') || lowerText.includes('ампул') || lowerText.includes('ampoule')) {
       category = 'hydration-serums';
     } else if (lowerText.includes('spf') || lowerText.includes('спф') || lowerText.includes('солнц') || lowerText.includes('sun')) {
       category = 'sun-care';
-    } else if (lowerText.includes('whoo') || lowerText.includes('sulwhasoo') || lowerText.includes('премиум') || lowerText.includes('люкс')) {
+    } else if (lowerText.includes('whoo') || lowerText.includes('sulwhasoo') || lowerText.includes('премиум') || lowerText.includes('люкс') || lowerText.includes('history of whoo')) {
       category = 'premium-luxury';
     }
 
     // Determine skin concerns
     const skinConcerns: SkinConcern[] = [];
-    if (lowerText.includes('морщин') || lowerText.includes('возраст') || lowerText.includes('anti-age') || lowerText.includes('зрел')) skinConcerns.push('anti-age');
+    if (lowerText.includes('морщин') || lowerText.includes('возраст') || lowerText.includes('anti-age') || lowerText.includes('зрел') || lowerText.includes('aging')) skinConcerns.push('anti-age');
     if (lowerText.includes('увлажн') || lowerText.includes('сухост') || lowerText.includes('обезвож') || lowerText.includes('гиалурон')) skinConcerns.push('hydration');
     if (lowerText.includes('осветл') || lowerText.includes('тон') || lowerText.includes('сияни') || lowerText.includes('витамин c') || lowerText.includes('ниацинамид')) skinConcerns.push('brightening');
-    if (lowerText.includes('пор') || lowerText.includes('акне') || lowerText.includes('высыпан') || lowerText.includes('черн') || lowerText.includes('прыщ')) skinConcerns.push('pores-acne');
+    if (lowerText.includes('пор') || lowerText.includes('акне') || lowerText.includes('высыпан') || lowerText.includes('черн') || lowerText.includes('прыщ') || lowerText.includes('себум')) skinConcerns.push('pores-acne');
     if (lowerText.includes('чувствительн') || lowerText.includes('купероз') || lowerText.includes('покраснен') || lowerText.includes('центелл') || lowerText.includes('пантенол')) skinConcerns.push('sensitive');
     if (lowerText.includes('пигмент') || lowerText.includes('пятн')) skinConcerns.push('pigmentation');
     if (lowerText.includes('лифтинг') || lowerText.includes('упругост') || lowerText.includes('овал') || lowerText.includes('волюфилин')) skinConcerns.push('lifting');
 
     const totalReactions = (post.reactions || []).reduce((sum, r) => sum + (r.count || 0), 0);
     const viewsNum = parseInt((post.views || '').replace(/[^0-9]/g, ''), 10) || 0;
-    const isBestseller = totalReactions > 3 || viewsNum > 400 || lowerText.includes('хит') || lowerText.includes('bestseller') || lowerText.includes('топ');
-    const isNew = post.timestamp ? Date.now() - post.timestamp < 14 * 24 * 60 * 60 * 1000 : false;
+    const isBestseller = totalReactions > 1 || viewsNum > 50 || lowerText.includes('хит') || lowerText.includes('bestseller') || lowerText.includes('топ');
+    const isNew = post.timestamp ? Date.now() - post.timestamp < 30 * 24 * 60 * 60 * 1000 : false;
+
+    const cleanTitle = cleanProductTitle(sanitized.title || post.productTitle || 'Корейская косметика');
 
     return {
       id: post.id,
-      name: post.productTitle || sanitized.title,
+      name: cleanTitle,
       brand: sanitized.brand || 'Корейский уход',
       category,
       skinConcerns: skinConcerns.length > 0 ? skinConcerns : ['hydration'],
       description: sanitized.descriptionParagraphs.join('\n\n'),
-      shortDescription: sanitized.descriptionParagraphs[0] || sanitized.title,
+      shortDescription: sanitized.descriptionParagraphs[0] || cleanTitle,
       priceKrw,
       originalPriceKrw,
       discountPercent,
@@ -67,7 +70,7 @@ export class ProductService {
       volume: sanitized.volume,
       weight: sanitized.weight,
       rating: 4.8 + Math.min(0.2, (totalReactions % 3) * 0.1),
-      reviewCount: Math.max(15, totalReactions * 4 + (viewsNum % 25)),
+      reviewCount: Math.max(18, totalReactions * 5 + (viewsNum % 30)),
       isBestseller,
       isNew,
       inStock: true,
@@ -153,6 +156,13 @@ export class ProductService {
     // Sorting
     if (params.sortBy) {
       switch (params.sortBy) {
+        case 'popular':
+          result.sort((a, b) => {
+            const scoreA = (a.isBestseller ? 50 : 0) + (a.discountPercent ? 30 : 0) + (a.reactionsCount || 0) * 10;
+            const scoreB = (b.isBestseller ? 50 : 0) + (b.discountPercent ? 30 : 0) + (b.reactionsCount || 0) * 10;
+            return scoreB - scoreA;
+          });
+          break;
         case 'newest':
           result.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           break;
@@ -171,13 +181,6 @@ export class ProductService {
           break;
         case 'discount':
           result.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
-          break;
-        case 'popular':
-          result.sort((a, b) => {
-            const scoreA = (a.isBestseller ? 100 : 0) + (a.reactionsCount || 0) * 10;
-            const scoreB = (b.isBestseller ? 100 : 0) + (b.reactionsCount || 0) * 10;
-            return scoreB - scoreA;
-          });
           break;
         case 'name-asc':
           result.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
