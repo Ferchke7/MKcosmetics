@@ -25,6 +25,8 @@ interface TelegramFeedProps {
   onSelectTag: (tag: string | null) => void;
   onOpenDetails: (post: TelegramPost) => void;
   onQuickOrder: (title: string, price: string, url: string) => void;
+  onOpenCatalog?: () => void;
+  totalProductsCount?: number;
 }
 
 export const TelegramFeed: React.FC<TelegramFeedProps> = ({
@@ -42,6 +44,8 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
   onSelectTag,
   onOpenDetails,
   onQuickOrder,
+  onOpenCatalog,
+  totalProductsCount,
 }) => {
   const dateText = updatedAt
     ? new Date(updatedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
@@ -215,15 +219,29 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
-            {posts.map((post) => (
-              <TelegramPostCard
-                key={post.id}
-                post={post}
-                onOpenDetails={onOpenDetails}
-                onQuickOrder={onQuickOrder}
-              />
-            ))}
+          <div className="space-y-10">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
+              {posts.map((post) => (
+                <TelegramPostCard
+                  key={post.id}
+                  post={post}
+                  onOpenDetails={onOpenDetails}
+                  onQuickOrder={onQuickOrder}
+                />
+              ))}
+            </div>
+
+            {onOpenCatalog && (
+              <div className="text-center pt-2">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={onOpenCatalog}
+                >
+                  Перейти в полный каталог {totalProductsCount ? `(${totalProductsCount} товаров)` : ''} с сортировкой →
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

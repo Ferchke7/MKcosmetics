@@ -5,7 +5,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Предложения', href: '#telegram-feed', isSpecial: true },
+  { label: 'Каталог товаров', href: '#catalog', isSpecial: true },
+  { label: 'Предложения', href: '#telegram-feed' },
   { label: 'Подбор ухода', href: '#skin-quiz' },
   { label: 'Как заказать', href: '#delivery' },
   { label: 'FAQ', href: '#faq' },

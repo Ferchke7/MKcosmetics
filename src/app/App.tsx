@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTelegramFeed } from '../hooks/useTelegramFeed';
+import { useProducts } from '../hooks/useProducts';
+import { useCurrency } from '../hooks/useCurrency';
+import { useCart } from '../hooks/useCart';
+import { useWishlist } from '../hooks/useWishlist';
 import { TelegramPost } from '../core/types/telegram';
+import { Product } from '../core/types/product';
+import { ProductService } from '../services/product/productService';
 
 // Layout
 import { Header } from '../components/layout/Header/Header';
@@ -9,6 +15,7 @@ import { Footer } from '../components/layout/Footer/Footer';
 // Sections
 import { Hero } from '../components/sections/Hero/Hero';
 import { TelegramFeed } from '../components/sections/TelegramFeed/TelegramFeed';
+import { CatalogPage } from '../components/sections/Catalog/CatalogPage';
 import { ConsultationQuiz } from '../components/sections/ConsultationQuiz/ConsultationQuiz';
 import { DeliveryInfo } from '../components/sections/DeliveryInfo/DeliveryInfo';
 import { FAQ } from '../components/sections/FAQ/FAQ';
@@ -17,23 +24,80 @@ import { Contact } from '../components/sections/Contact/Contact';
 // Modals
 import { QuickOrderModal } from '../components/modals/QuickOrderModal';
 import { PostDetailModal } from '../components/modals/PostDetailModal';
+import { ProductQuickViewModal } from '../components/modals/ProductQuickViewModal';
+import { CartDrawer } from '../components/modals/CartDrawer';
 
 export function App() {
+  // 1. Navigation View State: 'home' | 'catalog'
+  const [currentView, setCurrentView] = useState<'home' | 'catalog'>('home');
+
+  // 2. Telegram Feed hook (loads live/cache posts)
   const {
     posts: telegramPosts,
     isLoading: isTgLoading,
     isRefreshing: isTgRefreshing,
     searchQuery: tgSearch,
     setSearchQuery: setTgSearch,
-    allTags,
-    selectedTag,
-    setSelectedTag,
+    allTags: tgTags,
+    selectedTag: tgSelectedTag,
+    setSelectedTag: setTgSelectedTag,
     dataSource,
     updatedAt,
     error: feedError,
     refreshFeed,
   } = useTelegramFeed();
 
+  // 3. Currency hook
+  const {
+    currency,
+    setCurrency,
+    formatPrice,
+    allCurrencies,
+  } = useCurrency();
+
+  // 4. Cart hook
+  const {
+    items: cartItems,
+    totalCount: cartCount,
+    formattedTotal: cartFormattedTotal,
+    isDrawerOpen: isCartOpen,
+    setIsDrawerOpen: setIsCartOpen,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    generateWhatsAppOrderLink,
+  } = useCart(formatPrice);
+
+  // 5. Wishlist hook
+  const { isFavorite, toggleWishlist } = useWishlist();
+
+  // 6. Products hook (derived directly from Telegram posts)
+  const {
+    products,
+    allProducts,
+    allBrands,
+    allTags: catalogTags,
+    totalCount: catalogTotalCount,
+    filteredCount: catalogFilteredCount,
+    discountCount,
+    selectedCategory,
+    setSelectedCategory,
+    selectedBrand,
+    setSelectedBrand,
+    searchQuery: catalogSearch,
+    setSearchQuery: setCatalogSearch,
+    sortBy,
+    setSortBy,
+    onlyDiscount,
+    setOnlyDiscount,
+    onlyWithPrice,
+    setOnlyWithPrice,
+    resetFilters: resetCatalogFilters,
+    hasActiveFilters,
+  } = useProducts(telegramPosts);
+
+  // 7. Modals state
   const [quickOrderData, setQuickOrderData] = useState<{
     isOpen: boolean;
     productTitle: string;
@@ -46,6 +110,45 @@ export function App() {
   });
 
   const [detailPost, setDetailPost] = useState<TelegramPost | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+
+  // Listen to hash changes for SPA direct links (#catalog, #products, #top)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#catalog' || hash === '#products') {
+        setCurrentView('catalog');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setCurrentView('home');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleNavigate = (view: 'home' | 'catalog', targetAnchor?: string) => {
+    setCurrentView(view);
+    if (view === 'catalog') {
+      window.location.hash = 'catalog';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (targetAnchor && targetAnchor !== '#catalog') {
+        window.location.hash = targetAnchor.replace('#', '');
+        const elem = document.querySelector(targetAnchor);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        window.location.hash = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  };
 
   const handleOpenQuickOrder = (
     productTitle: string,
@@ -55,38 +158,100 @@ export function App() {
     setQuickOrderData({ isOpen: true, productTitle, priceFormatted, sourceUrl });
   };
 
+  const handleOpenProductDetails = (product: Product) => {
+    // If we have a matching raw telegram post, open PostDetailModal, otherwise ProductQuickViewModal
+    const rawPost = telegramPosts.find((p) => p.id === product.id);
+    if (rawPost) {
+      setDetailPost(rawPost);
+    } else {
+      setQuickViewProduct(product);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#242120]">
-      <Header />
+      <Header
+        activeView={currentView}
+        onNavigate={handleNavigate}
+        cartCount={cartCount}
+        onOpenCart={() => setIsCartOpen(true)}
+        currentCurrency={currency}
+        currencies={allCurrencies}
+        onSelectCurrency={setCurrency}
+      />
 
       <main className="flex-1">
-        <Hero />
+        {currentView === 'catalog' ? (
+          <CatalogPage
+            products={products}
+            allProducts={allProducts}
+            allBrands={allBrands}
+            allTags={catalogTags}
+            totalCount={catalogTotalCount}
+            filteredCount={catalogFilteredCount}
+            discountCount={discountCount}
+            isLoading={isTgLoading}
+            isRefreshing={isTgRefreshing}
+            onRefresh={refreshFeed}
+            searchQuery={catalogSearch}
+            onSearchChange={setCatalogSearch}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            selectedBrand={selectedBrand}
+            onBrandChange={setSelectedBrand}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            onlyDiscount={onlyDiscount}
+            onToggleDiscount={setOnlyDiscount}
+            onlyWithPrice={onlyWithPrice}
+            onToggleWithPrice={setOnlyWithPrice}
+            onResetFilters={resetCatalogFilters}
+            hasActiveFilters={hasActiveFilters}
+            formatPrice={formatPrice}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleWishlist}
+            onAddToCart={addToCart}
+            onQuickView={handleOpenProductDetails}
+            onQuickBuy={handleOpenQuickOrder}
+            onBackToHome={() => handleNavigate('home', '#top')}
+          />
+        ) : (
+          <>
+            <Hero
+              onOpenCatalog={() => handleNavigate('catalog')}
+              totalProductsCount={allProducts.length}
+            />
 
-        <TelegramFeed
-          posts={telegramPosts}
-          isLoading={isTgLoading}
-          isRefreshing={isTgRefreshing}
-          dataSource={dataSource}
-          updatedAt={updatedAt}
-          error={feedError}
-          onRefresh={refreshFeed}
-          searchQuery={tgSearch}
-          onSearchChange={setTgSearch}
-          allTags={allTags}
-          selectedTag={selectedTag}
-          onSelectTag={setSelectedTag}
-          onOpenDetails={setDetailPost}
-          onQuickOrder={handleOpenQuickOrder}
-        />
+            <TelegramFeed
+              posts={telegramPosts}
+              isLoading={isTgLoading}
+              isRefreshing={isTgRefreshing}
+              dataSource={dataSource}
+              updatedAt={updatedAt}
+              error={feedError}
+              onRefresh={refreshFeed}
+              searchQuery={tgSearch}
+              onSearchChange={setTgSearch}
+              allTags={tgTags}
+              selectedTag={tgSelectedTag}
+              onSelectTag={setTgSelectedTag}
+              onOpenDetails={setDetailPost}
+              onQuickOrder={handleOpenQuickOrder}
+              onOpenCatalog={() => handleNavigate('catalog')}
+              totalProductsCount={allProducts.length}
+            />
 
-        <ConsultationQuiz />
-        <DeliveryInfo />
-        <FAQ />
-        <Contact />
+            <ConsultationQuiz />
+            <DeliveryInfo />
+            <FAQ />
+            <Contact />
+          </>
+        )}
       </main>
 
       <Footer />
 
+      {/* Quick Order Modal */}
       <QuickOrderModal
         isOpen={quickOrderData.isOpen}
         onClose={() => setQuickOrderData((previous) => ({ ...previous, isOpen: false }))}
@@ -95,11 +260,35 @@ export function App() {
         sourceUrl={quickOrderData.sourceUrl}
       />
 
+      {/* Post Detail Modal */}
       <PostDetailModal
         post={detailPost}
         isOpen={!!detailPost}
         onClose={() => setDetailPost(null)}
         onQuickOrder={handleOpenQuickOrder}
+      />
+
+      {/* Product Quick View Modal */}
+      <ProductQuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        formatPrice={formatPrice}
+        onAddToCart={addToCart}
+        onQuickBuy={handleOpenQuickOrder}
+      />
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cartItems}
+        formattedTotal={cartFormattedTotal}
+        onUpdateQty={updateQuantity}
+        onRemove={removeFromCart}
+        onClear={clearCart}
+        formatPrice={formatPrice}
+        onCheckoutWhatsApp={generateWhatsAppOrderLink}
       />
     </div>
   );

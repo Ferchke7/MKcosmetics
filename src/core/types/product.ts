@@ -16,6 +16,15 @@ export type SkinConcern =
   | 'pigmentation'
   | 'lifting';
 
+export type ProductSortOption =
+  | 'newest'
+  | 'oldest'
+  | 'price-asc'
+  | 'price-desc'
+  | 'discount'
+  | 'popular'
+  | 'name-asc';
+
 export interface Product {
   id: string;
   name: string;
@@ -26,8 +35,10 @@ export interface Product {
   shortDescription: string;
   priceKrw: number;
   originalPriceKrw?: number;
+  discountPercent?: number;
   images: string[];
   volume?: string;
+  weight?: string;
   rating: number;
   reviewCount: number;
   isBestseller?: boolean;
@@ -37,9 +48,14 @@ export interface Product {
   benefits: string[];
   howToUse?: string;
   telegramPostUrl?: string;
+  tags?: string[];
+  timestamp?: number;
+  views?: string;
+  reactionsCount?: number;
 }
 
 export interface CartItem {
   product: Product;
   quantity: number;
 }
+
