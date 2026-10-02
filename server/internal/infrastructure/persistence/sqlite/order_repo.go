@@ -37,14 +37,18 @@ func (r *orderRepository) Create(ctx context.Context, order *entity.Order) error
 	query := `
 		INSERT INTO orders (
 			order_number, customer_name, phone, channel_source, type,
-			items_json, total_amount, currency, status, notes, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+			items_json, total_amount, currency, status,
+			payment_receipt_url, payment_method, tracking_number, shipping_address,
+			notes, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 	`
 
 	res, err := r.db.ExecContext(
 		ctx, query,
 		order.OrderNumber, order.CustomerName, order.Phone, order.ChannelSource, order.Type,
-		string(itemsJSON), order.TotalAmount, order.Currency, order.Status, order.Notes,
+		string(itemsJSON), order.TotalAmount, order.Currency, order.Status,
+		order.PaymentReceiptURL, order.PaymentMethod, order.TrackingNumber, order.ShippingAddress,
+		order.Notes,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert order: %w", err)
@@ -58,6 +62,33 @@ func (r *orderRepository) Create(ctx context.Context, order *entity.Order) error
 	order.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (r *orderRepository) Update(ctx context.Context, order *entity.Order) error {
+	itemsJSON, _ := json.Marshal(order.Items)
+	query := `
+		UPDATE orders SET
+			customer_name = ?,
+			phone = ?,
+			items_json = ?,
+			total_amount = ?,
+			currency = ?,
+			status = ?,
+			payment_receipt_url = ?,
+			payment_method = ?,
+			tracking_number = ?,
+			shipping_address = ?,
+			notes = ?,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?;
+	`
+	_, err := r.db.ExecContext(
+		ctx, query,
+		order.CustomerName, order.Phone, string(itemsJSON), order.TotalAmount, order.Currency,
+		order.Status, order.PaymentReceiptURL, order.PaymentMethod, order.TrackingNumber, order.ShippingAddress,
+		order.Notes, order.ID,
+	)
+	return err
 }
 
 func (r *orderRepository) FindAll(ctx context.Context, status string, search string, limit int, offset int) ([]*entity.Order, int, error) {
@@ -76,9 +107,9 @@ func (r *orderRepository) FindAll(ctx context.Context, status string, search str
 	}
 
 	if search != "" {
-		whereClauses = append(whereClauses, "(order_number LIKE ? OR customer_name LIKE ? OR phone LIKE ? OR notes LIKE ?)")
+		whereClauses = append(whereClauses, "(order_number LIKE ? OR customer_name LIKE ? OR phone LIKE ? OR tracking_number LIKE ? OR notes LIKE ?)")
 		searchPattern := "%" + search + "%"
-		args = append(args, searchPattern, searchPattern, searchPattern, searchPattern)
+		args = append(args, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern)
 	}
 
 	whereSQL := ""
@@ -96,7 +127,9 @@ func (r *orderRepository) FindAll(ctx context.Context, status string, search str
 	// Fetch page
 	query := fmt.Sprintf(`
 		SELECT id, order_number, customer_name, phone, channel_source, type,
-		       items_json, total_amount, currency, status, notes, created_at, updated_at
+		       items_json, total_amount, currency, status,
+		       payment_receipt_url, payment_method, tracking_number, shipping_address,
+		       notes, created_at, updated_at
 		FROM orders
 		%s
 		ORDER BY created_at DESC
@@ -120,8 +153,9 @@ func (r *orderRepository) FindAll(ctx context.Context, status string, search str
 
 		err := rows.Scan(
 			&o.ID, &o.OrderNumber, &o.CustomerName, &o.Phone, &o.ChannelSource, &o.Type,
-			&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status, &o.Notes,
-			&createdAtStr, &updatedAtStr,
+			&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status,
+			&o.PaymentReceiptURL, &o.PaymentMethod, &o.TrackingNumber, &o.ShippingAddress,
+			&o.Notes, &createdAtStr, &updatedAtStr,
 		)
 		if err != nil {
 			return nil, 0, err
@@ -140,7 +174,9 @@ func (r *orderRepository) FindAll(ctx context.Context, status string, search str
 func (r *orderRepository) FindByID(ctx context.Context, id int64) (*entity.Order, error) {
 	query := `
 		SELECT id, order_number, customer_name, phone, channel_source, type,
-		       items_json, total_amount, currency, status, notes, created_at, updated_at
+		       items_json, total_amount, currency, status,
+		       payment_receipt_url, payment_method, tracking_number, shipping_address,
+		       notes, created_at, updated_at
 		FROM orders
 		WHERE id = ?;
 	`
@@ -152,8 +188,9 @@ func (r *orderRepository) FindByID(ctx context.Context, id int64) (*entity.Order
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&o.ID, &o.OrderNumber, &o.CustomerName, &o.Phone, &o.ChannelSource, &o.Type,
-		&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status, &o.Notes,
-		&createdAtStr, &updatedAtStr,
+		&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status,
+		&o.PaymentReceiptURL, &o.PaymentMethod, &o.TrackingNumber, &o.ShippingAddress,
+		&o.Notes, &createdAtStr, &updatedAtStr,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -172,7 +209,9 @@ func (r *orderRepository) FindByID(ctx context.Context, id int64) (*entity.Order
 func (r *orderRepository) FindByOrderNumber(ctx context.Context, orderNumber string) (*entity.Order, error) {
 	query := `
 		SELECT id, order_number, customer_name, phone, channel_source, type,
-		       items_json, total_amount, currency, status, notes, created_at, updated_at
+		       items_json, total_amount, currency, status,
+		       payment_receipt_url, payment_method, tracking_number, shipping_address,
+		       notes, created_at, updated_at
 		FROM orders
 		WHERE LOWER(order_number) = LOWER(?);
 	`
@@ -184,8 +223,9 @@ func (r *orderRepository) FindByOrderNumber(ctx context.Context, orderNumber str
 
 	err := r.db.QueryRowContext(ctx, query, orderNumber).Scan(
 		&o.ID, &o.OrderNumber, &o.CustomerName, &o.Phone, &o.ChannelSource, &o.Type,
-		&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status, &o.Notes,
-		&createdAtStr, &updatedAtStr,
+		&itemsJSON, &o.TotalAmount, &o.Currency, &o.Status,
+		&o.PaymentReceiptURL, &o.PaymentMethod, &o.TrackingNumber, &o.ShippingAddress,
+		&o.Notes, &createdAtStr, &updatedAtStr,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -210,6 +250,19 @@ func (r *orderRepository) UpdateStatus(ctx context.Context, id int64, status str
 func (r *orderRepository) UpdateNotes(ctx context.Context, id int64, notes string) error {
 	query := `UPDATE orders SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;`
 	_, err := r.db.ExecContext(ctx, query, notes, id)
+	return err
+}
+
+func (r *orderRepository) UpdatePaymentReceipt(ctx context.Context, id int64, receiptURL, paymentMethod string) error {
+	query := `
+		UPDATE orders SET
+			payment_receipt_url = ?,
+			payment_method = CASE WHEN ? != '' THEN ? ELSE payment_method END,
+			status = CASE WHEN status = 'new' THEN 'paid' ELSE status END,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?;
+	`
+	_, err := r.db.ExecContext(ctx, query, receiptURL, paymentMethod, paymentMethod, id)
 	return err
 }
 

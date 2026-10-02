@@ -118,6 +118,10 @@ func (db *DB) migrate() error {
 		total_amount REAL NOT NULL DEFAULT 0,
 		currency TEXT NOT NULL DEFAULT 'UZS',
 		status TEXT NOT NULL DEFAULT 'new',
+		payment_receipt_url TEXT NOT NULL DEFAULT '',
+		payment_method TEXT NOT NULL DEFAULT '',
+		tracking_number TEXT NOT NULL DEFAULT '',
+		shipping_address TEXT NOT NULL DEFAULT '',
 		notes TEXT NOT NULL DEFAULT '',
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -131,6 +135,12 @@ func (db *DB) migrate() error {
 	if err != nil {
 		return err
 	}
+
+	// Safe column migrations for existing SQLite databases
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN payment_receipt_url TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN tracking_number TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN shipping_address TEXT NOT NULL DEFAULT '';")
 
 	// Ensure default admin user exists
 	db.seedDefaultAdmin()

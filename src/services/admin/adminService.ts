@@ -25,6 +25,10 @@ export interface Order {
   totalAmount: number;
   currency: string;
   status: 'new' | 'processing' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  paymentReceiptUrl?: string;
+  paymentMethod?: string;
+  trackingNumber?: string;
+  shippingAddress?: string;
   notes: string;
   createdAt: string;
   updatedAt: string;
@@ -251,6 +255,55 @@ export const adminService = {
     const data = await res.json();
     if (!res.ok || !data.success) {
       throw new Error(data.error || 'Не удалось сохранить заметку');
+    }
+  },
+
+  async uploadFile(file: File, token: string): Promise<{ url: string; filename: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/admin/upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Не удалось загрузить файл');
+    }
+    return data;
+  },
+
+  async processOrder(id: number, orderData: Partial<Order>, token: string): Promise<Order> {
+    const res = await fetch(`${API_BASE}/admin/orders/${id}/process`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Не удалось обновить заказ');
+    }
+    return data.order;
+  },
+
+  async attachReceipt(id: number, receiptUrl: string, paymentMethod: string, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/admin/orders/${id}/receipt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ receiptUrl, paymentMethod }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Не удалось прикрепить чек');
     }
   },
 

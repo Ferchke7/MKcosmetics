@@ -29,11 +29,19 @@ import {
   ShoppingBag,
   HeartHandshake,
   Zap,
+  Truck,
+  MapPin,
+  Image as ImageIcon,
+  SlidersHorizontal,
+  CreditCard,
+  Eye,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { adminService, AdminStats, Order } from '../../services/admin/adminService';
 import { TelegramPost } from '../../core/types/telegram';
 import { ProductEditModal } from './ProductEditModal';
+import { OrderProcessingModal } from './OrderProcessingModal';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -67,6 +75,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingNotesText, setEditingNotesText] = useState('');
   const [deleteOrderConfirmId, setDeleteOrderConfirmId] = useState<number | null>(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [selectedOrderForProcessing, setSelectedOrderForProcessing] = useState<Order | null>(null);
+  const [lightboxReceiptUrl, setLightboxReceiptUrl] = useState<string | null>(null);
 
   // Products Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +186,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await fetchStats();
     } catch (err: any) {
       alert(err.message || 'Ошибка удаления заказа');
+    }
+  };
+
+  const handleSaveProcessedOrder = async (updatedFields: Partial<Order>) => {
+    if (!selectedOrderForProcessing || !token) return;
+    try {
+      const updated = await adminService.processOrder(selectedOrderForProcessing.id, updatedFields, token);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+      );
+      setSelectedOrderForProcessing(null);
+      await fetchStats();
+    } catch (err: any) {
+      alert(err.message || 'Ошибка сохранения обработки заказа');
+      throw err;
     }
   };
 
@@ -788,6 +813,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   )}
                                 </div>
 
+                                {/* Order Logistics & Payment details */}
+                                {(order.paymentReceiptUrl || order.trackingNumber || order.shippingAddress || order.paymentMethod) && (
+                                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                    {order.paymentReceiptUrl && (
+                                      <div className="flex items-center gap-2 p-1.5 pr-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300">
+                                        <button
+                                          onClick={() => setLightboxReceiptUrl(order.paymentReceiptUrl || null)}
+                                          className="relative group w-8 h-8 rounded-lg overflow-hidden bg-black/40 border border-purple-500/40 flex-shrink-0"
+                                          title="Нажмите для увеличения чека"
+                                        >
+                                          <img
+                                            src={order.paymentReceiptUrl}
+                                            alt="Чек"
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                          />
+                                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <Eye className="w-3.5 h-3.5 text-white" />
+                                          </div>
+                                        </button>
+                                        <div className="text-[11px]">
+                                          <div className="font-bold flex items-center gap-1">
+                                            <CheckCircle2 className="w-3 h-3 text-purple-400" />
+                                            <span>Чек об оплате</span>
+                                          </div>
+                                          {order.paymentMethod && (
+                                            <span className="text-[10px] text-[#A8A29E] block">
+                                              {order.paymentMethod}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {order.trackingNumber && (
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-mono">
+                                        <Truck className="w-3.5 h-3.5 text-orange-400" />
+                                        <span>Трек: <strong>{order.trackingNumber}</strong></span>
+                                      </div>
+                                    )}
+
+                                    {order.shippingAddress && (
+                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[#C4BDB5]">
+                                        <MapPin className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
+                                        <span className="truncate max-w-xs">{order.shippingAddress}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
                                 {/* Order Items or Details */}
                                 {order.items && order.items.length > 0 && (
                                   <div className="pt-2">
@@ -847,10 +921,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   </div>
                                 )}
 
+                                {/* Seller Order Processing Button (Primary Action) */}
+                                <button
+                                  onClick={() => setSelectedOrderForProcessing(order)}
+                                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:brightness-110 text-[#141312] text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-[#D4AF37]/20 transition-all cursor-pointer"
+                                >
+                                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                                  <span>Обработать заказ & Чек</span>
+                                </button>
+
                                 {/* Status Selector */}
-                                <div className="w-full sm:w-auto lg:w-full space-y-1">
+                                <div className="w-full space-y-1">
                                   <span className="text-[10px] text-[#78716C] block uppercase font-semibold">
-                                    Статус заказа:
+                                    Быстрый статус:
                                   </span>
                                   <select
                                     value={order.status}
@@ -870,6 +953,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                 {/* Actions: Edit Notes / Delete */}
                                 <div className="flex items-center gap-2 pt-1 w-full justify-end">
+                                  {order.paymentReceiptUrl && (
+                                    <button
+                                      onClick={() => setLightboxReceiptUrl(order.paymentReceiptUrl || null)}
+                                      className="py-1.5 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs font-semibold flex items-center gap-1 transition-colors"
+                                      title="Посмотреть чек"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      <span>Чек</span>
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={() => handleStartEditNotes(order)}
                                     className="py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-[#C4BDB5] hover:text-white border border-white/5 flex items-center gap-1.5 transition-colors"
@@ -1448,6 +1542,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               >
                 Удалить
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seller Order Processing Modal */}
+      <OrderProcessingModal
+        isOpen={selectedOrderForProcessing !== null}
+        onClose={() => setSelectedOrderForProcessing(null)}
+        order={selectedOrderForProcessing}
+        onSave={handleSaveProcessedOrder}
+        token={token || ''}
+      />
+
+      {/* Payment Receipt Image Lightbox Modal */}
+      {lightboxReceiptUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
+          onClick={() => setLightboxReceiptUrl(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[90vh] bg-[#141312] border border-white/15 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#1C1A18]">
+              <div className="flex items-center gap-2 text-sm font-bold text-white">
+                <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                <span>Чек об оплате / Подтверждение перевода</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={lightboxReceiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] transition-colors"
+                  title="Открыть в оригинале"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setLightboxReceiptUrl(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#A8A29E] hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 flex items-center justify-center overflow-auto bg-black/60">
+              <img
+                src={lightboxReceiptUrl}
+                alt="Чек об оплате"
+                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg border border-white/10"
+              />
             </div>
           </div>
         </div>

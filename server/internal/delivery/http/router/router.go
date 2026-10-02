@@ -26,6 +26,7 @@ func NewRouter(
 	authHandler *handler.AuthHandler,
 	adminHandler *handler.AdminHandler,
 	orderHandler *handler.OrderHandler,
+	uploadHandler *handler.UploadHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -46,6 +47,11 @@ func NewRouter(
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	// Static Uploads Serving (Images & Payment Receipts)
+	uploadDir := filepath.Join("data", "uploads")
+	_ = os.MkdirAll(uploadDir, 0755)
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadDir))))
 
 	// API Routes
 	r.Route("/api", func(api chi.Router) {
@@ -85,6 +91,7 @@ func NewRouter(
 			admin.Get("/stats", adminHandler.GetDashboard)
 			admin.Get("/visitors", adminHandler.GetVisitorLogs)
 			admin.Post("/sync", adminHandler.TriggerSync)
+			admin.Post("/upload", uploadHandler.UploadFile)
 
 			admin.Route("/products", func(p chi.Router) {
 				p.Post("/", adminHandler.CreateProduct)
@@ -96,6 +103,8 @@ func NewRouter(
 				o.Get("/", orderHandler.GetAdminOrders)
 				o.Put("/{id}/status", orderHandler.UpdateStatus)
 				o.Put("/{id}/notes", orderHandler.UpdateNotes)
+				o.Put("/{id}/process", orderHandler.ProcessOrder)
+				o.Post("/{id}/receipt", orderHandler.AttachReceipt)
 				o.Delete("/{id}", orderHandler.DeleteOrder)
 			})
 		})

@@ -65,6 +65,8 @@ func main() {
 	authHandler := handler.NewAuthHandler(authUC)
 	orderHandler := handler.NewOrderHandler(orderUC)
 	adminHandler := handler.NewAdminHandler(adminUC, syncUC)
+	uploadDir := getEnv("UPLOAD_DIR", "./data/uploads")
+	uploadHandler := handler.NewUploadHandler(uploadDir)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -76,6 +78,7 @@ func main() {
 		authHandler,
 		adminHandler,
 		orderHandler,
+		uploadHandler,
 		authMiddleware,
 	)
 

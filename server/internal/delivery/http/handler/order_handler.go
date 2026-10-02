@@ -171,3 +171,73 @@ func (h *OrderHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 		"message": "Заказ удален",
 	})
 }
+
+func (h *OrderHandler) ProcessOrder(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid order id"}`, http.StatusBadRequest)
+		return
+	}
+
+	var input usecase.ProcessOrderInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+	input.ID = id
+
+	updatedOrder, err := h.orderUC.ProcessOrder(r.Context(), input)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Данные заказа успешно обновлены",
+		"order":   updatedOrder,
+	})
+}
+
+type attachReceiptBody struct {
+	ReceiptURL    string `json:"receiptUrl"`
+	PaymentMethod string `json:"paymentMethod"`
+}
+
+func (h *OrderHandler) AttachReceipt(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid order id"}`, http.StatusBadRequest)
+		return
+	}
+
+	var body attachReceiptBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.orderUC.AttachPaymentReceipt(r.Context(), id, body.ReceiptURL, body.PaymentMethod); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Чек об оплате успешно прикреплен к заказу",
+	})
+}

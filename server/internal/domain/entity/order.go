@@ -14,17 +14,21 @@ type OrderItem struct {
 
 // Order represents a CRM lead or e-commerce purchase order
 type Order struct {
-	ID            int64       `json:"id"`
-	OrderNumber   string      `json:"orderNumber"`
-	CustomerName  string      `json:"customerName"`
-	Phone         string      `json:"phone"`
-	ChannelSource string      `json:"channelSource"` // 'web', 'whatsapp', 'telegram', 'quiz'
-	Type          string      `json:"type"`          // 'order', 'quick_buy', 'quiz_consultation'
-	Items         []OrderItem `json:"items"`
-	TotalAmount   float64     `json:"totalAmount"`
-	Currency      string      `json:"currency"`
-	Status        string      `json:"status"` // 'new', 'processing', 'paid', 'shipped', 'delivered', 'cancelled'
-	Notes         string      `json:"notes"`
-	CreatedAt     time.Time   `json:"createdAt"`
-	UpdatedAt     time.Time   `json:"updatedAt"`
+	ID                int64       `json:"id"`
+	OrderNumber       string      `json:"orderNumber"`
+	CustomerName      string      `json:"customerName"`
+	Phone             string      `json:"phone"`
+	ChannelSource     string      `json:"channelSource"` // 'web', 'whatsapp', 'telegram', 'quiz'
+	Type              string      `json:"type"`          // 'order', 'quick_order', 'cart', 'quiz_consultation'
+	Items             []OrderItem `json:"items"`
+	TotalAmount       float64     `json:"totalAmount"`
+	Currency          string      `json:"currency"`
+	Status            string      `json:"status"` // 'new', 'processing', 'paid', 'shipped', 'delivered', 'cancelled'
+	PaymentReceiptURL string      `json:"paymentReceiptUrl"`
+	PaymentMethod     string      `json:"paymentMethod"`
+	TrackingNumber    string      `json:"trackingNumber"`
+	ShippingAddress   string      `json:"shippingAddress"`
+	Notes             string      `json:"notes"`
+	CreatedAt         time.Time   `json:"createdAt"`
+	UpdatedAt         time.Time   `json:"updatedAt"`
 }
