@@ -8,9 +8,14 @@ import {
   X,
   ChevronDown,
   RotateCcw,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useLanguage } from '../../../core/i18n/LanguageContext';
-import { Translations } from '../../../core/i18n/translations';
+import { CatalogHeroHeader } from './CatalogHeroHeader';
+import { CatalogFilterSidebar } from './CatalogFilterSidebar';
+import { CatalogPromoBanner } from './CatalogPromoBanner';
 
 interface CatalogPageProps {
   products: Product[];
@@ -46,18 +51,7 @@ interface CatalogPageProps {
   onBackToHome: () => void;
 }
 
-const ITEMS_PER_PAGE = 20;
-
-const CATEGORIES_CONFIG: { id: string; key: keyof Translations; isDiscount?: boolean }[] = [
-  { id: 'all', key: 'cat_all' },
-  { id: 'discount', key: 'cat_discount', isDiscount: true },
-  { id: 'sets', key: 'cat_sets' },
-  { id: 'hydration-serums', key: 'cat_serums' },
-  { id: 'anti-aging', key: 'cat_antiaging' },
-  { id: 'peeling-cleansing', key: 'cat_cleansing' },
-  { id: 'sun-care', key: 'cat_sun' },
-  { id: 'premium-luxury', key: 'cat_luxury' },
-];
+const ITEMS_PER_PAGE = 12; // 3 columns x 4 rows like reference design
 
 export const CatalogPage: React.FC<CatalogPageProps> = ({
   products,
@@ -91,386 +85,414 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   onBackToHome,
 }) => {
   const { t } = useLanguage();
-  const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
-  const [priceRangeFilter, setPriceRangeFilter] = useState<'all' | 'under30k' | '30k-60k' | 'over60k'>('all');
 
-  // Reset pagination when search or filters change
-  React.useEffect(() => {
-    setVisibleCount(ITEMS_PER_PAGE);
-  }, [searchQuery, selectedCategory, selectedBrand, sortBy, onlyDiscount, onlyWithPrice, priceRangeFilter]);
+  // Mobile Filter Drawer state
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Apply optional local price range filter
-  const processedProducts = useMemo(() => {
-    if (priceRangeFilter === 'all') return products;
+  // Filter state for skin types and price slider
+  const [selectedSkinTypes, setSelectedSkinTypes] = useState<string[]>([]);
+  const [currentPriceRange, setCurrentPriceRange] = useState<[number, number]>([0, 150000]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-    return products.filter((p) => {
-      if (p.priceKrw <= 0) return true;
-      if (priceRangeFilter === 'under30k') return p.priceKrw < 30000;
-      if (priceRangeFilter === '30k-60k') return p.priceKrw >= 30000 && p.priceKrw <= 60000;
-      if (priceRangeFilter === 'over60k') return p.priceKrw > 60000;
-      return true;
-    });
-  }, [products, priceRangeFilter]);
+  const priceMin = 0;
+  const priceMax = 200000;
 
-  const visibleProducts = useMemo(() => {
-    return processedProducts.slice(0, visibleCount);
-  }, [processedProducts, visibleCount]);
-
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+  // Toggle skin type filter
+  const handleToggleSkinType = (typeId: string) => {
+    setSelectedSkinTypes((prev) =>
+      prev.includes(typeId) ? prev.filter((id) => id !== typeId) : [...prev, typeId]
+    );
   };
 
-  const isAnyFilterActive = hasActiveFilters || priceRangeFilter !== 'all';
+  // Reset pagination on filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedBrand,
+    sortBy,
+    onlyDiscount,
+    onlyWithPrice,
+    selectedSkinTypes,
+    currentPriceRange,
+  ]);
+
+  // Combined client-side filtering (tree categories, price slider, skin types)
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      // 1. Price slider
+      if (product.priceKrw > 0) {
+        if (product.priceKrw < currentPriceRange[0] || product.priceKrw > currentPriceRange[1]) {
+          return false;
+        }
+      }
+
+      // 2. Skin types / concerns
+      if (selectedSkinTypes.length > 0) {
+        const text = `${product.name} ${product.description} ${(product.keyIngredients || []).join(' ')}`.toLowerCase();
+        const matchesAnySkin = selectedSkinTypes.some((type) => {
+          if (type === 'dry') return text.includes('сух') || text.includes('увлажн') || text.includes('hydrat');
+          if (type === 'oily') return text.includes('жирн') || text.includes('пор') || text.includes('себум') || text.includes('acne');
+          if (type === 'sensitive') return text.includes('чувствительн') || text.includes('успокаив') || text.includes('cica');
+          if (type === 'combination') return text.includes('комбинирован') || text.includes('баланс');
+          if (type === 'normal') return true;
+          return false;
+        });
+        if (!matchesAnySkin) return false;
+      }
+
+      return true;
+    });
+  }, [products, currentPriceRange, selectedSkinTypes]);
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const isCustomFilterActive =
+    hasActiveFilters ||
+    selectedSkinTypes.length > 0 ||
+    currentPriceRange[1] < 150000 ||
+    currentPriceRange[0] > 0;
 
   const handleResetAll = () => {
-    setPriceRangeFilter('all');
+    setSelectedSkinTypes([]);
+    setCurrentPriceRange([0, 150000]);
     onResetFilters();
   };
 
   return (
-    <div className="bg-[#FFFFFF] min-h-screen pt-24 pb-24 text-[#111111]">
+    <div className="bg-[#FAF7F2] min-h-screen pt-24 pb-24 text-[#2D2A2E]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        {/* Top Breadcrumb & Back Navigation */}
-        <div className="flex items-center justify-between gap-4 py-3 border-b border-[#EEEEEE] mb-6">
-          <button
-            onClick={onBackToHome}
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#111111] hover:text-[#555555] transition-colors py-1.5 px-3 rounded-lg bg-[#F5F5F5] hover:bg-[#EBEBEB] cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>← {t('nav_home')}</span>
-          </button>
+        {/* 1. Elegant Shop Hero Header & Category Diamond Strip */}
+        <CatalogHeroHeader
+          onBackToHome={onBackToHome}
+          selectedCategory={selectedCategory}
+          onCategoryChange={onCategoryChange}
+        />
 
-          <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase text-[#888888]">
-            <span>MK KOREA COSMETIC</span>
-            <span>•</span>
-            <span className="text-[#111111]">100% ORIGINAL</span>
-          </div>
-        </div>
-
-        {/* Header Title & Search */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-[#111111]">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest text-[#777777] mb-1">
-                <span>{t('catalog_badge')}</span>
-              </div>
-              <h1 className="font-sans text-3xl sm:text-4xl font-black tracking-tight text-[#111111]">
-                {t('catalog_title')}
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-[#666666]">
-                {t('catalog_subtitle')} • <strong className="text-[#111111] font-bold">{totalCount}</strong> {t('catalog_items')}
-              </p>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative w-full md:w-80 lg:w-96">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={t('catalog_search_placeholder')}
-                className="w-full rounded-xl border border-[#DCDCDC] bg-[#FAFAFA] py-2.5 pl-10 pr-9 text-xs sm:text-sm text-[#111111] placeholder-[#888888] focus:border-[#111111] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#111111]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => onSearchChange('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111] cursor-pointer"
-                  aria-label="Очистить поиск"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+        {/* 2. Main Two-Column Layout (Left: Filter Tree Sidebar, Right: Product Grid) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Desktop Tree Filter Sidebar */}
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-24">
+            <CatalogFilterSidebar
+              allBrands={allBrands}
+              totalProductsCount={totalCount}
+              selectedCategory={selectedCategory}
+              onCategoryChange={onCategoryChange}
+              selectedBrand={selectedBrand}
+              onBrandChange={onBrandChange}
+              onlyDiscount={onlyDiscount}
+              onToggleDiscount={onToggleDiscount}
+              onlyWithPrice={onlyWithPrice}
+              onToggleWithPrice={onToggleWithPrice}
+              selectedSkinTypes={selectedSkinTypes}
+              onToggleSkinType={handleToggleSkinType}
+              priceMin={priceMin}
+              priceMax={priceMax}
+              currentPriceRange={currentPriceRange}
+              onPriceRangeChange={setCurrentPriceRange}
+              onResetFilters={handleResetAll}
+              hasActiveFilters={isCustomFilterActive}
+              formatPrice={formatPrice}
+            />
           </div>
 
-          {/* Categories Horizontal Tab Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto py-3.5 border-b border-[#EEEEEE] no-scrollbar">
-            {CATEGORIES_CONFIG.map((cat) => {
-              const isActive = cat.isDiscount
-                ? onlyDiscount
-                : selectedCategory === cat.id && !onlyDiscount;
+          {/* Right Column: Main Content Area */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
+            
+            {/* Top Toolbar (Results Count, Mobile Filter Trigger, Sorting) */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#F0E6DE] shadow-2xs">
+              
+              {/* Results count */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs sm:text-sm font-medium text-[#6C635B]">
+                  {t('catalog_showing')}{' '}
+                  <strong className="text-[#2D2A2E]">
+                    {filteredProducts.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length)}
+                  </strong>{' '}
+                  {t('catalog_of')}{' '}
+                  <strong className="text-[#2D2A2E]">{filteredProducts.length}</strong> {t('catalog_results')}
+                </span>
 
-              const label = t(cat.key);
-
-              return (
+                {/* Mobile Filter Button */}
                 <button
-                  key={cat.id}
-                  onClick={() => {
-                    if (cat.isDiscount) {
-                      onToggleDiscount(!onlyDiscount);
-                    } else {
-                      onToggleDiscount(false);
-                      onCategoryChange(cat.id);
-                    }
-                  }}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${
-                    isActive
-                      ? cat.isDiscount
-                        ? 'bg-[#FF0038] text-white shadow-sm'
-                        : 'bg-[#111111] text-white shadow-sm'
-                      : cat.isDiscount
-                      ? 'bg-[#FFF0F3] text-[#FF0038] hover:bg-[#FFE0E6] border border-[#FFCCD5]'
-                      : 'bg-[#F7F7F7] text-[#444444] hover:bg-[#EBEBEB] hover:text-[#111111]'
-                  }`}
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  className="inline-flex lg:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-semibold text-[#8A503C] hover:bg-[#F2E8DC] cursor-pointer"
                 >
-                  <span>{label}</span>
-                  {cat.isDiscount && discountCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
-                      {discountCount}
-                    </span>
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>{t('catalog_filters_title')}</span>
+                  {isCustomFilterActive && (
+                    <span className="w-2 h-2 rounded-full bg-[#A96851]" />
                   )}
                 </button>
-              );
-            })}
-          </div>
-        </div>
+              </div>
 
-        {/* Filter & Sorting Control Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAFAFA] p-3.5 sm:p-4 rounded-xl border border-[#EEEEEE] mb-6">
-          {/* Left: Brand Dropdown, Price Filter Pills, Toggles */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Brand Dropdown */}
-            <div className="relative">
-              <select
-                value={selectedBrand}
-                onChange={(e) => onBrandChange(e.target.value)}
-                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
-              >
-                <option value="all">{t('catalog_all_brands')} ({allBrands.length})</option>
-                {allBrands.map(({ brand, count }) => (
-                  <option key={brand} value={brand}>
-                    {brand} ({count})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
-            </div>
-
-            {/* Price Range Selector */}
-            <div className="relative hidden sm:block">
-              <select
-                value={priceRangeFilter}
-                onChange={(e) => setPriceRangeFilter(e.target.value as any)}
-                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
-              >
-                <option value="all">{t('catalog_all_prices')}</option>
-                <option value="under30k">{t('catalog_under_30k')}</option>
-                <option value="30k-60k">{t('catalog_30k_60k')}</option>
-                <option value="over60k">{t('catalog_over_60k')}</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
-            </div>
-
-            {/* Discount Pill */}
-            <button
-              onClick={() => onToggleDiscount(!onlyDiscount)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold border transition-colors cursor-pointer ${
-                onlyDiscount
-                  ? 'bg-[#FF0038] text-white border-[#FF0038]'
-                  : 'bg-white border-[#D5D5D5] text-[#333333] hover:bg-[#F0F0F0]'
-              }`}
-            >
-              🔥 {t('catalog_sale_filter')} ({discountCount})
-            </button>
-
-            {/* In-Stock with Price */}
-            <button
-              onClick={() => onToggleWithPrice(!onlyWithPrice)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold border transition-colors cursor-pointer ${
-                onlyWithPrice
-                  ? 'bg-[#111111] text-white border-[#111111]'
-                  : 'bg-white border-[#D5D5D5] text-[#333333] hover:bg-[#F0F0F0]'
-              }`}
-            >
-              {t('catalog_with_price')}
-            </button>
-          </div>
-
-          {/* Right: Sorting Dropdown & Items Count */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-[#777777]">
-              {processedProducts.length} {t('catalog_items')}
-            </span>
-
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
-                className="appearance-none rounded-lg bg-white border border-[#D5D5D5] py-2 pl-3 pr-8 text-xs font-bold text-[#111111] focus:border-[#111111] focus:outline-none cursor-pointer hover:border-[#999999]"
-              >
-                <option value="popular">{t('catalog_sort_popular')}</option>
-                <option value="newest">{t('catalog_sort_newest')}</option>
-                <option value="discount">{t('catalog_sort_discount')}</option>
-                <option value="price-asc">{t('catalog_sort_price_asc')}</option>
-                <option value="price-desc">{t('catalog_sort_price_desc')}</option>
-                <option value="name-asc">{t('catalog_sort_name_asc')}</option>
-                <option value="oldest">{t('catalog_sort_oldest')}</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#777777]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Active Filters Pill Bar */}
-        {isAnyFilterActive && (
-          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-[#F8F9FA] rounded-xl border border-[#EEEEEE]">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#777777] mr-1">
-              {t('catalog_active_filters')}
-            </span>
-
-            {searchQuery && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
-                <span>{searchQuery}</span>
-                <button onClick={() => onSearchChange('')} className="hover:text-red-500 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {selectedBrand !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
-                <span>{selectedBrand}</span>
-                <button onClick={() => onBrandChange('all')} className="hover:text-red-500 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {selectedCategory !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
-                <span>
-                  {(() => {
-                    const cfg = CATEGORIES_CONFIG.find((c) => c.id === selectedCategory);
-                    return cfg ? t(cfg.key) : selectedCategory;
-                  })()}
+              {/* Sort By Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#8C827A] hidden sm:inline">
+                  {t('catalog_sort_label')}:
                 </span>
-                <button onClick={() => onCategoryChange('all')} className="hover:text-red-500 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {onlyDiscount && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFF0F3] border border-[#FFCCD5] text-xs font-bold text-[#FF0038]">
-                <span>{t('catalog_sale_filter')}</span>
-                <button onClick={() => onToggleDiscount(false)} className="hover:text-red-700 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {onlyWithPrice && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
-                <span>{t('catalog_with_price')}</span>
-                <button onClick={() => onToggleWithPrice(false)} className="hover:text-red-500 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {priceRangeFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#D0D0D0] text-xs font-bold text-[#111111]">
-                <span>
-                  {priceRangeFilter === 'under30k' && t('catalog_under_30k')}
-                  {priceRangeFilter === '30k-60k' && t('catalog_30k_60k')}
-                  {priceRangeFilter === 'over60k' && t('catalog_over_60k')}
-                </span>
-                <button onClick={() => setPriceRangeFilter('all')} className="hover:text-red-500 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            <button
-              onClick={handleResetAll}
-              className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[#777777] hover:text-[#111111] hover:underline cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>{t('catalog_reset_all')}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Loading Skeletons */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
-            {[...Array(15)].map((_, i) => (
-              <div key={i} className="space-y-2 rounded-xl border border-[#EBEBEB] bg-white p-3">
-                <Skeleton className="aspect-[4/5] rounded-lg" />
-                <Skeleton className="h-3 w-1/3" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <div className="grid grid-cols-2 gap-1.5 pt-1">
-                  <Skeleton className="h-8 rounded-lg" />
-                  <Skeleton className="h-8 rounded-lg" />
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
+                    className="appearance-none rounded-xl bg-[#FAF5EE] border border-[#EED9CF] py-2 pl-3 pr-8 text-xs font-bold text-[#4D2C20] focus:border-[#A96851] focus:outline-none cursor-pointer"
+                  >
+                    <option value="popular">{t('catalog_sort_default')}</option>
+                    <option value="newest">{t('catalog_sort_newest')}</option>
+                    <option value="discount">{t('catalog_sort_discount')}</option>
+                    <option value="price-asc">{t('catalog_sort_price_asc')}</option>
+                    <option value="price-desc">{t('catalog_sort_price_desc')}</option>
+                    <option value="name-asc">{t('catalog_sort_name_asc')}</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C827A]" />
                 </div>
               </div>
-            ))}
-          </div>
-        ) : visibleProducts.length === 0 ? (
-          /* Empty State */
-          <div className="text-center py-20 bg-[#FAFAFA] rounded-2xl border border-dashed border-[#D5D5D5] p-8">
-            <div className="w-16 h-16 rounded-full bg-[#EEEEEE] text-[#777777] flex items-center justify-center mx-auto mb-4">
-              <Search className="w-7 h-7" />
-            </div>
-            <h3 className="font-sans text-xl font-bold text-[#111111]">
-              {t('catalog_not_found_title')}
-            </h3>
-            <p className="mt-2 text-xs sm:text-sm text-[#777777] max-w-md mx-auto">
-              {t('catalog_not_found_desc')}
-            </p>
-            <button
-              onClick={handleResetAll}
-              className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs font-bold tracking-wide hover:bg-[#333333] transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t('catalog_show_all_btn')} ({totalCount})</span>
-            </button>
-          </div>
-        ) : (
-          /* 5-Column Responsive Product Grid */
-          <div className="space-y-12">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-              {visibleProducts.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  rank={sortBy === 'popular' ? index + 1 : undefined}
-                  formatPrice={formatPrice}
-                  isFavorite={isFavorite(product.id)}
-                  onToggleFavorite={onToggleFavorite}
-                  onAddToCart={onAddToCart}
-                  onQuickView={onQuickView}
-                  onQuickBuy={onQuickBuy}
-                />
-              ))}
             </div>
 
-            {/* Pagination & Load More */}
-            {visibleCount < processedProducts.length && (
-              <div className="flex flex-col items-center justify-center pt-8 border-t border-[#EEEEEE] space-y-3">
-                <p className="text-xs text-[#777777] font-medium">
-                  {t('catalog_showing')} <strong className="text-[#111111]">{visibleCount}</strong> {t('catalog_of')} <strong className="text-[#111111]">{processedProducts.length}</strong> {t('catalog_items')}
-                </p>
+            {/* Active Filters Pill Row */}
+            {isCustomFilterActive && (
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-xl border border-[#F0E6DE]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#8A503C] mr-1">
+                  {t('catalog_active_filters')}
+                </span>
 
-                {/* Progress bar */}
-                <div className="w-48 h-1 bg-[#EBEBEB] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#111111] transition-all duration-300"
-                    style={{ width: `${Math.min(100, (visibleCount / processedProducts.length) * 100)}%` }}
-                  />
-                </div>
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                    <span>{searchQuery}</span>
+                    <button onClick={() => onSearchChange('')} className="hover:text-red-500 cursor-pointer">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedCategory !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                    <span>{selectedCategory}</span>
+                    <button onClick={() => onCategoryChange('all')} className="hover:text-red-500 cursor-pointer">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedBrand !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                    <span>{selectedBrand}</span>
+                    <button onClick={() => onBrandChange('all')} className="hover:text-red-500 cursor-pointer">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {onlyDiscount && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFF0F3] border border-[#FFCCD5] text-xs font-bold text-[#FF0038]">
+                    <span>{t('catalog_sale_filter')}</span>
+                    <button onClick={() => onToggleDiscount(false)} className="hover:text-red-700 cursor-pointer">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedSkinTypes.map((type) => (
+                  <span
+                    key={type}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]"
+                  >
+                    <span>{type}</span>
+                    <button onClick={() => handleToggleSkinType(type)} className="hover:text-red-500 cursor-pointer">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
 
                 <button
-                  onClick={handleLoadMore}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#111111] hover:bg-[#333333] text-white text-xs sm:text-sm font-bold tracking-wider transition-all duration-200 active:scale-95 shadow-md cursor-pointer"
+                  onClick={handleResetAll}
+                  className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#A96851] hover:underline cursor-pointer"
                 >
-                  <span>{t('catalog_show_more')} ({Math.min(ITEMS_PER_PAGE, processedProducts.length - visibleCount)})</span>
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{t('catalog_reset_all')}</span>
                 </button>
               </div>
             )}
+
+            {/* Product Grid (3 Columns as in reference image) */}
+            {isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="space-y-3 rounded-2xl border border-[#F0E6DE] bg-white p-4">
+                    <Skeleton className="aspect-[4/5] rounded-xl" />
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-9 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            ) : paginatedProducts.length === 0 ? (
+              /* Empty State */
+              <div className="text-center py-20 bg-white rounded-3xl border border-[#F0E6DE] p-8 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-[#FAF5EE] text-[#A89F97] flex items-center justify-center mx-auto">
+                  <Search className="w-8 h-8" />
+                </div>
+                <h3 className="font-serif text-2xl font-medium text-[#2D2A2E]">
+                  {t('catalog_not_found_title')}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#6C635B] max-w-md mx-auto">
+                  {t('catalog_not_found_desc')}
+                </p>
+                <button
+                  onClick={handleResetAll}
+                  className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C2836B] hover:bg-[#A96851] text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{t('catalog_show_all_btn')} ({totalCount})</span>
+                </button>
+              </div>
+            ) : (
+              /* 3-Column Luxury Product Grid */
+              <div className="space-y-10">
+                <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                  {paginatedProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      formatPrice={formatPrice}
+                      isFavorite={isFavorite(product.id)}
+                      onToggleFavorite={onToggleFavorite}
+                      onAddToCart={onAddToCart}
+                      onQuickView={onQuickView}
+                      onQuickBuy={onQuickBuy}
+                    />
+                  ))}
+                </div>
+
+                {/* Numbered Pagination (1 2 3 4 5 →) */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 pt-8 border-t border-[#F0E6DE]">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-xl text-[#6C635B] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pageNum = i + 1;
+                      const isActive = currentPage === pageNum;
+
+                      // Show first, last, and window around current
+                      if (
+                        pageNum === 1 ||
+                        pageNum === totalPages ||
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => {
+                              setCurrentPage(pageNum);
+                              window.scrollTo({ top: 300, behavior: 'smooth' });
+                            }}
+                            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              isActive
+                                ? 'bg-[#2D2A2E] text-white shadow-sm'
+                                : 'bg-white text-[#6C635B] hover:bg-[#FAF5EE] border border-[#F0E6DE]'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      } else if (
+                        (pageNum === 2 && currentPage > 3) ||
+                        (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                      ) {
+                        return (
+                          <span key={pageNum} className="px-1 text-xs text-[#8C827A]">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-xl text-[#6C635B] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Bottom Editorial Campaign Promo Banner */}
+        <CatalogPromoBanner
+          onExploreSale={() => {
+            onToggleDiscount(true);
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+          }}
+        />
+
+        {/* 4. Mobile Filter Slide-out Drawer */}
+        {isMobileFilterOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => setIsMobileFilterOpen(false)}
+            />
+            <div className="fixed inset-y-0 right-0 z-10 w-[88%] max-w-sm bg-white p-5 shadow-2xl overflow-y-auto">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F0E6DE]">
+                <span className="font-serif text-lg font-medium text-[#2D2A2E]">
+                  {t('catalog_filters_title')}
+                </span>
+                <button
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="p-1 rounded-full text-gray-500 hover:bg-gray-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <CatalogFilterSidebar
+                allBrands={allBrands}
+                totalProductsCount={totalCount}
+                selectedCategory={selectedCategory}
+                onCategoryChange={(cat) => {
+                  onCategoryChange(cat);
+                  setIsMobileFilterOpen(false);
+                }}
+                selectedBrand={selectedBrand}
+                onBrandChange={(b) => {
+                  onBrandChange(b);
+                  setIsMobileFilterOpen(false);
+                }}
+                onlyDiscount={onlyDiscount}
+                onToggleDiscount={onToggleDiscount}
+                onlyWithPrice={onlyWithPrice}
+                onToggleWithPrice={onToggleWithPrice}
+                selectedSkinTypes={selectedSkinTypes}
+                onToggleSkinType={handleToggleSkinType}
+                priceMin={priceMin}
+                priceMax={priceMax}
+                currentPriceRange={currentPriceRange}
+                onPriceRangeChange={setCurrentPriceRange}
+                onResetFilters={handleResetAll}
+                hasActiveFilters={isCustomFilterActive}
+                formatPrice={formatPrice}
+              />
+            </div>
           </div>
         )}
 

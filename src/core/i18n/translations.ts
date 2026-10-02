@@ -29,19 +29,26 @@ export interface Translations {
   showcase_banner_desc: string;
   showcase_banner_btn: string;
 
-  // Catalog Page
+  // Catalog Page & Tree Sidebar
   catalog_badge: string;
   catalog_title: string;
   catalog_subtitle: string;
+  catalog_shop_tagline: string;
+  catalog_filters_title: string;
   catalog_search_placeholder: string;
   catalog_all_brands: string;
   catalog_all_prices: string;
+  catalog_price_filter_title: string;
   catalog_under_30k: string;
   catalog_30k_60k: string;
   catalog_over_60k: string;
   catalog_sale_filter: string;
   catalog_with_price: string;
+  catalog_skin_type_title: string;
+  catalog_status_title: string;
+  catalog_in_stock: string;
   catalog_sort_label: string;
+  catalog_sort_default: string;
   catalog_sort_popular: string;
   catalog_sort_newest: string;
   catalog_sort_discount: string;
@@ -54,25 +61,47 @@ export interface Translations {
   catalog_showing: string;
   catalog_of: string;
   catalog_items: string;
+  catalog_results: string;
   catalog_show_more: string;
+  catalog_show_less: string;
   catalog_not_found_title: string;
   catalog_not_found_desc: string;
   catalog_show_all_btn: string;
+  catalog_filter_toggle_btn: string;
+  catalog_close_filters: string;
 
-  // Categories
+  // Categories & Tree nodes
   cat_all: string;
   cat_discount: string;
-  cat_sets: string;
+  cat_face_care: string;
+  cat_cleansers: string;
+  cat_toners: string;
   cat_serums: string;
+  cat_creams: string;
+  cat_eye_care: string;
+  cat_masks: string;
+  cat_special_care: string;
   cat_antiaging: string;
-  cat_cleansing: string;
+  cat_brightening: string;
   cat_sun: string;
+  cat_sets: string;
+  cat_body_hair: string;
+  cat_body_care: string;
+  cat_hair_care: string;
   cat_luxury: string;
+
+  // Skin Types
+  skin_combination: string;
+  skin_dry: string;
+  skin_sensitive: string;
+  skin_normal: string;
+  skin_oily: string;
 
   // Product Card & Details
   product_flight_badge: string;
   product_genuine_badge: string;
   product_add_cart: string;
+  product_in_cart: string;
   product_order_btn: string;
   product_quick_buy: string;
   product_quick_view: string;
@@ -81,6 +110,12 @@ export interface Translations {
   product_active_ingredients: string;
   product_how_to_use: string;
   product_reviews: string;
+
+  // Promo Banner
+  promo_badge: string;
+  promo_title: string;
+  promo_desc: string;
+  promo_btn: string;
 
   // Cart Drawer
   cart_title: string;
@@ -156,19 +191,26 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     showcase_banner_desc: 'Быстрый поиск по брендам, фильтры по типам кожи, объему и эксклюзивным скидкам до 70%.',
     showcase_banner_btn: 'Перейти в полный каталог',
 
-    // Catalog Page
+    // Catalog Page & Tree Sidebar
     catalog_badge: 'SEOUL DIRECT • 100% ORIGINAL',
-    catalog_title: 'КАТАЛОГ ТОВАРОВ',
+    catalog_title: 'Каталог косметики',
     catalog_subtitle: 'Оригинальная корейская косметика напрямую из Сеула',
+    catalog_shop_tagline: 'Откройте для себя сочетание инновационных формул и премиального ухода в каждом средстве. Новая коллекция для сияния вашей кожи.',
+    catalog_filters_title: 'Фильтры',
     catalog_search_placeholder: 'Поиск бренда, средства, типа кожи...',
     catalog_all_brands: 'Все бренды',
     catalog_all_prices: 'Все цены',
+    catalog_price_filter_title: 'Цена',
     catalog_under_30k: 'До 30,000 ₩',
     catalog_30k_60k: '30,000 ₩ — 60,000 ₩',
     catalog_over_60k: 'От 60,000 ₩',
-    catalog_sale_filter: 'Скидки',
-    catalog_with_price: 'С точной ценой',
+    catalog_sale_filter: 'Только со скидкой',
+    catalog_with_price: 'В наличии с ценой',
+    catalog_skin_type_title: 'Тип кожи',
+    catalog_status_title: 'Статус',
+    catalog_in_stock: 'В наличии',
     catalog_sort_label: 'Сортировка',
+    catalog_sort_default: 'По умолчанию',
     catalog_sort_popular: 'По популярности',
     catalog_sort_newest: 'Сначала новые',
     catalog_sort_discount: 'По скидке %',
@@ -181,25 +223,47 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     catalog_showing: 'Показано',
     catalog_of: 'из',
     catalog_items: 'товаров',
-    catalog_show_more: 'Показать еще',
+    catalog_results: 'результатов',
+    catalog_show_more: 'Показать больше',
+    catalog_show_less: 'Свернуть',
     catalog_not_found_title: 'Товары не найдены',
     catalog_not_found_desc: 'Попробуйте изменить поисковый запрос, выбрать другой бренд или сбросить фильтры.',
     catalog_show_all_btn: 'Показать все товары',
+    catalog_filter_toggle_btn: 'Фильтры каталога',
+    catalog_close_filters: 'Закрыть',
 
-    // Categories
+    // Categories & Tree nodes
     cat_all: 'Все товары',
     cat_discount: '🔥 Спецскидки',
-    cat_sets: 'Наборы & Боксы',
-    cat_serums: 'Сыворотки и эссенции',
-    cat_antiaging: 'Лифтинг и упругость',
-    cat_cleansing: 'Очищение и маски',
-    cat_sun: 'SPF Защита',
+    cat_face_care: 'Уход за лицом',
+    cat_cleansers: 'Очищение и пенки',
+    cat_toners: 'Тонеры и мисты',
+    cat_serums: 'Сыворотки и ампулы',
+    cat_creams: 'Кремы и флюиды',
+    cat_eye_care: 'Уход для век',
+    cat_masks: 'Маски и пилинги',
+    cat_special_care: 'Специальный уход',
+    cat_antiaging: 'Лифтинг и коллаген',
+    cat_brightening: 'Осветление и ниацинамид',
+    cat_sun: 'Защита от солнца (SPF)',
+    cat_sets: 'Наборы и боксы',
+    cat_body_hair: 'Тело и волосы',
+    cat_body_care: 'Уход за телом',
+    cat_hair_care: 'Уход за волосами',
     cat_luxury: 'Люкс бренды',
+
+    // Skin Types
+    skin_combination: 'Комбинированная',
+    skin_dry: 'Сухая',
+    skin_sensitive: 'Чувствительная',
+    skin_normal: 'Нормальная',
+    skin_oily: 'Жирная / Проблемная',
 
     // Product Card & Details
     product_flight_badge: 'Сеул • Прямой рейс',
     product_genuine_badge: '100% Оригинал',
     product_add_cart: 'В корзину',
+    product_in_cart: 'В корзине',
     product_order_btn: 'Заказать',
     product_quick_buy: 'Купить в 1 клик',
     product_quick_view: 'Быстрый просмотр',
@@ -208,6 +272,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     product_active_ingredients: 'Активные компоненты:',
     product_how_to_use: 'Способ применения:',
     product_reviews: 'отзывов',
+
+    // Promo Banner
+    promo_badge: 'СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ',
+    promo_title: 'Скидки до 30% на антивозрастной уход и сыворотки до конца месяца',
+    promo_desc: 'Подарите вашей коже премиальный корейский уход с пептидами, коллагеном и волюфилином по специальным ценам.',
+    promo_btn: 'Смотреть все акции',
 
     // Cart Drawer
     cart_title: 'Ваша корзина',
@@ -282,19 +352,26 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     showcase_banner_desc: "Brendlar bo'yicha tezkor qidiruv, teri turlari, hajm va 70% gacha bo'lgan chegirmalar bo'yicha filtrlar.",
     showcase_banner_btn: "To'liq katalogga o'tish",
 
-    // Catalog Page
+    // Catalog Page & Tree Sidebar
     catalog_badge: 'SEOUL DIRECT • 100% ORIGINAL',
-    catalog_title: 'MAHSULOTLAR KATALOGI',
+    catalog_title: 'Mahsulotlar katalogi',
     catalog_subtitle: "Original Koreya kosmetikasi to'g'ridan-to'g'ri Seuldan",
+    catalog_shop_tagline: "Har bir mahsulotda ilm-fan va premium parvarish uyg'unligini kashf eting. Teringizga jilo beruvchi yangi to'plam.",
+    catalog_filters_title: 'Filtrlar',
     catalog_search_placeholder: "Brend, mahsulot, teri turi bo'yicha qidiruv...",
     catalog_all_brands: 'Barcha brendlar',
     catalog_all_prices: 'Barcha narxlar',
+    catalog_price_filter_title: 'Narx',
     catalog_under_30k: '30,000 ₩ gacha',
     catalog_30k_60k: '30,000 ₩ — 60,000 ₩',
     catalog_over_60k: '60,000 ₩ dan yuqori',
-    catalog_sale_filter: 'Chegirmalar',
+    catalog_sale_filter: 'Faqat chegirmalar',
     catalog_with_price: 'Aniq narx bilan',
+    catalog_skin_type_title: 'Teri turi',
+    catalog_status_title: 'Holat',
+    catalog_in_stock: 'Mavjud',
     catalog_sort_label: 'Saralash',
+    catalog_sort_default: "Odatiy bo'yicha",
     catalog_sort_popular: "Mashhurlik bo'yicha",
     catalog_sort_newest: 'Avval yangilari',
     catalog_sort_discount: "Chegirma % bo'yicha",
@@ -305,27 +382,49 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     catalog_active_filters: 'Faol filtrlar:',
     catalog_reset_all: 'Hammasini tozalash',
     catalog_showing: "Ko'rsatildi:",
-    catalog_of: 'ta mahsulotdan',
-    catalog_items: 'tasi',
-    catalog_show_more: "Yana ko'rsatish",
+    catalog_of: 'tadan',
+    catalog_items: 'ta mahsulot',
+    catalog_results: 'ta natija',
+    catalog_show_more: "Ko'proq ko'rsatish",
+    catalog_show_less: 'Kamaytirish',
     catalog_not_found_title: 'Mahsulotlar topilmadi',
     catalog_not_found_desc: "Qidiruv so'zini o'zgartirib ko'ring, boshqa brendni tanlang yoki filtrlarni tozalang.",
     catalog_show_all_btn: 'Barcha mahsulotlarni ko\'rsatish',
+    catalog_filter_toggle_btn: 'Katalog filtrlari',
+    catalog_close_filters: 'Yopish',
 
-    // Categories
+    // Categories & Tree nodes
     cat_all: 'Barcha mahsulotlar',
     cat_discount: '🔥 Maxsus chegirmalar',
+    cat_face_care: 'Yuz parvarishi',
+    cat_cleansers: 'Yuvish vositalari & Penkalar',
+    cat_toners: 'Tonerlar & Mistlar',
+    cat_serums: 'Zardoblar & Ampulalar',
+    cat_creams: 'Kremlar & Emulsiyalar',
+    cat_eye_care: "Ko'z atrofi parvarishi",
+    cat_masks: 'Niqoblar & Pilinglar',
+    cat_special_care: 'Maxsus parvarish',
+    cat_antiaging: 'Lifting & Kollagen',
+    cat_brightening: 'Oqartirish & Niacinamid',
+    cat_sun: 'Quyoshdan himoya (SPF)',
     cat_sets: 'To\'plamlar & Boxlar',
-    cat_serums: 'Zardoblar va essensiyalar',
-    cat_antiaging: 'Lifting va elastiklik',
-    cat_cleansing: 'Tozalash va niqoblar',
-    cat_sun: 'SPF Quyoshdan himoya',
+    cat_body_hair: 'Tana va sochlar',
+    cat_body_care: 'Tana parvarishi',
+    cat_hair_care: 'Soch parvarishi',
     cat_luxury: 'Lyuks brendlar',
+
+    // Skin Types
+    skin_combination: 'Kombinatsiyalashgan',
+    skin_dry: 'Quruq',
+    skin_sensitive: 'Ta\'sirchan',
+    skin_normal: 'Normal',
+    skin_oily: 'Yog\'li / Muammoli',
 
     // Product Card & Details
     product_flight_badge: "Seul • To'g'ridan-to'g'ri reys",
     product_genuine_badge: '100% Original',
     product_add_cart: 'Savatchaga',
+    product_in_cart: 'Savatchada',
     product_order_btn: 'Buyurtma berish',
     product_quick_buy: '1 bosishda xarid',
     product_quick_view: "Tez ko'rish",
@@ -334,6 +433,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     product_active_ingredients: 'Faol moddalar:',
     product_how_to_use: "Qo'llash usuli:",
     product_reviews: 'ta sharh',
+
+    // Promo Banner
+    promo_badge: 'MAXSUS TAKLIF',
+    promo_title: "Yoshartiruvchi vositalar va zardoblarga 30% gacha chegirma oy oxirigacha",
+    promo_desc: "Teringizga peptidlar, kollagen va volufilinli premium Koreya parvarishini maxsus narxlarda tuhfa eting.",
+    promo_btn: 'Barcha aksiyalarni ko\'rish',
 
     // Cart Drawer
     cart_title: 'Sizning savatchangiz',
