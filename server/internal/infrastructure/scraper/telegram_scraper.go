@@ -167,6 +167,28 @@ func (s *TelegramScraper) ScrapePage(ctx context.Context, beforeID int) (*entity
 		posts = append(posts, post)
 	})
 
+	// Check Telegram's native cursor for earlier messages
+	doc.Find("a.tgme_messages_more, a[data-before], link[rel='prev']").Each(func(i int, s *goquery.Selection) {
+		if val, exists := s.Attr("data-before"); exists && val != "" {
+			if num, err := strconv.Atoi(val); err == nil && num > 0 {
+				if earliestID == 0 || num < earliestID {
+					earliestID = num
+				}
+			}
+		}
+		if href, exists := s.Attr("href"); exists && strings.Contains(href, "before=") {
+			parts := strings.Split(href, "before=")
+			if len(parts) > 1 {
+				numStr := strings.Split(parts[1], "&")[0]
+				if num, err := strconv.Atoi(numStr); err == nil && num > 0 {
+					if earliestID == 0 || num < earliestID {
+						earliestID = num
+					}
+				}
+			}
+		}
+	})
+
 	return channel, posts, earliestID, nil
 }
 
@@ -200,14 +222,15 @@ func (s *TelegramScraper) ScrapeDeep(ctx context.Context, maxPages int) (*entity
 			}
 		}
 
-		log.Printf("📄 Page %d: fetched %d posts (new: %d), earliest ID: %d", page, len(posts), addedOnPage, earliestID)
+		log.Printf("📄 Page %d: fetched %d posts (new: %d), earliest ID: %d, total so far: %d", page, len(posts), addedOnPage, earliestID, len(allPosts))
 
-		if earliestID <= 1 || addedOnPage == 0 || earliestID == beforeID {
+		if earliestID <= 1 || (beforeID > 0 && earliestID >= beforeID) {
+			log.Printf("🛑 Reached earliest post cursor (%d). Stopping deep scrape.", earliestID)
 			break
 		}
 
 		beforeID = earliestID
-		time.Sleep(700 * time.Millisecond) // Polite delay between requests
+		time.Sleep(350 * time.Millisecond) // Polite delay between requests
 	}
 
 	log.Printf("✨ Telegram Deep Scrape completed! Total unique posts: %d", len(allPosts))

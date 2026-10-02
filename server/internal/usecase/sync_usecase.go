@@ -47,7 +47,7 @@ func (uc *SyncUseCase) Sync(ctx context.Context, deep bool) (int, error) {
 	)
 
 	if deep {
-		ch, posts, err = uc.scraper.ScrapeDeep(ctx, 20)
+		ch, posts, err = uc.scraper.ScrapeDeep(ctx, 40)
 	} else {
 		var earliest int
 		ch, posts, earliest, err = uc.scraper.ScrapePage(ctx, 0)

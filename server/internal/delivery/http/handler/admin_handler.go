@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -133,7 +134,7 @@ func (h *AdminHandler) TriggerSync(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
-		"message": "Sync completed successfully",
+		"message": fmt.Sprintf("Синхронизация успешно завершена! В каталоге обработано %d товаров.", count),
 		"count":   count,
 	})
 }

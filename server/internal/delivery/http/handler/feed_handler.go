@@ -23,12 +23,20 @@ func NewFeedHandler(feedUC *usecase.FeedUseCase, syncUC *usecase.SyncUseCase) *F
 func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	feed, err := h.feedUC.GetFeed(r.Context())
 	if err != nil {
-		http.Error(w, `{"error":"failed to fetch feed: `+err.Error()+`"}`, http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "failed to fetch feed: " + err.Error(),
+		})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(feed)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"data":    feed,
+	})
 }
 
 func (h *FeedHandler) Sync(w http.ResponseWriter, r *http.Request) {
