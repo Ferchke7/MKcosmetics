@@ -1,0 +1,20 @@
+services:
+  mkcosmetics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mkcosmetics
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/app/server/data
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+    networks:
+      - duda-shared
+
+networks:
+  duda-shared:
+    external: true

@@ -1,0 +1,141 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Start server & test health check
+        run: |
+          set -euo pipefail
+          echo "=== Starting server on port 3101 in background ==="
+          PORT=3101 npm run start &
+          SERVER_PID=$!
+
+          HEALTH_URL="http://localhost:3101/api/health"
+          MAX_RETRIES=30
+          RETRY_INTERVAL=1
+          SUCCESS=0
+
+          echo "=== Waiting for health check ($HEALTH_URL) ==="
+          for i in $(seq 1 $MAX_RETRIES); do
+            if curl -s -f "$HEALTH_URL" > /dev/null 2>&1; then
+              echo "✅ Health check passed on attempt $i"
+              echo "Response: $(curl -s "$HEALTH_URL")"
+              SUCCESS=1
+              break
+            fi
+            echo "Waiting for server to become healthy ($i/$MAX_RETRIES)..."
+            sleep $RETRY_INTERVAL
+          done
+
+          kill $SERVER_PID || true
+
+          if [ $SUCCESS -ne 1 ]; then
+            echo "❌ Health check test failed after $((MAX_RETRIES * RETRY_INTERVAL))s"
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Configure SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync files to remote server
+        run: |
+          echo "=== [1/2] Syncing changed files via rsync ==="
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='dist/' \
+            --exclude='data/' \
+            --exclude='data' \
+            --exclude='server/data/' \
+            --exclude='server/data' \
+            --exclude='.idea/' \
+            --exclude='.env*' \
+            ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
+
+      - name: Rebuild & Restart Docker Container
+        run: |
+          echo "=== [2/2] Running deployment and health check on remote server ==="
+          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash << 'EOF'
+            set -euo pipefail
+
+            echo "--> Navigating to project directory: ${{ secrets.DEPLOY_PATH }}"
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "--> Rebuilding and starting container..."
+            docker compose up -d --build --remove-orphans
+
+            echo "--> Verifying service health..."
+            HEALTH_URL="http://localhost:3001/api/health"
+            MAX_RETRIES=30
+            RETRY_INTERVAL=2
+            SUCCESS=0
+
+            for i in $(seq 1 $MAX_RETRIES); do
+              if curl -s -f "$HEALTH_URL" > /dev/null 2>&1 || docker exec mkcosmetics wget -qO- "$HEALTH_URL" > /dev/null 2>&1; then
+                echo "✅ Service is healthy on attempt $i!"
+                if command -v curl > /dev/null 2>&1; then
+                  echo "Health response: $(curl -s "$HEALTH_URL")"
+                fi
+                SUCCESS=1
+                break
+              fi
+              echo "Waiting for health check ($i/$MAX_RETRIES)..."
+              sleep $RETRY_INTERVAL
+            done
+
+            if [ $SUCCESS -ne 1 ]; then
+              echo "❌ Health check failed after $((MAX_RETRIES * RETRY_INTERVAL))s!"
+              echo "=== Recent container logs for mkcosmetics ==="
+              docker compose logs --tail=100 mkcosmetics
+              exit 1
+            fi
+
+            echo "🚀 Deployment finished successfully!"
+          EOF
