@@ -138,3 +138,23 @@ func (h *AdminHandler) TriggerSync(w http.ResponseWriter, r *http.Request) {
 		"count":   count,
 	})
 }
+
+func (h *AdminHandler) ImportDummyProducts(w http.ResponseWriter, r *http.Request) {
+	count, err := h.syncUC.Sync(r.Context(), true)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Успешно импортировано %d товаров из Telegram канала @mkcosmetkor для теста!", count),
+		"count":   count,
+	})
+}

@@ -20,6 +20,7 @@ import { ConsultationQuiz } from '../components/sections/ConsultationQuiz/Consul
 import { DeliveryInfo } from '../components/sections/DeliveryInfo/DeliveryInfo';
 import { FAQ } from '../components/sections/FAQ/FAQ';
 import { Contact } from '../components/sections/Contact/Contact';
+import { BeautyBlogView } from '../components/blog/BeautyBlogView';
 
 // Admin & CRM
 import { AdminLogin } from '../components/admin/AdminLogin';
@@ -254,6 +255,15 @@ export function App() {
               onQuickBuy={handleOpenQuickOrder}
               onOpenFullCatalog={() => handleNavigate('catalog')}
             />
+
+            <section id="magazine">
+              <BeautyBlogView
+                onOpenProduct={(id) => {
+                  const found = allProducts.find((p) => p.id === id);
+                  if (found) handleOpenProductDetails(found);
+                }}
+              />
+            </section>
 
             <ConsultationQuiz />
             <DeliveryInfo />

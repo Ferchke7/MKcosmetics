@@ -122,3 +122,37 @@ type UnitEconomicsResponse struct {
 	Cohorts              []*CohortData         `json:"cohorts"`
 	RecentLedger         []*UnitSaleLedgerItem `json:"recentLedger"`
 }
+
+// StaffPayroll represents a calculated payslip and commission record for a staff member
+type StaffPayroll struct {
+	UserID           int64   `json:"userId"`
+	DisplayName      string  `json:"displayName"`
+	Role             string  `json:"role"`
+	Phone            string  `json:"phone"`
+	Period           string  `json:"period"`
+	OrdersCount      int     `json:"ordersCount"`
+	RevenueGenerated float64 `json:"revenueGenerated"`
+	BaseSalary       float64 `json:"baseSalary"`
+	CommissionRate   float64 `json:"commissionRate"`
+	CommissionAmount float64 `json:"commissionAmount"`
+	BonusAmount      float64 `json:"bonusAmount"`
+	TotalPayout      float64 `json:"totalPayout"`
+}
+
+// SalesLedgerItem represents an accounting line for export
+type SalesLedgerItem struct {
+	OrderNumber     string  `json:"orderNumber"`
+	Date            string  `json:"date"`
+	CustomerName    string  `json:"customerName"`
+	ChannelSource   string  `json:"channelSource"`
+	ProductNames    string  `json:"productNames"`
+	ItemsCount      int     `json:"itemsCount"`
+	Revenue         float64 `json:"revenue"`
+	CostPrice       float64 `json:"costPrice"`
+	GrossMargin     float64 `json:"grossMargin"`
+	MarginPercent   float64 `json:"marginPercent"`
+	AssignedTo      string  `json:"assignedTo"`
+	StaffCommission float64 `json:"staffCommission"`
+	NetProfit       float64 `json:"netProfit"`
+	Status          string  `json:"status"`
+}

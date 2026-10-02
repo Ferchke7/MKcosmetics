@@ -12,15 +12,24 @@ import (
 
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/excel"
 )
 
 type OrderUseCase struct {
-	orderRepo repository.OrderRepository
+	orderRepo     repository.OrderRepository
+	customerRepo  repository.CustomerRepository
+	excelExporter *excel.ExcelExporter
 }
 
-func NewOrderUseCase(orderRepo repository.OrderRepository) *OrderUseCase {
+func NewOrderUseCase(
+	orderRepo repository.OrderRepository,
+	customerRepo repository.CustomerRepository,
+	excelExporter *excel.ExcelExporter,
+) *OrderUseCase {
 	return &OrderUseCase{
-		orderRepo: orderRepo,
+		orderRepo:     orderRepo,
+		customerRepo:  customerRepo,
+		excelExporter: excelExporter,
 	}
 }
 
@@ -89,6 +98,18 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 
 	if err := uc.orderRepo.Create(ctx, order); err != nil {
 		return nil, err
+	}
+
+	// Auto sync with CRM customer record
+	if uc.customerRepo != nil && order.Phone != "" {
+		_, _ = uc.customerRepo.UpsertFromOrder(ctx, entity.Customer{
+			Name:            order.CustomerName,
+			Phone:           order.Phone,
+			City:            order.City,
+			DeliveryAddress: order.ShippingAddress,
+			TotalOrders:     1,
+			TotalSpent:      order.TotalAmount,
+		})
 	}
 
 	return order, nil
@@ -331,4 +352,12 @@ func (uc *OrderUseCase) ExportOrdersCSV(ctx context.Context, status, search stri
 
 	writer.Flush()
 	return buf.Bytes(), nil
+}
+
+func (uc *OrderUseCase) ExportOrdersXLSX(ctx context.Context, status, search string) ([]byte, error) {
+	orders, _, err := uc.orderRepo.FindAll(ctx, status, search, 10000, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch orders for export: %w", err)
+	}
+	return uc.excelExporter.ExportOrdersXLSX(orders)
 }

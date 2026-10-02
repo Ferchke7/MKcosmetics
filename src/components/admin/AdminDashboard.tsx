@@ -7,12 +7,10 @@ import {
   Settings,
   LogOut,
   Store,
-  Search,
   Plus,
   Edit2,
   Trash2,
   CheckCircle2,
-  AlertTriangle,
   ArrowUpDown,
   Download,
   Shield,
@@ -29,21 +27,19 @@ import {
   ShoppingBag,
   HeartHandshake,
   Zap,
-  Truck,
   MapPin,
   Image as ImageIcon,
-  SlidersHorizontal,
   CreditCard,
   Eye,
   X,
-  Plane,
   Layers,
   FileSpreadsheet,
-  Activity,
   LineChart,
-  BarChart3,
-  Briefcase,
   TrendingUp,
+  BookOpen,
+  Send,
+  Database,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { adminService, AdminStats, Order } from '../../services/admin/adminService';
@@ -52,10 +48,13 @@ import { ProductEditModal } from './ProductEditModal';
 import { OrderProcessingModal } from './OrderProcessingModal';
 import { AnalyticsEChartsView } from './AnalyticsEChartsView';
 import { SalesUnitEconomicsView } from './SalesUnitEconomicsView';
-import { LogisticsCargoView } from './LogisticsCargoView';
 import { InventoryVariantsView } from './InventoryVariantsView';
 import { StaffManagementView } from './StaffManagementView';
 import { DataExportModal } from './DataExportModal';
+import { CustomerCRMView } from './CustomerCRMView';
+import { BeautyBlogView } from '../blog/BeautyBlogView';
+import { TelegramDummyImportModal } from './TelegramDummyImportModal';
+import { UnifiedDataGrid, Column, BulkAction } from './UnifiedDataGrid';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -63,7 +62,18 @@ interface AdminDashboardProps {
   onRefreshFeed: () => Promise<void>;
 }
 
-type TabType = 'overview' | 'sales' | 'orders' | 'cargo' | 'variants' | 'staff' | 'products' | 'sync' | 'visitors' | 'settings';
+type TabType =
+  | 'overview'
+  | 'sales'
+  | 'orders'
+  | 'customers'
+  | 'staff'
+  | 'products'
+  | 'articles'
+  | 'variants'
+  | 'sync'
+  | 'visitors'
+  | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackToShop,
@@ -84,22 +94,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [orderTypeFilter, setOrderTypeFilter] = useState('all');
-  const [orderSearchQuery, setOrderSearchQuery] = useState('');
-  const [editingNotesOrderId, setEditingNotesOrderId] = useState<number | null>(null);
-  const [editingNotesText, setEditingNotesText] = useState('');
-  const [deleteOrderConfirmId, setDeleteOrderConfirmId] = useState<number | null>(null);
-  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [sellerFilter, setSellerFilter] = useState('all');
   const [selectedOrderForProcessing, setSelectedOrderForProcessing] = useState<Order | null>(null);
   const [lightboxReceiptUrl, setLightboxReceiptUrl] = useState<string | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [sellerFilter, setSellerFilter] = useState('all');
+  const [isDummyModalOpen, setIsDummyModalOpen] = useState(false);
 
-  // Products Search & Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('all');
-  const [sortBy, setSortBy] = useState<'newest' | 'priceAsc' | 'priceDesc' | 'discount'>('newest');
-
-  // Modals & Actions
+  // Product CRUD State
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<TelegramPost | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -133,8 +134,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const data = await adminService.getAdminOrders(
         orderStatusFilter === 'all' ? '' : orderStatusFilter,
-        orderSearchQuery,
-        100,
+        '',
+        500,
         0,
         token
       );
@@ -156,7 +157,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (activeTab === 'orders' || activeTab === 'overview') {
       fetchOrders();
     }
-  }, [activeTab, orderStatusFilter, orderSearchQuery, token]);
+  }, [activeTab, orderStatusFilter, token]);
 
   // Order Handlers
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
@@ -172,32 +173,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleStartEditNotes = (order: Order) => {
-    setEditingNotesOrderId(order.id);
-    setEditingNotesText(order.notes || '');
-  };
-
-  const handleSaveNotes = async (orderId: number) => {
-    if (!token) return;
-    setIsSavingNotes(true);
-    try {
-      await adminService.updateOrderNotes(orderId, editingNotesText, token);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, notes: editingNotesText } : o))
-      );
-      setEditingNotesOrderId(null);
-    } catch (err: any) {
-      alert(err.message || 'Ошибка сохранения заметки');
-    } finally {
-      setIsSavingNotes(false);
-    }
-  };
-
   const handleDeleteOrder = async (orderId: number) => {
     if (!token) return;
     try {
       await adminService.deleteOrder(orderId, token);
-      setDeleteOrderConfirmId(null);
       await fetchOrders();
       await fetchStats();
     } catch (err: any) {
@@ -254,7 +233,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Sync Handlers
+  // Trigger sync from Telegram
   const handleTriggerSync = async (deep: boolean) => {
     if (!token || isSyncing) return;
     setIsSyncing(true);
@@ -269,6 +248,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  // 1-Click XLSX Export Handlers
+  const handleExportProductsXLSX = () => {
+    window.open('/api/admin/products/export/xlsx', '_blank');
+  };
+
+  const handleExportOrdersXLSX = () => {
+    const url = `/api/admin/orders/export/xlsx${orderStatusFilter !== 'all' ? `?status=${orderStatusFilter}` : ''}`;
+    window.open(url, '_blank');
   };
 
   // Password Change
@@ -292,98 +281,350 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Export JSON
-  const handleExportJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(posts, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `mk_cosmetics_catalog_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+  // Format money helper
+  const fmtMoney = (val?: number) => {
+    if (!val) return '0 сум';
+    return new Intl.NumberFormat('ru-RU').format(Math.round(val)) + ' сум';
   };
 
-  // Filter and sort products
-  const brands = Array.from(new Set(posts.map((p) => p.brand).filter(Boolean))).sort();
+  // Orders Columns for UnifiedDataGrid
+  const orderColumns: Column<Order>[] = [
+    {
+      key: 'orderNumber',
+      header: '№ Заказа / Дата',
+      sortable: true,
+      render: (o) => (
+        <div>
+          <div className="font-bold text-white flex items-center gap-1.5">
+            <span className="text-amber-400">#{o.orderNumber}</span>
+            {o.status === 'new' && (
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            )}
+          </div>
+          <div className="text-[11px] text-neutral-500 mt-0.5">
+            {new Date(o.createdAt).toLocaleDateString('ru-RU', {
+              day: '2-digit',
+              month: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'customerName',
+      header: 'Клиент / Телефон',
+      sortable: true,
+      render: (o) => (
+        <div>
+          <div className="font-semibold text-neutral-200">{o.customerName || 'Покупатель'}</div>
+          <div className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
+            <Phone className="w-3 h-3 text-neutral-500" />
+            <span>{o.phone}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'city',
+      header: 'Город / Адрес',
+      sortable: true,
+      render: (o) => (
+        <div className="text-xs">
+          <div className="font-medium text-neutral-300 flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-amber-400/70" />
+            <span>{o.city || 'Ташкент'}</span>
+          </div>
+          {o.shippingAddress && (
+            <div className="text-neutral-500 truncate max-w-[150px]">{o.shippingAddress}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'totalAmount',
+      header: 'Сумма заказа',
+      sortable: true,
+      align: 'right',
+      render: (o) => (
+        <div className="text-right">
+          <div className="font-bold text-emerald-400">{fmtMoney(o.totalAmount)}</div>
+          <div className="text-[11px] text-neutral-500">{o.items?.length || 0} тов.</div>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Статус',
+      sortable: true,
+      align: 'center',
+      render: (o) => {
+        const statusMap: Record<string, { label: string; color: string }> = {
+          new: { label: 'Новый', color: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+          processing: { label: 'В обработке', color: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
+          paid: { label: 'Оплачен', color: 'bg-purple-500/10 text-purple-300 border-purple-500/30' },
+          shipped: { label: 'Отправлен', color: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
+          delivered: { label: 'Доставлен', color: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' },
+          cancelled: { label: 'Отменен', color: 'bg-neutral-800 text-neutral-400 border-neutral-700' },
+        };
+        const st = statusMap[o.status] || { label: o.status, color: 'bg-neutral-800 text-neutral-400' };
+        return (
+          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${st.color}`}>
+            {st.label}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'receipt',
+      header: 'Чек оплаты',
+      align: 'center',
+      render: (o) => {
+        if (o.paymentReceiptUrl) {
+          return (
+            <button
+              onClick={() => setLightboxReceiptUrl(o.paymentReceiptUrl!)}
+              className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium flex items-center gap-1 hover:bg-emerald-500/30 transition-colors mx-auto"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Чек 📄</span>
+            </button>
+          );
+        }
+        return <span className="text-neutral-600 text-xs">—</span>;
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Действия',
+      align: 'center',
+      render: (o) => (
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            onClick={() => setSelectedOrderForProcessing(o)}
+            className="p-1.5 rounded-lg bg-[#25221F] hover:bg-amber-500/20 text-neutral-300 hover:text-amber-400 border border-amber-500/10 transition-all"
+            title="Обработать заказ"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm(`Удалить заказ #${o.orderNumber}?`)) {
+                handleDeleteOrder(o.id);
+              }
+            }}
+            className="p-1.5 rounded-lg bg-[#25221F] hover:bg-red-500/20 text-neutral-400 hover:text-red-400 border border-amber-500/10 transition-all"
+            title="Удалить"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
-  const filteredProducts = posts.filter((p) => {
-    const matchSearch =
-      !searchQuery.trim() ||
-      p.productTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.text && p.text.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Bulk actions for Orders
+  const orderBulkActions: BulkAction<Order>[] = [
+    {
+      label: 'Отметить: В обработке',
+      variant: 'default',
+      onClick: async (items, clear) => {
+        for (const item of items) {
+          await adminService.updateOrderStatus(item.id, 'processing', token || '');
+        }
+        await fetchOrders();
+        clear();
+      },
+    },
+    {
+      label: 'Отметить: Оплачен',
+      variant: 'gold',
+      onClick: async (items, clear) => {
+        for (const item of items) {
+          await adminService.updateOrderStatus(item.id, 'paid', token || '');
+        }
+        await fetchOrders();
+        clear();
+      },
+    },
+  ];
 
-    const matchBrand = selectedBrand === 'all' || p.brand === selectedBrand;
-    return matchSearch && matchBrand;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'priceAsc') return (a.prices?.krw || 0) - (b.prices?.krw || 0);
-    if (sortBy === 'priceDesc') return (b.prices?.krw || 0) - (a.prices?.krw || 0);
-    if (sortBy === 'discount') return (b.discountPercent || 0) - (a.discountPercent || 0);
-    return (b.timestamp || 0) - (a.timestamp || 0);
-  });
+  // Product Columns for UnifiedDataGrid
+  const productColumns: Column<TelegramPost>[] = [
+    {
+      key: 'productTitle',
+      header: 'Товар / Фото',
+      sortable: true,
+      render: (p) => (
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#221F1C] border border-amber-500/20 overflow-hidden shrink-0">
+            {p.photos && p.photos.length > 0 ? (
+              <img src={p.photos[0]} alt={p.productTitle} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-neutral-600">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="font-bold text-white text-sm line-clamp-1">{p.productTitle}</div>
+            <div className="text-xs text-amber-400 font-semibold">{p.brand || 'Корея'}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'priceUZS',
+      header: 'Цена (UZS)',
+      sortable: true,
+      align: 'right',
+      accessor: (p) => p.prices?.uzs || 0,
+      render: (p) => (
+        <span className="font-bold text-emerald-400">
+          {fmtMoney(p.prices?.uzs)}
+        </span>
+      ),
+    },
+    {
+      key: 'priceKRW',
+      header: 'Цена (KRW)',
+      sortable: true,
+      align: 'right',
+      accessor: (p) => p.prices?.krw || 0,
+      render: (p) => (
+        <span className="text-neutral-300 font-medium">
+          {p.prices?.krw ? `₩ ${p.prices.krw.toLocaleString()}` : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'discountPercent',
+      header: 'Скидка',
+      sortable: true,
+      align: 'center',
+      render: (p) =>
+        p.discountPercent > 0 ? (
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+            -{p.discountPercent}%
+          </span>
+        ) : (
+          <span className="text-neutral-600 text-xs">—</span>
+        ),
+    },
+    {
+      key: 'views',
+      header: 'Просмотры',
+      sortable: true,
+      align: 'center',
+      render: (p) => <span className="text-neutral-400 text-xs">{p.views || 0}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Действия',
+      align: 'center',
+      render: (p) => (
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            onClick={() => handleOpenEditModal(p)}
+            className="p-1.5 rounded-lg bg-[#25221F] hover:bg-amber-500/20 text-neutral-300 hover:text-amber-400 border border-amber-500/10 transition-all"
+            title="Редактировать"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          {p.postUrl && (
+            <a
+              href={p.postUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1.5 rounded-lg bg-[#25221F] hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 transition-all"
+              title="Открыть в Telegram"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+          <button
+            onClick={() => setDeleteConfirmId(p.id)}
+            className="p-1.5 rounded-lg bg-[#25221F] hover:bg-red-500/20 text-neutral-400 hover:text-red-400 border border-amber-500/10 transition-all"
+            title="Удалить"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#141312] text-[#EDE8E1] flex flex-col font-sans">
-      {/* Top Header */}
-      <header className="bg-[#1C1A18] border-b border-white/10 sticky top-0 z-40 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+      {/* Top Navigation Bar */}
+      <header className="bg-[#1C1A18] border-b border-amber-500/20 sticky top-0 z-40 px-4 lg:px-8 py-3.5 flex items-center justify-between backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#D4AF37] to-[#8B5A2B] flex items-center justify-center text-[#141312] font-bold font-serif shadow-lg">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-700 flex items-center justify-center text-black font-black font-serif shadow-lg">
             MK
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-serif font-bold text-white text-base tracking-wide">
-                MK COSMETICS
+              <span className="font-serif font-black text-white text-base tracking-wide">
+                MK COSMETICS ENTERPRISE
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30">
-                CRM
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                ERP/CRM
               </span>
             </div>
-            <p className="text-[11px] text-[#A8A29E]">Панель управления и база SQLite</p>
+            <p className="text-[11px] text-neutral-400">Управление магазином корейской косметики</p>
           </div>
         </div>
 
-        {/* Top actions */}
-        <div className="flex items-center gap-3">
+        {/* Top Header Actions */}
+        <div className="flex items-center gap-2.5">
+          {/* Telegram Dummy Loader Trigger */}
           <button
-            onClick={onBackToShop}
-            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-[#C4BDB5] hover:text-white border border-white/10 transition-colors"
+            onClick={() => setIsDummyModalOpen(true)}
+            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-sky-950/50 hover:bg-sky-900/60 border border-sky-500/40 text-xs text-sky-300 font-semibold transition-all shadow-sm"
           >
-            <Store className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="hidden sm:inline">Перейти в магазин</span>
+            <Send className="w-3.5 h-3.5 text-sky-400" />
+            <span>Импорт из Telegram</span>
           </button>
 
-          <div className="h-5 w-[1px] bg-white/10 hidden sm:block" />
+          {/* Quick XLSX Export */}
+          <button
+            onClick={handleExportProductsXLSX}
+            className="hidden sm:flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Каталог .xlsx</span>
+          </button>
 
-          <div className="flex items-center gap-2 pl-1">
-            <div className="w-7 h-7 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center text-xs font-bold border border-[#D4AF37]/30">
-              {user?.username?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            <span className="text-xs font-medium text-white hidden md:inline">{user?.username}</span>
-            <button
-              onClick={logout}
-              title="Выйти"
-              className="p-1.5 text-[#A8A29E] hover:text-red-400 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={onBackToShop}
+            className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-neutral-300 hover:text-white border border-white/10 transition-colors"
+          >
+            <Store className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">В магазин</span>
+          </button>
+
+          <button
+            onClick={logout}
+            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 border border-white/10 transition-colors"
+            title="Выйти"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
-      {/* Main Content Layout */}
-      <div className="flex-1 flex flex-col md:flex-row">
-        {/* Sidebar Nav */}
-        <aside className="w-full md:w-64 bg-[#181615] border-r border-white/10 p-4 space-y-1 flex-shrink-0">
+      {/* Main Admin Layout */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Left Sidebar Navigation */}
+        <aside className="w-full md:w-64 bg-[#181614] border-r border-amber-500/10 p-4 shrink-0 flex flex-col justify-between">
           <nav className="space-y-1">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'overview'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <LineChart className="w-4 h-4" />
@@ -392,127 +633,128 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={() => setActiveTab('sales')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'sales'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <span>Продажи & Юнит-Экономика</span>
+              <span>Юнит-Экономика</span>
             </button>
 
             <button
               onClick={() => setActiveTab('orders')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'orders'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <div className="flex items-center gap-3">
                 <ClipboardList className="w-4 h-4" />
                 <span>Заказы & Лиды CRM</span>
               </div>
-              <div className="flex items-center gap-1">
-                {(ordersStatusCounts['new'] || 0) > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-black font-bold animate-pulse">
-                    +{ordersStatusCounts['new']}
-                  </span>
-                )}
-                <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                  activeTab === 'orders' ? 'bg-[#141312]/20 text-[#141312]' : 'bg-white/10 text-[#C4BDB5]'
-                }`}>
-                  {ordersTotal || orders.length}
-                </span>
-              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  activeTab === 'orders'
+                    ? 'bg-black/20 text-black font-bold'
+                    : 'bg-white/10 text-neutral-300'
+                }`}
+              >
+                {ordersTotal || orders.length}
+              </span>
             </button>
 
             <button
-              onClick={() => setActiveTab('cargo')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'cargo'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              onClick={() => setActiveTab('customers')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'customers'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Plane className="w-4 h-4" />
-              <span>Карго & Авиа-Рейсы</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('variants')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'variants'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Склад & Инварианты</span>
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span>Клиенты (CRM)</span>
             </button>
 
             <button
               onClick={() => setActiveTab('staff')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'staff'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>Продавцы & Команда</span>
+              <span>Продавцы & Зарплата (HRM)</span>
             </button>
 
             <button
               onClick={() => setActiveTab('products')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'products'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Package className="w-4 h-4" />
-                <span>Товары в базе</span>
+                <span>Каталог Товаров</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                activeTab === 'products' ? 'bg-[#141312]/20 text-[#141312]' : 'bg-white/10 text-[#C4BDB5]'
-              }`}>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  activeTab === 'products'
+                    ? 'bg-black/20 text-black font-bold'
+                    : 'bg-white/10 text-neutral-300'
+                }`}
+              >
                 {posts.length}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab('sync')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'sync'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              onClick={() => setActiveTab('articles')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'articles'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[#D4AF37]' : ''}`} />
+              <BookOpen className="w-4 h-4 text-sky-400" />
+              <span>Бьюти-Журнал (Статьи)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('variants')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'variants'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Склад & Варианты</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('sync')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'sync'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-amber-400' : ''}`} />
               <span>Telegram Синхронизация</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('visitors')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'visitors'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Globe className="w-4 h-4" />
-              <span>CRM Посетители</span>
-            </button>
-
-            <button
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'settings'
-                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
-                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Settings className="w-4 h-4" />
@@ -520,63 +762,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </nav>
 
-          <div className="pt-6 mt-6 border-t border-white/5 px-2">
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/5 text-[11px] text-[#A8A29E] space-y-1.5">
+          <div className="pt-4 border-t border-amber-500/10">
+            <div className="p-3 rounded-2xl bg-[#141210] border border-amber-500/10 text-xs text-neutral-400 space-y-1">
               <div className="flex items-center gap-1.5 text-white font-semibold">
-                <Shield className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
                 <span>Go + SQLite WAL</span>
               </div>
-              <p className="text-[10px] text-[#78716C]">
-                Идемпотентная персистентность. Данные защищены.
+              <p className="text-[10px] text-neutral-500">
+                Нативная генерация Excel `.xlsx` и CRM база.
               </p>
             </div>
           </div>
         </aside>
 
-        {/* Tab Content Area */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
-          {/* TAB 1: OVERVIEW & ECHARTS ANALYTICS */}
-          {activeTab === 'overview' && (
-            <AnalyticsEChartsView token={token || ''} />
-          )}
+        {/* Main Content Pane */}
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+          {/* TAB: ECHARTS OVERVIEW */}
+          {activeTab === 'overview' && <AnalyticsEChartsView token={token || ''} />}
 
-          {/* TAB: ADVANCED SALES & UNIT ECONOMICS */}
-          {activeTab === 'sales' && (
-            <SalesUnitEconomicsView token={token || ''} />
-          )}
+          {/* TAB: SALES UNIT ECONOMICS */}
+          {activeTab === 'sales' && <SalesUnitEconomicsView token={token || ''} />}
 
-          {/* TAB 2: CRM ORDERS & LEADS */}
+          {/* TAB: ORDERS & LEADS (Unified DataGrid) */}
           {activeTab === 'orders' && (
-            <div className="space-y-6 max-w-7xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-xl font-bold text-white font-serif">Заказы & Лиды CRM</h1>
-                  <p className="text-xs text-[#A8A29E]">
-                    Управление входящими заявками, назначение продавцов, авиа-карго и учет чеков оплаты
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                  <button
-                    onClick={() => setIsExportModalOpen(true)}
-                    className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40"
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span>Выгрузка в Excel / CSV</span>
-                  </button>
-
-                  <button
-                    onClick={fetchOrders}
-                    disabled={isLoadingOrders}
-                    className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />
-                    <span>Обновить</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Status Filter Buttons */}
-              <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
+            <div className="space-y-6">
+              {/* Status Pills */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-amber-500/10 pb-4">
                 {[
                   { id: 'all', label: 'Все заявки', count: ordersTotal },
                   { id: 'new', label: '🟡 Новые', count: ordersStatusCounts['new'] || 0, highlight: true },
@@ -591,1021 +802,252 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onClick={() => setOrderStatusFilter(st.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
                       orderStatusFilter === st.id
-                        ? 'bg-[#D4AF37] text-[#141312] shadow-md font-bold'
-                        : 'bg-white/5 text-[#A8A29E] hover:bg-white/10 hover:text-white border border-white/5'
+                        ? 'bg-amber-500 text-black shadow-md font-bold'
+                        : 'bg-[#1C1A18] text-neutral-400 hover:text-white border border-amber-500/10'
                     }`}
                   >
                     <span>{st.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      orderStatusFilter === st.id
-                        ? 'bg-[#141312]/20 text-[#141312]'
-                        : st.highlight && st.count > 0
-                        ? 'bg-amber-500/20 text-amber-300 font-bold'
-                        : 'bg-white/10 text-[#C4BDB5]'
-                    }`}>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        orderStatusFilter === st.id
+                          ? 'bg-black/20 text-black font-bold'
+                          : st.highlight && st.count > 0
+                          ? 'bg-amber-500/20 text-amber-400 font-bold'
+                          : 'bg-white/10 text-neutral-400'
+                      }`}
+                    >
                       {st.count}
                     </span>
                   </button>
                 ))}
               </div>
 
-              {/* Search & Channel & Seller Filters */}
-              <div className="p-4 rounded-2xl bg-[#1C1A18] border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div className="sm:col-span-2 relative">
-                  <Search className="w-4 h-4 text-[#78716C] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={orderSearchQuery}
-                    onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    placeholder="Поиск по MK-номеру, имени, телефону, городу..."
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
-                  />
-                </div>
-
-                <div>
-                  <select
-                    value={orderTypeFilter}
-                    onChange={(e) => setOrderTypeFilter(e.target.value)}
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    <option value="all">Все каналы продаж</option>
-                    <option value="quick_order">⚡ Быстрый заказ</option>
-                    <option value="cart">🛒 Корзина магазина</option>
-                    <option value="quiz_consultation">💆‍♀️ Подбор ухода (Квиз)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <select
-                    value={sellerFilter}
-                    onChange={(e) => setSellerFilter(e.target.value)}
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    <option value="all">Все менеджеры</option>
-                    <option value="unassigned">⚠️ Не назначены</option>
-                    {Array.from(new Set(orders.map((o) => o.assignedTo).filter(Boolean))).map((seller) => (
-                      <option key={seller} value={seller}>
-                        👤 {seller}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Orders Table & Cards */}
-              <div className="bg-[#1C1A18] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                {isLoadingOrders ? (
-                  <div className="p-12 text-center text-[#A8A29E] flex flex-col items-center justify-center gap-3">
-                    <RefreshCw className="w-6 h-6 animate-spin text-[#D4AF37]" />
-                    <span className="text-xs">Загрузка заказов из базы SQLite...</span>
-                  </div>
-                ) : orders.filter(o => {
-                  const matchType = orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter;
-                  const matchSeller = sellerFilter === 'all' || (sellerFilter === 'unassigned' ? !o.assignedTo : o.assignedTo === sellerFilter);
-                  return matchType && matchSeller;
-                }).length === 0 ? (
-                  <div className="p-12 text-center text-[#78716C] space-y-2">
-                    <ClipboardList className="w-8 h-8 mx-auto text-[#78716C] opacity-40" />
-                    <p className="text-sm font-medium text-white">Заказы не найдены</p>
-                    <p className="text-xs text-[#78716C]">
-                      Новые заявки из форм сайта и WhatsApp будут автоматически появляться здесь в реальном времени.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/5">
-                    {orders
-                      .filter(o => {
-                        const matchType = orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter;
-                        const matchSeller = sellerFilter === 'all' || (sellerFilter === 'unassigned' ? !o.assignedTo : o.assignedTo === sellerFilter);
-                        return matchType && matchSeller;
-                      })
-                      .map((order) => {
-                        const isNew = order.status === 'new';
-                        const statusColors: Record<string, string> = {
-                          new: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-                          processing: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-                          paid: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-                          shipped: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-                          delivered: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-                          cancelled: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
-                        };
-
-                        const channelBadges: Record<string, { label: string; icon: any; color: string }> = {
-                          quick_order: { label: 'Быстрый заказ', icon: Zap, color: 'text-amber-400' },
-                          cart: { label: 'Корзина', icon: ShoppingBag, color: 'text-emerald-400' },
-                          quiz_consultation: { label: 'Подбор ухода', icon: HeartHandshake, color: 'text-rose-400' },
-                          skin_quiz: { label: 'Подбор ухода', icon: HeartHandshake, color: 'text-rose-400' },
-                        };
-
-                        const channel = channelBadges[order.type] || channelBadges[order.channelSource] || {
-                          label: order.channelSource || 'Заказ',
-                          icon: ClipboardList,
-                          color: 'text-[#D4AF37]',
-                        };
-                        const ChannelIcon = channel.icon;
-
-                        const cleanPhone = (order.phone || '').replace(/[^\d+]/g, '');
-                        const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : null;
-
-                        return (
-                          <div
-                            key={order.id}
-                            className={`p-5 sm:p-6 transition-colors hover:bg-white/[0.02] ${
-                              isNew ? 'bg-amber-500/[0.03] border-l-4 border-l-amber-400' : ''
-                            }`}
-                          >
-                            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                              {/* Left Info: Order Number, Customer, Channel, Manager, Cargo, Timestamp */}
-                              <div className="space-y-3 flex-1">
-                                <div className="flex flex-wrap items-center gap-2.5">
-                                  <span className="font-mono text-sm font-bold text-white px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">
-                                    {order.orderNumber}
-                                  </span>
-                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 border border-white/5 ${channel.color}`}>
-                                    <ChannelIcon className="w-3.5 h-3.5" />
-                                    <span>{channel.label}</span>
-                                  </span>
-
-                                  {/* Manager Badge */}
-                                  {order.assignedTo ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                                      <Briefcase className="w-3.5 h-3.5 text-blue-400" />
-                                      <span>Менеджер: <strong>{order.assignedTo}</strong></span>
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] text-[#A8A29E] bg-white/5 border border-white/5">
-                                      Без менеджера
-                                    </span>
-                                  )}
-
-                                  {/* Cargo Batch Badge */}
-                                  {order.cargoBatchId && (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20">
-                                      <Plane className="w-3.5 h-3.5 text-sky-400" />
-                                      <span>Рейс #{order.cargoBatchId}</span>
-                                    </span>
-                                  )}
-
-                                  {/* City Badge */}
-                                  {order.city && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20">
-                                      <MapPin className="w-3 h-3" />
-                                      <span>{order.city}</span>
-                                    </span>
-                                  )}
-
-                                  <span className="text-[11px] text-[#78716C] flex items-center gap-1 ml-auto">
-                                    <Clock className="w-3 h-3" />
-                                    {new Date(order.createdAt).toLocaleString()}
-                                  </span>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-4 text-xs">
-                                  <div className="text-white font-medium">
-                                    <span className="text-[#78716C] text-[11px] block">Клиент:</span>
-                                    <span className="font-semibold text-sm">{order.customerName || 'Не указано'}</span>
-                                  </div>
-
-                                  {order.phone && (
-                                    <div>
-                                      <span className="text-[#78716C] text-[11px] block">Телефон / Контакт:</span>
-                                      <div className="flex items-center gap-2 mt-0.5">
-                                        <a
-                                          href={`tel:${cleanPhone}`}
-                                          className="text-[#D4AF37] hover:underline font-mono"
-                                        >
-                                          {order.phone}
-                                        </a>
-                                        {waUrl && (
-                                          <a
-                                            href={waUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-2 py-0.5 rounded-md bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/30 text-[10px] font-bold flex items-center gap-1"
-                                            title="Написать в WhatsApp"
-                                          >
-                                            <MessageSquare className="w-3 h-3" />
-                                            WhatsApp
-                                          </a>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Order Logistics & Payment details */}
-                                {(order.paymentReceiptUrl || order.trackingNumber || order.shippingAddress || order.paymentMethod) && (
-                                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                                    {order.paymentReceiptUrl && (
-                                      <div className="flex items-center gap-2 p-1.5 pr-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300">
-                                        <button
-                                          onClick={() => setLightboxReceiptUrl(order.paymentReceiptUrl || null)}
-                                          className="relative group w-8 h-8 rounded-lg overflow-hidden bg-black/40 border border-purple-500/40 flex-shrink-0"
-                                          title="Нажмите для увеличения чека"
-                                        >
-                                          <img
-                                            src={order.paymentReceiptUrl}
-                                            alt="Чек"
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                          />
-                                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <Eye className="w-3.5 h-3.5 text-white" />
-                                          </div>
-                                        </button>
-                                        <div className="text-[11px]">
-                                          <div className="font-bold flex items-center gap-1">
-                                            <CheckCircle2 className="w-3 h-3 text-purple-400" />
-                                            <span>Чек об оплате</span>
-                                          </div>
-                                          {order.paymentMethod && (
-                                            <span className="text-[10px] text-[#A8A29E] block">
-                                              {order.paymentMethod}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {order.trackingNumber && (
-                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-mono">
-                                        <Truck className="w-3.5 h-3.5 text-orange-400" />
-                                        <span>Трек: <strong>{order.trackingNumber}</strong></span>
-                                      </div>
-                                    )}
-
-                                    {order.shippingAddress && (
-                                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[#C4BDB5]">
-                                        <MapPin className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
-                                        <span className="truncate max-w-xs">{order.shippingAddress}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Order Items or Details */}
-                                {order.items && order.items.length > 0 && (
-                                  <div className="pt-2">
-                                    <span className="text-[11px] uppercase tracking-wider text-[#A8A29E] font-semibold block mb-1.5">
-                                      Состав заказа ({order.items.length} поз.):
-                                    </span>
-                                    <div className="space-y-1.5">
-                                      {order.items.map((item, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="flex items-center gap-3 p-2 rounded-xl bg-black/20 border border-white/5 text-xs"
-                                        >
-                                          {item.photoUrl ? (
-                                            <img
-                                              src={item.photoUrl}
-                                              alt=""
-                                              className="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-black"
-                                            />
-                                          ) : (
-                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] text-[#78716C] flex-shrink-0">
-                                              MK
-                                            </div>
-                                          )}
-                                          <div className="flex-1 min-w-0">
-                                            <div className="text-white font-medium truncate">{item.title}</div>
-                                            <div className="text-[11px] text-[#78716C]">
-                                              Кол-во: <strong className="text-[#D4AF37]">{item.quantity} шт.</strong>
-                                              {item.price > 0 && ` • ₩ ${item.price.toLocaleString()}`}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Notes / Comments */}
-                                {order.notes && (
-                                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-[#C4BDB5] whitespace-pre-line leading-relaxed">
-                                    <span className="text-[10px] uppercase font-bold text-[#A8A29E] block mb-0.5">
-                                      Комментарии / Данные заявки:
-                                    </span>
-                                    {order.notes}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Right Info: Status Dropdown, Total Amount, Manager Actions */}
-                              <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-3 lg:w-64 flex-shrink-0 border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
-                                {/* Total Amount & Cost/Margin */}
-                                {order.totalAmount > 0 && (
-                                  <div className="text-left lg:text-right">
-                                    <span className="text-[10px] text-[#78716C] block uppercase">Сумма заказа:</span>
-                                    <span className="text-lg font-bold text-[#D4AF37] font-serif">
-                                      ₩ {order.totalAmount.toLocaleString()}
-                                    </span>
-                                    {order.costPrice !== undefined && order.costPrice > 0 && (
-                                      <div className="text-[10px] text-emerald-400 font-semibold">
-                                        Маржа: +₩ {(order.totalAmount - order.costPrice).toLocaleString()}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Seller Order Processing Button (Primary Action) */}
-                                <button
-                                  onClick={() => setSelectedOrderForProcessing(order)}
-                                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:brightness-110 text-[#141312] text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-[#D4AF37]/20 transition-all cursor-pointer"
-                                >
-                                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                                  <span>Обработать заказ & Чек</span>
-                                </button>
-
-                                {/* Status Selector */}
-                                <div className="w-full space-y-1">
-                                  <span className="text-[10px] text-[#78716C] block uppercase font-semibold">
-                                    Быстрый статус:
-                                  </span>
-                                  <select
-                                    value={order.status}
-                                    onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                                    className={`w-full text-xs font-bold rounded-xl px-3 py-2 border focus:outline-none cursor-pointer transition-colors ${
-                                      statusColors[order.status] || 'bg-white/5 text-white border-white/10'
-                                    }`}
-                                  >
-                                    <option value="new" className="bg-[#1C1A18] text-amber-400">🟡 Новый заказ (New)</option>
-                                    <option value="processing" className="bg-[#1C1A18] text-blue-400">🔵 В обработке (Processing)</option>
-                                    <option value="paid" className="bg-[#1C1A18] text-purple-400">🟣 Оплачен (Paid)</option>
-                                    <option value="shipped" className="bg-[#1C1A18] text-orange-400">🚚 Отправлен из Кореи (Shipped)</option>
-                                    <option value="delivered" className="bg-[#1C1A18] text-emerald-400">🟢 Доставлен клиенту (Delivered)</option>
-                                    <option value="cancelled" className="bg-[#1C1A18] text-zinc-400">⚪ Отменен (Cancelled)</option>
-                                  </select>
-                                </div>
-
-                                {/* Actions: Edit Notes / Delete */}
-                                <div className="flex items-center gap-2 pt-1 w-full justify-end">
-                                  {order.paymentReceiptUrl && (
-                                    <button
-                                      onClick={() => setLightboxReceiptUrl(order.paymentReceiptUrl || null)}
-                                      className="py-1.5 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs font-semibold flex items-center gap-1 transition-colors"
-                                      title="Посмотреть чек"
-                                    >
-                                      <Eye className="w-3.5 h-3.5" />
-                                      <span>Чек</span>
-                                    </button>
-                                  )}
-
-                                  <button
-                                    onClick={() => handleStartEditNotes(order)}
-                                    className="py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-[#C4BDB5] hover:text-white border border-white/5 flex items-center gap-1.5 transition-colors"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5 text-[#D4AF37]" />
-                                    <span>Заметка</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => setDeleteOrderConfirmId(order.id)}
-                                    className="p-1.5 rounded-lg text-[#78716C] hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                    title="Удалить заявку"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
+              <UnifiedDataGrid<Order>
+                data={orders}
+                columns={orderColumns}
+                keyExtractor={(item) => item.id}
+                title="Реестр Заказов и Лидов CRM"
+                subtitle="Обработка входящих заказов, чеки оплаты и статус доставки"
+                searchPlaceholder="Поиск по номеру, имени, телефону, городу..."
+                searchFields={['orderNumber', 'customerName', 'phone', 'city', 'shippingAddress']}
+                loading={isLoadingOrders}
+                onRefresh={fetchOrders}
+                onExportXLSX={handleExportOrdersXLSX}
+                bulkActions={orderBulkActions}
+              />
             </div>
           )}
 
-          {/* TAB: CARGO LOGISTICS */}
-          {activeTab === 'cargo' && (
-            <LogisticsCargoView token={token || ''} />
-          )}
+          {/* TAB: CRM CUSTOMERS */}
+          {activeTab === 'customers' && <CustomerCRMView />}
 
-          {/* TAB: INVENTORY VARIANTS & SKU */}
-          {activeTab === 'variants' && (
-            <InventoryVariantsView posts={posts} token={token || ''} />
-          )}
+          {/* TAB: HRM STAFF MANAGEMENT */}
+          {activeTab === 'staff' && <StaffManagementView token={token || ''} />}
 
-          {/* TAB: STAFF & SELLERS MANAGEMENT */}
-          {activeTab === 'staff' && (
-            <StaffManagementView token={token || ''} />
-          )}
-
-          {/* TAB 2: PRODUCTS MANAGEMENT */}
+          {/* TAB: PRODUCTS (Unified DataGrid) */}
           {activeTab === 'products' && (
-            <div className="space-y-6 max-w-7xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-xl font-bold text-white font-serif">Управление товарами</h1>
-                  <p className="text-xs text-[#A8A29E]">
-                    Всего {posts.length} позиций в базе данных SQLite
-                  </p>
-                </div>
-                <button
-                  onClick={handleOpenAddModal}
-                  className="py-2.5 px-4 rounded-xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#141312] text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-[#D4AF37]/20 self-start sm:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Добавить товар
-                </button>
-              </div>
-
-              {/* Filters & Search */}
-              <div className="p-4 rounded-2xl bg-[#1C1A18] border border-white/10 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {/* Search */}
-                <div className="sm:col-span-2 relative">
-                  <Search className="w-4 h-4 text-[#78716C] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Поиск по названию, бренду, описанию..."
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
-                  />
-                </div>
-
-                {/* Brand Filter */}
-                <div>
-                  <select
-                    value={selectedBrand}
-                    onChange={(e) => setSelectedBrand(e.target.value)}
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
+            <div className="space-y-6">
+              <UnifiedDataGrid<TelegramPost>
+                data={posts}
+                columns={productColumns}
+                keyExtractor={(item) => item.id}
+                title="Каталог Товаров Корейской Косметики"
+                subtitle="База товаров из Telegram-канала @mkcosmetkor с ценами и фото"
+                searchPlaceholder="Поиск по наименованию, бренду, описанию..."
+                searchFields={['productTitle', 'brand', 'text']}
+                onRefresh={onRefreshFeed}
+                onExportXLSX={handleExportProductsXLSX}
+                headerActionSlot={
+                  <button
+                    onClick={handleOpenAddModal}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-xl shadow-lg transition-all"
                   >
-                    <option value="all">Все бренды ({brands.length})</option>
-                    {brands.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Sort */}
-                <div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    <option value="newest">Сначала новые</option>
-                    <option value="priceAsc">Цена: по возрастанию</option>
-                    <option value="priceDesc">Цена: по убыванию</option>
-                    <option value="discount">По размеру скидки</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Products Table */}
-              <div className="bg-[#1C1A18] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#161514] border-b border-white/10 text-[#A8A29E] uppercase tracking-wider text-[10px]">
-                      <tr>
-                        <th className="py-3.5 px-4">Товар</th>
-                        <th className="py-3.5 px-3">Бренд</th>
-                        <th className="py-3.5 px-3">Цены</th>
-                        <th className="py-3.5 px-3">Скидка / Хит</th>
-                        <th className="py-3.5 px-4 text-right">Действия</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {sortedProducts.map((p) => (
-                        <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                          {/* Image & Title */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-black overflow-hidden flex-shrink-0 border border-white/10">
-                                {p.photos && p.photos.length > 0 ? (
-                                  <img src={p.photos[0]} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-[#78716C] text-[10px]">
-                                    Нет фото
-                                  </div>
-                                )}
-                              </div>
-                              <div className="max-w-xs sm:max-w-md">
-                                <div className="font-semibold text-white truncate">{p.productTitle}</div>
-                                <div className="text-[11px] text-[#78716C] truncate mt-0.5">
-                                  ID: {p.id}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Brand */}
-                          <td className="py-3 px-3">
-                            <span className="px-2.5 py-1 rounded-lg bg-white/5 text-[#C4BDB5] text-[11px] font-medium border border-white/5">
-                              {p.brand || 'K-Beauty'}
-                            </span>
-                          </td>
-
-                          {/* Prices */}
-                          <td className="py-3 px-3">
-                            <div className="space-y-0.5 text-[11px]">
-                              {p.prices?.krw && (
-                                <div className="font-bold text-[#D4AF37]">
-                                  ₩ {p.prices.krw.toLocaleString()}
-                                </div>
-                              )}
-                              {p.prices?.uzs && (
-                                <div className="text-[#A8A29E]">
-                                  {p.prices.uzs.toLocaleString()} сум
-                                </div>
-                              )}
-                              {p.prices?.rub && (
-                                <div className="text-[#78716C]">
-                                  {p.prices.rub.toLocaleString()} ₽
-                                </div>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Discount / Bestseller */}
-                          <td className="py-3 px-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {p.discountPercent > 0 && (
-                                <span className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 font-bold text-[10px] border border-red-500/30">
-                                  -{p.discountPercent}%
-                                </span>
-                              )}
-                              {p.isBestseller && (
-                                <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/20 text-[#D4AF37] font-semibold text-[10px] border border-[#D4AF37]/30">
-                                  ★ Хит
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {p.postUrl && (
-                                <a
-                                  href={p.postUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 rounded-lg text-[#78716C] hover:text-white hover:bg-white/5 transition-colors"
-                                  title="Открыть в Telegram"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                              )}
-                              <button
-                                onClick={() => handleOpenEditModal(p)}
-                                className="p-2 rounded-lg text-[#A8A29E] hover:text-[#D4AF37] hover:bg-white/5 transition-colors"
-                                title="Редактировать"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(p.id)}
-                                className="p-2 rounded-lg text-[#A8A29E] hover:text-red-400 hover:bg-white/5 transition-colors"
-                                title="Удалить"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {sortedProducts.length === 0 && (
-                  <div className="p-12 text-center text-[#78716C]">
-                    Товары по заданным фильтрам не найдены
-                  </div>
-                )}
-              </div>
+                    <Plus className="w-4 h-4" />
+                    <span>Добавить товар</span>
+                  </button>
+                }
+              />
             </div>
           )}
 
-          {/* TAB 3: TELEGRAM SYNC */}
+          {/* TAB: BEAUTY MAGAZINE & ARTICLES */}
+          {activeTab === 'articles' && <BeautyBlogView />}
+
+          {/* TAB: INVENTORY VARIANTS */}
+          {activeTab === 'variants' && <InventoryVariantsView token={token || ''} />}
+
+          {/* TAB: TELEGRAM SYNC */}
           {activeTab === 'sync' && (
-            <div className="space-y-6 max-w-4xl">
-              <div>
-                <h1 className="text-xl font-bold text-white font-serif">Центр синхронизации Telegram</h1>
-                <p className="text-xs text-[#A8A29E]">Управление фоновым парсером и ручной импорт</p>
-              </div>
-
-              {/* Channel Profile Box */}
-              <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-2xl font-bold text-[#D4AF37] flex-shrink-0">
-                  {stats?.channelInfo?.avatarUrl ? (
-                    <img src={stats.channelInfo.avatarUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
-                  ) : (
-                    'MK'
-                  )}
-                </div>
-                <div className="flex-1 text-center sm:text-left space-y-1">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <h2 className="text-base font-bold text-white">
-                      {stats?.channelInfo?.title || 'MK KOREA COSMETIC'}
-                    </h2>
-                    <span className="text-xs font-mono text-[#D4AF37]">
-                      @{stats?.channelInfo?.username || 'mkcosmetkor'}
-                    </span>
+            <div className="max-w-2xl space-y-6">
+              <div className="p-6 rounded-3xl bg-[#181614] border border-amber-500/20 shadow-xl space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-sky-500/20 text-sky-400">
+                    <Send className="w-6 h-6" />
                   </div>
-                  <p className="text-xs text-[#A8A29E]">
-                    {stats?.channelInfo?.description || 'Прямые оптовые поставки из Южной Кореи'}
-                  </p>
-                  <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-[#78716C]">
-                    <span>Подписчиков: <strong>{stats?.channelInfo?.subscribersCount || '1.2k+'}</strong></span>
-                    <span>Товаров в SQLite: <strong>{posts.length}</strong></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sync Trigger Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-sm font-bold text-white mb-1">Быстрая синхронизация</h3>
-                    <p className="text-xs text-[#A8A29E]">
-                      Сканирует последние 20 постов на канале и обновляет свежие цены и новинки.
-                    </p>
+                    <h3 className="text-lg font-bold text-white">Синхронизация с Telegram</h3>
+                    <p className="text-xs text-neutral-400">Канал @mkcosmetkor • Автоматический сбор каждые 3 мин.</p>
                   </div>
+                </div>
+
+                {syncMessage && (
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+                    {syncMessage}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <button
                     onClick={() => handleTriggerSync(false)}
                     disabled={isSyncing}
-                    className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] text-xs font-bold flex items-center justify-center gap-2 border border-[#D4AF37]/30 transition-colors disabled:opacity-50"
+                    className="p-4 rounded-2xl bg-[#221F1C] hover:bg-[#2C2824] border border-amber-500/20 text-left transition-all disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    Запустить быстрый синк
+                    <div className="font-bold text-white text-sm">Обычная синхронизация</div>
+                    <div className="text-xs text-neutral-400 mt-1">Проверяет последние новые посты</div>
                   </button>
-                </div>
 
-                <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-1">Глубокий архивный парсинг</h3>
-                    <p className="text-xs text-[#A8A29E]">
-                      Выполняет пагинацию до 20 страниц вглубь истории для выгрузки всех старых постов.
-                    </p>
-                  </div>
                   <button
                     onClick={() => handleTriggerSync(true)}
                     disabled={isSyncing}
-                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B38F24] text-[#141312] text-xs font-bold flex items-center justify-center gap-2 hover:from-[#E5C158] hover:to-[#C49E30] transition-all disabled:opacity-50 shadow-lg shadow-[#D4AF37]/20"
+                    className="p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black text-left font-bold transition-all disabled:opacity-50 shadow-lg"
                   >
-                    <Sparkles className="w-4 h-4" />
-                    Запустить глубокий синк (Deep Scrape)
+                    <div className="text-sm">Глубокий Scrape (40+ страниц)</div>
+                    <div className="text-xs opacity-80 mt-1">Полная перезагрузка каталога</div>
                   </button>
                 </div>
               </div>
-
-              {syncMessage && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-[#D4AF37] flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>{syncMessage}</span>
-                </div>
-              )}
             </div>
           )}
 
-          {/* TAB 4: VISITORS CRM */}
-          {activeTab === 'visitors' && (
-            <div className="space-y-6 max-w-6xl">
-              <div>
-                <h1 className="text-xl font-bold text-white font-serif">CRM Посетители & Гео-трафик</h1>
-                <p className="text-xs text-[#A8A29E]">
-                  Учет переходов пользователей и распределение по странам мира
-                </p>
-              </div>
-
-              {/* Geo Table */}
-              <div className="bg-[#1C1A18] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-5 border-b border-white/10 bg-[#161514] flex items-center justify-between">
-                  <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                    Сводка по странам мира
-                  </h2>
-                  <span className="text-xs text-[#A8A29E]">
-                    Всего: {stats?.totalVisits !== undefined ? stats.totalVisits.toLocaleString() : '0'} визитов
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#141312] text-[#A8A29E] uppercase tracking-wider text-[10px]">
-                      <tr>
-                        <th className="py-3 px-4">Флаг & Страна</th>
-                        <th className="py-3 px-3">Код</th>
-                        <th className="py-3 px-3">Визиты</th>
-                        <th className="py-3 px-4 text-right">Доля трафика</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {(stats?.countries || []).map((c) => {
-                        const total = stats?.totalVisits || 1;
-                        const percent = Math.min(100, Math.round((c.visits / total) * 100));
-                        return (
-                          <tr key={c.code} className="hover:bg-white/[0.02]">
-                            <td className="py-3 px-4 font-medium text-white flex items-center gap-2">
-                              <span className="text-lg">{c.flag}</span>
-                              <span>{c.nameRu}</span>
-                              <span className="text-[#78716C] text-[11px]">/ {c.nameUz}</span>
-                            </td>
-                            <td className="py-3 px-3 font-mono text-[#D4AF37]">{c.code}</td>
-                            <td className="py-3 px-3 font-bold text-white">{c.visits.toLocaleString()}</td>
-                            <td className="py-3 px-4 text-right font-medium text-[#A8A29E]">{percent}%</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Recent Access Logs */}
-              {stats?.recentLogs && stats.recentLogs.length > 0 && (
-                <div className="bg-[#1C1A18] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                  <div className="p-5 border-b border-white/10 bg-[#161514]">
-                    <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                      Последние записи визитов (Live Access Logs)
-                    </h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-mono">
-                      <thead className="bg-[#141312] text-[#A8A29E] text-[10px]">
-                        <tr>
-                          <th className="py-2.5 px-4">ID</th>
-                          <th className="py-2.5 px-3">IP Адрес</th>
-                          <th className="py-2.5 px-3">Страна</th>
-                          <th className="py-2.5 px-4 text-right">Время</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5 text-[11px]">
-                        {stats.recentLogs.map((log) => (
-                          <tr key={log.id} className="hover:bg-white/[0.02]">
-                            <td className="py-2.5 px-4 text-[#78716C]">#{log.id}</td>
-                            <td className="py-2.5 px-3 text-[#EDE8E1]">{log.ip}</td>
-                            <td className="py-2.5 px-3 text-[#D4AF37]">{log.countryCode}</td>
-                            <td className="py-2.5 px-4 text-right text-[#A8A29E]">
-                              {new Date(log.visitedAt).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 5: SETTINGS & ACCESS */}
+          {/* TAB: SETTINGS & PASSWORD */}
           {activeTab === 'settings' && (
-            <div className="space-y-6 max-w-3xl">
-              <div>
-                <h1 className="text-xl font-bold text-white font-serif">Настройки и безопасность</h1>
-                <p className="text-xs text-[#A8A29E]">Управление паролем и системные параметры</p>
-              </div>
-
-              {/* Change Password Form */}
-              <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 space-y-4">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Сменить пароль администратора
-                </h2>
-
+            <div className="max-w-xl space-y-6">
+              <div className="p-6 rounded-3xl bg-[#181614] border border-amber-500/20 shadow-xl space-y-4">
+                <h3 className="text-lg font-bold text-white">Смена пароля администратора</h3>
                 {passwordMsg && (
                   <div
-                    className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                    className={`p-3 rounded-xl text-xs font-semibold ${
                       passwordMsg.type === 'success'
-                        ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-red-500/20 text-red-300 border border-red-500/30'
                     }`}
                   >
-                    <span>{passwordMsg.text}</span>
+                    {passwordMsg.text}
                   </div>
                 )}
-
-                <form onSubmit={handleChangePassword} className="space-y-4">
+                <form onSubmit={handleChangePassword} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-[#A8A29E] mb-1.5">
+                    <label className="block text-xs font-semibold text-neutral-400 mb-1">
                       Новый пароль
                     </label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Новый надежный пароль..."
-                      className="w-full bg-[#141312] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
+                      placeholder="Минимум 4 символа"
+                      className="w-full p-2.5 bg-[#141210] border border-amber-500/20 rounded-xl text-sm text-white focus:outline-none focus:border-amber-400"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={isChangingPass}
-                    className="py-2.5 px-5 rounded-xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#141312] text-xs font-bold transition-all disabled:opacity-50"
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl shadow-lg transition-all disabled:opacity-50"
                   >
-                    {isChangingPass ? 'Обновление...' : 'Обновить пароль'}
+                    {isChangingPass ? 'Сохранение...' : 'Обновить пароль'}
                   </button>
                 </form>
-              </div>
-
-              {/* Architecture Info Box */}
-              <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 space-y-3">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Архитектура & Стек системы
-                </h2>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[#78716C] block text-[10px]">Бэкенд</span>
-                    <strong className="text-white">Go (Golang 1.24)</strong>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[#78716C] block text-[10px]">База данных</span>
-                    <strong className="text-white">SQLite Pure Go (WAL Mode)</strong>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[#78716C] block text-[10px]">Авторизация</span>
-                    <strong className="text-white">100% Open Source JWT (HMAC-SHA256)</strong>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[#78716C] block text-[10px]">Архитектурный паттерн</span>
-                    <strong className="text-white">Clean Architecture & DDD</strong>
-                  </div>
-                </div>
               </div>
             </div>
           )}
         </main>
       </div>
 
-      {/* Product Edit / Add Modal */}
-      <ProductEditModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        product={selectedProduct}
-        onSave={handleSaveProduct}
-      />
-
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-red-400">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-bold text-white">Удалить товар?</h3>
-            </div>
-            <p className="text-xs text-[#A8A29E]">
-              Вы уверены, что хотите удалить товар <strong className="text-white">#{deleteConfirmId}</strong> из базы данных SQLite?
-            </p>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="py-2 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#A8A29E] hover:bg-white/5"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={() => handleDeleteProduct(deleteConfirmId)}
-                className="py-2 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20"
-              >
-                Удалить
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Modals */}
+      {isDummyModalOpen && (
+        <TelegramDummyImportModal
+          isOpen={isDummyModalOpen}
+          onClose={() => setIsDummyModalOpen(false)}
+          onSuccess={async () => {
+            await onRefreshFeed();
+            await fetchStats();
+          }}
+        />
       )}
 
-      {/* Order Notes Edit Modal */}
-      {editingNotesOrderId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/10 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Edit2 className="w-5 h-5 text-[#D4AF37]" />
-                <h3 className="text-base font-bold text-white">Заметки менеджера</h3>
-              </div>
-              <span className="font-mono text-xs text-[#A8A29E]">
-                Заказ #{orders.find((o) => o.id === editingNotesOrderId)?.orderNumber}
-              </span>
-            </div>
-
-            <textarea
-              rows={5}
-              value={editingNotesText}
-              onChange={(e) => setEditingNotesText(e.target.value)}
-              placeholder="Внутренний комментарий (статус оплаты, трек-номер, пожелания клиента)..."
-              className="w-full bg-[#141312] border border-white/10 rounded-2xl p-3.5 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
-            />
-
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                onClick={() => setEditingNotesOrderId(null)}
-                disabled={isSavingNotes}
-                className="py-2 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#A8A29E] hover:bg-white/5"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={() => handleSaveNotes(editingNotesOrderId)}
-                disabled={isSavingNotes}
-                className="py-2 px-5 rounded-xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#141312] text-xs font-bold shadow-lg shadow-[#D4AF37]/20 disabled:opacity-50"
-              >
-                {isSavingNotes ? 'Сохранение...' : 'Сохранить заметку'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {isExportModalOpen && (
+        <DataExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          token={token || ''}
+          orders={orders}
+        />
       )}
 
-      {/* Delete Order Confirmation Modal */}
-      {deleteOrderConfirmId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-red-400">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-bold text-white">Удалить заявку?</h3>
-            </div>
-            <p className="text-xs text-[#A8A29E]">
-              Вы уверены, что хотите удалить заявку{' '}
-              <strong className="text-white">
-                #{orders.find((o) => o.id === deleteOrderConfirmId)?.orderNumber || deleteOrderConfirmId}
-              </strong>{' '}
-              из CRM базы?
-            </p>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setDeleteOrderConfirmId(null)}
-                className="py-2 px-4 rounded-xl border border-white/10 text-xs font-semibold text-[#A8A29E] hover:bg-white/5"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={() => handleDeleteOrder(deleteOrderConfirmId)}
-                className="py-2 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20"
-              >
-                Удалить
-              </button>
-            </div>
-          </div>
-        </div>
+      {editModalOpen && (
+        <ProductEditModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          product={selectedProduct}
+          onSave={handleSaveProduct}
+        />
       )}
 
-      {/* Seller Order Processing Modal */}
-      <OrderProcessingModal
-        isOpen={selectedOrderForProcessing !== null}
-        onClose={() => setSelectedOrderForProcessing(null)}
-        order={selectedOrderForProcessing}
-        onSave={handleSaveProcessedOrder}
-        token={token || ''}
-      />
+      {selectedOrderForProcessing && (
+        <OrderProcessingModal
+          isOpen={!!selectedOrderForProcessing}
+          onClose={() => setSelectedOrderForProcessing(null)}
+          order={selectedOrderForProcessing}
+          onSave={handleSaveProcessedOrder}
+          token={token || ''}
+        />
+      )}
 
-      {/* Payment Receipt Image Lightbox Modal */}
+      {/* Lightbox for receipt */}
       {lightboxReceiptUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
           onClick={() => setLightboxReceiptUrl(null)}
         >
-          <div
-            className="relative max-w-3xl max-h-[90vh] bg-[#141312] border border-white/15 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#1C1A18]">
-              <div className="flex items-center gap-2 text-sm font-bold text-white">
-                <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                <span>Чек об оплате / Подтверждение перевода</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={lightboxReceiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] transition-colors"
-                  title="Открыть в оригинале"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-                <button
-                  onClick={() => setLightboxReceiptUrl(null)}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#A8A29E] hover:text-white transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="p-4 flex items-center justify-center overflow-auto bg-black/60">
-              <img
-                src={lightboxReceiptUrl}
-                alt="Чек об оплате"
-                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg border border-white/10"
-              />
+          <div className="relative max-w-2xl max-h-[85vh] bg-[#141210] border border-amber-500/30 rounded-3xl p-3 overflow-hidden">
+            <button
+              onClick={() => setLightboxReceiptUrl(null)}
+              className="absolute top-4 right-4 p-2 bg-black/60 rounded-full text-white hover:bg-black"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={lightboxReceiptUrl}
+              alt="Чек оплаты"
+              className="w-full h-auto max-h-[75vh] object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delete product confirm modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="p-6 rounded-3xl bg-[#181614] border border-red-500/30 max-w-md w-full text-center space-y-4 shadow-2xl">
+            <Trash2 className="w-12 h-12 text-red-400 mx-auto" />
+            <h3 className="text-lg font-bold text-white">Удалить товар из базы?</h3>
+            <p className="text-xs text-neutral-400">Это действие удалит товар из базы данных SQLite.</p>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 bg-[#25221F] text-neutral-300 text-xs font-semibold rounded-xl"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => handleDeleteProduct(deleteConfirmId)}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl"
+              >
+                Удалить
+              </button>
             </div>
           </div>
         </div>
       )}
-      {/* Data Export Modal (Excel / CSV & JSON) */}
-      <DataExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        token={token || ''}
-        orders={orders}
-      />
     </div>
   );
 };

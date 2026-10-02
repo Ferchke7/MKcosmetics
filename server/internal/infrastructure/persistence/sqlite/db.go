@@ -163,6 +163,42 @@ func (db *DB) migrate() error {
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS customers (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		phone TEXT UNIQUE NOT NULL,
+		email TEXT NOT NULL DEFAULT '',
+		telegram_username TEXT NOT NULL DEFAULT '',
+		city TEXT NOT NULL DEFAULT '',
+		delivery_address TEXT NOT NULL DEFAULT '',
+		total_orders INTEGER NOT NULL DEFAULT 0,
+		total_spent REAL NOT NULL DEFAULT 0,
+		average_order_value REAL NOT NULL DEFAULT 0,
+		last_order_at TIMESTAMP,
+		segment TEXT NOT NULL DEFAULT 'new',
+		notes TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS articles (
+		id TEXT PRIMARY KEY,
+		slug TEXT UNIQUE NOT NULL,
+		title TEXT NOT NULL,
+		subtitle TEXT NOT NULL DEFAULT '',
+		content_markdown TEXT NOT NULL,
+		cover_image TEXT NOT NULL DEFAULT '',
+		author TEXT NOT NULL DEFAULT 'MK Skincare Editor',
+		reading_time_minutes INTEGER NOT NULL DEFAULT 3,
+		tags_json TEXT NOT NULL DEFAULT '[]',
+		related_product_ids_json TEXT NOT NULL DEFAULT '[]',
+		source_telegram_url TEXT NOT NULL DEFAULT '',
+		views INTEGER NOT NULL DEFAULT 0,
+		published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
 	`
 
 	if _, err := db.Exec(tables); err != nil {
@@ -182,6 +218,9 @@ func (db *DB) migrate() error {
 		"ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;",
+		"ALTER TABLE customers ADD COLUMN segment TEXT NOT NULL DEFAULT 'new';",
+		"ALTER TABLE customers ADD COLUMN notes TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE articles ADD COLUMN source_telegram_url TEXT NOT NULL DEFAULT '';",
 	}
 	for _, query := range alterCols {
 		_, _ = db.Exec(query) // Ignore error if column already exists
@@ -197,6 +236,10 @@ func (db *DB) migrate() error {
 	CREATE INDEX IF NOT EXISTS idx_orders_assigned ON orders(assigned_to);
 	CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 	CREATE INDEX IF NOT EXISTS idx_cargo_batches_code ON cargo_batches(batch_code);
+	CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+	CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
+	CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
 	`
 	if _, err := db.Exec(indexes); err != nil {
 		return fmt.Errorf("failed to create indexes: %w", err)

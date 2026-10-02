@@ -13,6 +13,7 @@ import (
 	"mkcosmetics/server/internal/delivery/http/handler"
 	"mkcosmetics/server/internal/delivery/http/middleware"
 	"mkcosmetics/server/internal/delivery/http/router"
+	"mkcosmetics/server/internal/infrastructure/excel"
 	"mkcosmetics/server/internal/infrastructure/persistence/sqlite"
 	"mkcosmetics/server/internal/infrastructure/scraper"
 	"mkcosmetics/server/internal/usecase"
@@ -48,22 +49,27 @@ func main() {
 	orderRepo := sqlite.NewOrderRepository(db)
 	cargoRepo := sqlite.NewCargoRepository(db)
 	variantRepo := sqlite.NewVariantRepository(db)
+	customerRepo := sqlite.NewSQLiteCustomerRepository(db)
+	articleRepo := sqlite.NewSQLiteArticleRepository(db)
 
-	// 4. Infrastructure Scraper
+	// 4. Infrastructure (Scraper & Excelize Exporter)
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
+	excelExporter := excel.NewExcelExporter()
 
 	// 5. Use Cases (Clean Architecture Layer)
 	feedUC := usecase.NewFeedUseCase(productRepo, channelRepo)
 	syncUC := usecase.NewSyncUseCase(tgScraper, productRepo, channelRepo)
 	visitorUC := usecase.NewVisitorUseCase(visitorRepo)
 	authUC := usecase.NewAuthUseCase(userRepo, jwtSecret)
-	orderUC := usecase.NewOrderUseCase(orderRepo)
-	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo, orderRepo)
+	orderUC := usecase.NewOrderUseCase(orderRepo, customerRepo, excelExporter)
+	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo, orderRepo, excelExporter)
 	analyticsUC := usecase.NewAnalyticsUseCase(orderRepo, productRepo, userRepo, visitorRepo)
 	cargoUC := usecase.NewCargoUseCase(cargoRepo, orderRepo)
 	variantUC := usecase.NewVariantUseCase(variantRepo)
-	staffUC := usecase.NewStaffUseCase(userRepo, orderRepo)
-	salesUC := usecase.NewSalesUseCase(orderRepo, productRepo, variantRepo, cargoRepo)
+	staffUC := usecase.NewStaffUseCase(userRepo, orderRepo, excelExporter)
+	salesUC := usecase.NewSalesUseCase(orderRepo, productRepo, variantRepo, cargoRepo, excelExporter)
+	customerUC := usecase.NewCustomerUseCase(customerRepo, excelExporter)
+	articleUC := usecase.NewArticleUseCase(articleRepo, productRepo)
 
 	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
@@ -78,8 +84,10 @@ func main() {
 	cargoHandler := handler.NewCargoHandler(cargoUC)
 	variantHandler := handler.NewVariantHandler(variantUC)
 	staffHandler := handler.NewStaffHandler(staffUC)
-	exportHandler := handler.NewExportHandler(orderUC)
+	exportHandler := handler.NewExportHandler(orderUC, adminUC, staffUC, salesUC, customerUC)
 	salesHandler := handler.NewSalesHandler(salesUC)
+	customerHandler := handler.NewCustomerHandler(customerUC)
+	articleHandler := handler.NewArticleHandler(articleUC)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -98,6 +106,8 @@ func main() {
 		staffHandler,
 		exportHandler,
 		salesHandler,
+		customerHandler,
+		articleHandler,
 		authMiddleware,
 	)
 

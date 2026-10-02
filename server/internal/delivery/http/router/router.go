@@ -33,6 +33,8 @@ func NewRouter(
 	staffHandler *handler.StaffHandler,
 	exportHandler *handler.ExportHandler,
 	salesHandler *handler.SalesHandler,
+	customerHandler *handler.CustomerHandler,
+	articleHandler *handler.ArticleHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -69,6 +71,13 @@ func NewRouter(
 			tg.Post("/sync", feedHandler.Sync)
 		})
 
+		// Public Beauty Articles Magazine (From Telegram)
+		api.Route("/articles", func(art chi.Router) {
+			art.Get("/", articleHandler.GetAll)
+			art.Get("/{id}", articleHandler.GetByID)
+			art.Get("/slug/{slug}", articleHandler.GetBySlug)
+		})
+
 		api.Route("/visitor", func(v chi.Router) {
 			v.Post("/track", visitorHandler.Track)
 			v.Get("/stats", visitorHandler.GetStats)
@@ -93,7 +102,7 @@ func NewRouter(
 			})
 		})
 
-		// Protected Admin & CRM & ERP Routes
+		// Protected Admin, CRM, HRM & ERP Routes
 		api.Route("/admin", func(admin chi.Router) {
 			admin.Use(authMiddleware.RequireAuth)
 
@@ -101,23 +110,26 @@ func NewRouter(
 			admin.Get("/visitors", adminHandler.GetVisitorLogs)
 			admin.Post("/sync", adminHandler.TriggerSync)
 			admin.Post("/upload", uploadHandler.UploadFile)
+			admin.Post("/telegram/import-dummy", adminHandler.ImportDummyProducts)
 
 			// Deep ECharts Analytics
 			admin.Route("/analytics", func(an chi.Router) {
 				an.Get("/deep", analyticsHandler.GetDeepAnalytics)
 			})
 
-			// Products Management
+			// Products Management & Full Catalog XLSX Export
 			admin.Route("/products", func(p chi.Router) {
 				p.Post("/", adminHandler.CreateProduct)
+				p.Get("/export/xlsx", exportHandler.ExportProductsXLSX)
 				p.Put("/{id}", adminHandler.UpdateProduct)
 				p.Delete("/{id}", adminHandler.DeleteProduct)
 			})
 
-			// Orders & Export
+			// Orders & Multi-format Export
 			admin.Route("/orders", func(o chi.Router) {
 				o.Get("/", orderHandler.GetAdminOrders)
 				o.Get("/export/csv", exportHandler.ExportCSV)
+				o.Get("/export/xlsx", exportHandler.ExportOrdersXLSX)
 				o.Put("/{id}/status", orderHandler.UpdateStatus)
 				o.Put("/{id}/notes", orderHandler.UpdateNotes)
 				o.Put("/{id}/process", orderHandler.ProcessOrder)
@@ -125,14 +137,32 @@ func NewRouter(
 				o.Delete("/{id}", orderHandler.DeleteOrder)
 			})
 
-			// ERP: Cargo Flight Batches
-			admin.Route("/cargo", func(c chi.Router) {
-				c.Get("/", cargoHandler.GetAll)
-				c.Post("/", cargoHandler.Create)
-				c.Get("/{id}", cargoHandler.GetByID)
-				c.Put("/{id}", cargoHandler.Update)
-				c.Post("/assign", cargoHandler.AssignOrder)
-				c.Delete("/{id}", cargoHandler.Delete)
+			// Enterprise CRM: Customers Management
+			admin.Route("/customers", func(c chi.Router) {
+				c.Get("/", customerHandler.GetAll)
+				c.Get("/export/xlsx", customerHandler.ExportXLSX)
+				c.Get("/{id}", customerHandler.GetByID)
+				c.Put("/{id}", customerHandler.Update)
+				c.Delete("/{id}", customerHandler.Delete)
+			})
+
+			// Enterprise HRM: Staff & Seller Management & Commission Payroll
+			admin.Route("/staff", func(s chi.Router) {
+				s.Get("/", staffHandler.GetAll)
+				s.Post("/", staffHandler.Create)
+				s.Get("/payroll", staffHandler.GetPayroll)
+				s.Get("/payroll/export-csv", staffHandler.ExportPayrollCSV)
+				s.Get("/payroll/export-xlsx", exportHandler.ExportPayrollXLSX)
+				s.Put("/{id}", staffHandler.Update)
+				s.Delete("/{id}", staffHandler.Delete)
+			})
+
+			// Telegram Beauty Articles Magazine Management
+			admin.Route("/articles", func(art chi.Router) {
+				art.Get("/", articleHandler.GetAll)
+				art.Post("/", articleHandler.Upsert)
+				art.Post("/sync", articleHandler.SyncFromTelegram)
+				art.Delete("/{id}", articleHandler.Delete)
 			})
 
 			// ERP: Product Variants & Inventory SKUs
@@ -144,20 +174,21 @@ func NewRouter(
 				v.Delete("/{id}", variantHandler.Delete)
 			})
 
-			// Staff & Seller Management
-			admin.Route("/staff", func(s chi.Router) {
-				s.Get("/", staffHandler.GetAll)
-				s.Post("/", staffHandler.Create)
-				s.Get("/payroll", staffHandler.GetPayroll)
-				s.Get("/payroll/export-csv", staffHandler.ExportPayrollCSV)
-				s.Put("/{id}", staffHandler.Update)
-				s.Delete("/{id}", staffHandler.Delete)
-			})
-
 			// Advanced Unit Economics & Sales Analysis
 			admin.Route("/sales", func(sl chi.Router) {
 				sl.Get("/unit-economics", salesHandler.GetUnitEconomics)
 				sl.Get("/export-ledger", salesHandler.ExportLedgerCSV)
+				sl.Get("/export-xlsx", exportHandler.ExportSalesLedgerXLSX)
+			})
+
+			// Optional Cargo Batches (retained for backward compat)
+			admin.Route("/cargo", func(cg chi.Router) {
+				cg.Get("/", cargoHandler.GetAll)
+				cg.Post("/", cargoHandler.Create)
+				cg.Get("/{id}", cargoHandler.GetByID)
+				cg.Put("/{id}", cargoHandler.Update)
+				cg.Post("/assign", cargoHandler.AssignOrder)
+				cg.Delete("/{id}", cargoHandler.Delete)
 			})
 		})
 	})
@@ -187,7 +218,7 @@ func setupSPAServer(r *chi.Mux, staticDir string) {
 			return
 		}
 
-		// Fallback to index.html for SPA client-side routes (e.g. /admin, /catalog)
+		// Fallback to index.html for SPA client-side routes
 		indexPath := filepath.Join(staticDir, "index.html")
 		http.ServeFile(w, req, indexPath)
 	})

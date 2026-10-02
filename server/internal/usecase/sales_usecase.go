@@ -12,13 +12,15 @@ import (
 
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/excel"
 )
 
 type SalesUseCase struct {
-	orderRepo   repository.OrderRepository
-	productRepo repository.ProductRepository
-	variantRepo repository.VariantRepository
-	cargoRepo   repository.CargoRepository
+	orderRepo     repository.OrderRepository
+	productRepo   repository.ProductRepository
+	variantRepo   repository.VariantRepository
+	cargoRepo     repository.CargoRepository
+	excelExporter *excel.ExcelExporter
 }
 
 func NewSalesUseCase(
@@ -26,12 +28,14 @@ func NewSalesUseCase(
 	productRepo repository.ProductRepository,
 	variantRepo repository.VariantRepository,
 	cargoRepo repository.CargoRepository,
+	excelExporter *excel.ExcelExporter,
 ) *SalesUseCase {
 	return &SalesUseCase{
-		orderRepo:   orderRepo,
-		productRepo: productRepo,
-		variantRepo: variantRepo,
-		cargoRepo:   cargoRepo,
+		orderRepo:     orderRepo,
+		productRepo:   productRepo,
+		variantRepo:   variantRepo,
+		cargoRepo:     cargoRepo,
+		excelExporter: excelExporter,
 	}
 }
 
@@ -630,4 +634,33 @@ func (uc *SalesUseCase) ExportUnitSalesLedgerCSV(ctx context.Context, days int) 
 
 	writer.Flush()
 	return buf.Bytes(), nil
+}
+
+func (uc *SalesUseCase) ExportSalesLedgerXLSX(ctx context.Context, days int) ([]byte, error) {
+	resp, err := uc.GetUnitEconomics(ctx, days)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch unit economics for ledger XLSX export: %w", err)
+	}
+
+	var items []entity.SalesLedgerItem
+	for _, it := range resp.RecentLedger {
+		items = append(items, entity.SalesLedgerItem{
+			OrderNumber:     it.OrderNumber,
+			Date:            it.Date.Format("2006-01-02 15:04"),
+			CustomerName:    it.CustomerName,
+			ChannelSource:   it.ChannelSource,
+			ProductNames:    fmt.Sprintf("%s (%s)", it.ProductTitle, it.Brand),
+			ItemsCount:      it.Quantity,
+			Revenue:         it.UnitPriceKRW * float64(it.Quantity) * 9.5, // UZS conversion
+			CostPrice:       it.UnitCostKRW * float64(it.Quantity) * 9.5,
+			GrossMargin:     it.TotalMarginKRW * 9.5,
+			MarginPercent:   it.MarginPct,
+			AssignedTo:      it.AssignedTo,
+			StaffCommission: it.TotalMarginKRW * 0.05 * 9.5,
+			NetProfit:       it.TotalMarginKRW * 0.95 * 9.5,
+			Status:          "Оплачен",
+		})
+	}
+
+	return uc.excelExporter.ExportSalesLedgerXLSX(items)
 }

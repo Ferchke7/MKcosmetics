@@ -12,18 +12,25 @@ import (
 
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/excel"
 	"mkcosmetics/server/internal/infrastructure/persistence/sqlite"
 )
 
 type StaffUseCase struct {
-	userRepo  repository.UserRepository
-	orderRepo repository.OrderRepository
+	userRepo      repository.UserRepository
+	orderRepo     repository.OrderRepository
+	excelExporter *excel.ExcelExporter
 }
 
-func NewStaffUseCase(userRepo repository.UserRepository, orderRepo repository.OrderRepository) *StaffUseCase {
+func NewStaffUseCase(
+	userRepo repository.UserRepository,
+	orderRepo repository.OrderRepository,
+	excelExporter *excel.ExcelExporter,
+) *StaffUseCase {
 	return &StaffUseCase{
-		userRepo:  userRepo,
-		orderRepo: orderRepo,
+		userRepo:      userRepo,
+		orderRepo:     orderRepo,
+		excelExporter: excelExporter,
 	}
 }
 
@@ -469,4 +476,31 @@ func (uc *StaffUseCase) ExportPayrollCSV(
 
 	writer.Flush()
 	return buf.Bytes(), nil
+}
+
+func (uc *StaffUseCase) ExportPayrollXLSX(ctx context.Context, month string) ([]byte, error) {
+	report, err := uc.GetPayrollReport(ctx, month, "revenue", 3.0, 2500000.0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate payroll for XLSX export: %w", err)
+	}
+
+	var payrollList []entity.StaffPayroll
+	for idx, s := range report.StaffPayrolls {
+		payrollList = append(payrollList, entity.StaffPayroll{
+			UserID:           int64(idx + 1),
+			DisplayName:      s.DisplayName,
+			Role:             s.Role,
+			Phone:            s.Phone,
+			Period:           report.Month,
+			OrdersCount:      s.PaidCount,
+			RevenueGenerated: s.TotalRevenueUZS,
+			BaseSalary:       s.BaseSalaryUZS,
+			CommissionRate:   s.CommissionRatePct,
+			CommissionAmount: s.CommissionEarnedUZS,
+			BonusAmount:      s.KpiBonusUZS,
+			TotalPayout:      s.TotalPayoutUZS,
+		})
+	}
+
+	return uc.excelExporter.ExportPayrollXLSX(payrollList)
 }

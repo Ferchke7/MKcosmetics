@@ -7,13 +7,15 @@ import (
 
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/excel"
 )
 
 type AdminUseCase struct {
-	productRepo repository.ProductRepository
-	visitorRepo repository.VisitorRepository
-	channelRepo repository.ChannelRepository
-	orderRepo   repository.OrderRepository
+	productRepo   repository.ProductRepository
+	visitorRepo   repository.VisitorRepository
+	channelRepo   repository.ChannelRepository
+	orderRepo     repository.OrderRepository
+	excelExporter *excel.ExcelExporter
 }
 
 func NewAdminUseCase(
@@ -21,13 +23,23 @@ func NewAdminUseCase(
 	visitorRepo repository.VisitorRepository,
 	channelRepo repository.ChannelRepository,
 	orderRepo repository.OrderRepository,
+	excelExporter *excel.ExcelExporter,
 ) *AdminUseCase {
 	return &AdminUseCase{
-		productRepo: productRepo,
-		visitorRepo: visitorRepo,
-		channelRepo: channelRepo,
-		orderRepo:   orderRepo,
+		productRepo:   productRepo,
+		visitorRepo:   visitorRepo,
+		channelRepo:   channelRepo,
+		orderRepo:     orderRepo,
+		excelExporter: excelExporter,
 	}
+}
+
+func (uc *AdminUseCase) ExportProductsXLSX(ctx context.Context) ([]byte, error) {
+	products, err := uc.productRepo.FindAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch products for export: %w", err)
+	}
+	return uc.excelExporter.ExportProductsXLSX(products)
 }
 
 type DashboardStats struct {
