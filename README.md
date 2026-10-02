@@ -115,10 +115,10 @@ export const BRAND_CONFIG = {
 
 ### Схема работы:
 1. **Job `build`**:
-   - Node.js 22, `npm ci`, `npm run build`
+   - Node.js 24, `npm ci`, `npm run build`
    - Тестовый фоновый запуск сервера на порту 3101 и проверка эндпоинта `/api/health`
 2. **Job `deploy`** (только при успешном `build`):
-   - Авторизация по SSH с помощью `webfactory/ssh-agent`
+   - Авторизация по SSH с использованием `DEPLOY_SSH_KEY`
    - Синхронизация измененных файлов через `rsync` (с обязательным исключением `data/`, `node_modules/`, `dist/`, `.git/`)
    - Пересборка и запуск контейнера: `docker compose up -d --build --remove-orphans`
    - Health-check на сервере `http://localhost:3001/api/health` (до 60 секунд) с выводом последних 100 строк логов в случае сбоя
