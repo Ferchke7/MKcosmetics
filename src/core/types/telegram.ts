@@ -17,8 +17,8 @@ export interface TelegramPost {
   text: string;
   htmlContent?: string;
   photos: string[];
-  views: string;
-  reactions: { emoji: string; count: number }[];
+  views?: string | number;
+  reactions?: { emoji: string; count: number }[];
   prices: TelegramPriceInfo;
   author?: string;
   tags: string[];

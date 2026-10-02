@@ -49,7 +49,9 @@ export class ProductService {
     if (lowerText.includes('лифтинг') || lowerText.includes('упругост') || lowerText.includes('овал') || lowerText.includes('волюфилин')) skinConcerns.push('lifting');
 
     const totalReactions = (post.reactions || []).reduce((sum, r) => sum + (r.count || 0), 0);
-    const viewsNum = parseInt((post.views || '').replace(/[^0-9]/g, ''), 10) || 0;
+    const viewsNum = typeof post.views === 'number'
+      ? post.views
+      : parseInt(String(post.views || '').replace(/[^0-9]/g, ''), 10) || 0;
     const isBestseller = totalReactions > 1 || viewsNum > 50 || lowerText.includes('хит') || lowerText.includes('bestseller') || lowerText.includes('топ');
     const isNew = post.timestamp ? Date.now() - post.timestamp < 30 * 24 * 60 * 60 * 1000 : false;
 
@@ -80,7 +82,7 @@ export class ProductService {
       telegramPostUrl: post.postUrl,
       tags: post.tags || sanitized.rawTags || [],
       timestamp: post.timestamp,
-      views: post.views,
+      views: String(post.views ?? '0'),
       reactionsCount: totalReactions,
     };
   }
