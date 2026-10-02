@@ -36,12 +36,24 @@ import {
   CreditCard,
   Eye,
   X,
+  Plane,
+  Layers,
+  FileSpreadsheet,
+  Activity,
+  LineChart,
+  BarChart3,
+  Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { adminService, AdminStats, Order } from '../../services/admin/adminService';
 import { TelegramPost } from '../../core/types/telegram';
 import { ProductEditModal } from './ProductEditModal';
 import { OrderProcessingModal } from './OrderProcessingModal';
+import { AnalyticsEChartsView } from './AnalyticsEChartsView';
+import { LogisticsCargoView } from './LogisticsCargoView';
+import { InventoryVariantsView } from './InventoryVariantsView';
+import { StaffManagementView } from './StaffManagementView';
+import { DataExportModal } from './DataExportModal';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -49,7 +61,7 @@ interface AdminDashboardProps {
   onRefreshFeed: () => Promise<void>;
 }
 
-type TabType = 'overview' | 'orders' | 'products' | 'sync' | 'visitors' | 'settings';
+type TabType = 'overview' | 'orders' | 'cargo' | 'variants' | 'staff' | 'products' | 'sync' | 'visitors' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackToShop,
@@ -77,6 +89,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [selectedOrderForProcessing, setSelectedOrderForProcessing] = useState<Order | null>(null);
   const [lightboxReceiptUrl, setLightboxReceiptUrl] = useState<string | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [sellerFilter, setSellerFilter] = useState('all');
 
   // Products Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -370,8 +384,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
               }`}
             >
-              <Globe className="w-4 h-4" />
-              <span>Обзор CRM</span>
+              <LineChart className="w-4 h-4" />
+              <span>Аналитика ECharts</span>
             </button>
 
             <button
@@ -398,6 +412,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {ordersTotal || orders.length}
                 </span>
               </div>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('cargo')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'cargo'
+                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Plane className="w-4 h-4" />
+              <span>Карго & Авиа-Рейсы</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('variants')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'variants'
+                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Склад & Инварианты</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('staff')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'staff'
+                  ? 'bg-[#D4AF37] text-[#141312] font-bold shadow-lg shadow-[#D4AF37]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Продавцы & Команда</span>
             </button>
 
             <button
@@ -439,7 +489,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   : 'text-[#A8A29E] hover:text-white hover:bg-white/5'
               }`}
             >
-              <Users className="w-4 h-4" />
+              <Globe className="w-4 h-4" />
               <span>CRM Посетители</span>
             </button>
 
@@ -471,161 +521,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab Content Area */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
-          {/* TAB 1: OVERVIEW */}
+          {/* TAB 1: OVERVIEW & ECHARTS ANALYTICS */}
           {activeTab === 'overview' && (
-            <div className="space-y-6 max-w-6xl">
-              <div>
-                <h1 className="text-xl font-bold text-white font-serif">Обзор CRM платформы</h1>
-                <p className="text-xs text-[#A8A29E]">Ключевые показатели магазина, заказов и трафика</p>
-              </div>
-
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
-                    <span className="text-xs uppercase tracking-wider font-semibold">Заказов & Лидов CRM</span>
-                    <ClipboardList className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-white font-serif">
-                      {stats?.totalOrders !== undefined ? stats.totalOrders : ordersTotal}
-                    </span>
-                    {(ordersStatusCounts['new'] || 0) > 0 && (
-                      <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                        {ordersStatusCounts['new']} новых
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-[#78716C] mt-1">Быстрый заказ, корзина, квиз</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
-                    <span className="text-xs uppercase tracking-wider font-semibold">Товаров в каталоге</span>
-                    <Package className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <div className="text-2xl font-bold text-white font-serif">{posts.length}</div>
-                  <p className="text-[11px] text-[#78716C] mt-1">Синхронизировано из Telegram</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
-                    <span className="text-xs uppercase tracking-wider font-semibold">Всего просмотров</span>
-                    <Users className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <div className="text-2xl font-bold text-white font-serif">
-                    {stats?.totalVisits ? stats.totalVisits.toLocaleString() : '0'}
-                  </div>
-                  <p className="text-[11px] text-green-400 mt-1">Живой органический трафик</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between text-[#A8A29E] mb-2">
-                    <span className="text-xs uppercase tracking-wider font-semibold">География (стран)</span>
-                    <Globe className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <div className="text-2xl font-bold text-white font-serif">
-                    {stats?.countries?.length || 0}
-                  </div>
-                  <p className="text-[11px] text-[#78716C] mt-1">Реальные IP посетителей</p>
-                </div>
-              </div>
-
-              {/* Geo Traffic Breakdown & Quick Actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Traffic by Country */}
-                <div className="lg:col-span-2 p-6 rounded-3xl bg-[#1C1A18] border border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                      Распределение посетителей по странам
-                    </h2>
-                    <span className="text-xs text-[#A8A29E]">Живая статистика</span>
-                  </div>
-
-                  <div className="space-y-3.5">
-                    {(stats?.countries || []).map((c) => {
-                      const total = stats?.totalVisits || 1;
-                      const percent = Math.min(100, Math.round((c.visits / total) * 100));
-                      return (
-                        <div key={c.code} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2 font-medium text-[#EDE8E1]">
-                              <span className="text-base">{c.flag}</span>
-                              <span>{c.nameRu}</span>
-                              <span className="text-[#78716C]">({c.code})</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold text-white">{c.visits.toLocaleString()}</span>
-                              <span className="text-[11px] text-[#A8A29E] w-8 text-right">{percent}%</span>
-                            </div>
-                          </div>
-                          <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-[#D4AF37] to-[#B38F24] rounded-full transition-all duration-500"
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {(!stats?.countries || stats.countries.length === 0) && (
-                      <p className="text-xs text-[#78716C] py-4 text-center">Ожидание первых визитов пользователей...</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Actions Card */}
-                <div className="p-6 rounded-3xl bg-[#1C1A18] border border-white/10 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
-                      Быстрые действия
-                    </h2>
-                    <p className="text-xs text-[#A8A29E]">Оперативные команды CRM</p>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <button
-                      onClick={() => setActiveTab('orders')}
-                      className="w-full py-3 px-4 rounded-xl bg-[#D4AF37] text-[#141312] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#E5C158] transition-colors shadow-lg shadow-[#D4AF37]/10"
-                    >
-                      <ClipboardList className="w-4 h-4" />
-                      Перейти к заказам & лидам
-                    </button>
-
-                    <button
-                      onClick={handleOpenAddModal}
-                      className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors"
-                    >
-                      <Plus className="w-4 h-4 text-[#D4AF37]" />
-                      Добавить новый товар
-                    </button>
-
-                    <button
-                      onClick={() => handleTriggerSync(false)}
-                      disabled={isSyncing}
-                      className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#D4AF37]' : ''}`} />
-                      Синхронизировать Telegram
-                    </button>
-
-                    <button
-                      onClick={handleExportJSON}
-                      className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#C4BDB5] text-xs font-semibold flex items-center justify-center gap-2 border border-white/10 transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Экспорт каталога в JSON
-                    </button>
-                  </div>
-
-                  {syncMessage && (
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-[#D4AF37]">
-                      {syncMessage}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <AnalyticsEChartsView token={token || ''} />
           )}
 
           {/* TAB 2: CRM ORDERS & LEADS */}
@@ -635,17 +533,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <h1 className="text-xl font-bold text-white font-serif">Заказы & Лиды CRM</h1>
                   <p className="text-xs text-[#A8A29E]">
-                    Управление входящими заявками, статусами отправки и заметками менеджера
+                    Управление входящими заявками, назначение продавцов, авиа-карго и учет чеков оплаты
                   </p>
                 </div>
-                <button
-                  onClick={fetchOrders}
-                  disabled={isLoadingOrders}
-                  className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold flex items-center gap-2 transition-all self-start sm:self-auto disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />
-                  Обновить список
-                </button>
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                  <button
+                    onClick={() => setIsExportModalOpen(true)}
+                    className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>Выгрузка в Excel / CSV</span>
+                  </button>
+
+                  <button
+                    onClick={fetchOrders}
+                    disabled={isLoadingOrders}
+                    className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />
+                    <span>Обновить</span>
+                  </button>
+                </div>
               </div>
 
               {/* Status Filter Buttons */}
@@ -664,7 +572,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onClick={() => setOrderStatusFilter(st.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
                       orderStatusFilter === st.id
-                        ? 'bg-[#D4AF37] text-[#141312] shadow-md'
+                        ? 'bg-[#D4AF37] text-[#141312] shadow-md font-bold'
                         : 'bg-white/5 text-[#A8A29E] hover:bg-white/10 hover:text-white border border-white/5'
                     }`}
                   >
@@ -682,15 +590,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </div>
 
-              {/* Search & Channel Filters */}
-              <div className="p-4 rounded-2xl bg-[#1C1A18] border border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Search & Channel & Seller Filters */}
+              <div className="p-4 rounded-2xl bg-[#1C1A18] border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="sm:col-span-2 relative">
                   <Search className="w-4 h-4 text-[#78716C] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={orderSearchQuery}
                     onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    placeholder="Поиск по номеру заказа (MK-...), имени клиента или телефону..."
+                    placeholder="Поиск по MK-номеру, имени, телефону, городу..."
                     className="w-full bg-[#141312] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37]"
                   />
                 </div>
@@ -701,10 +609,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setOrderTypeFilter(e.target.value)}
                     className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
                   >
-                    <option value="all">Все источники каналов</option>
+                    <option value="all">Все каналы продаж</option>
                     <option value="quick_order">⚡ Быстрый заказ</option>
                     <option value="cart">🛒 Корзина магазина</option>
                     <option value="quiz_consultation">💆‍♀️ Подбор ухода (Квиз)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <select
+                    value={sellerFilter}
+                    onChange={(e) => setSellerFilter(e.target.value)}
+                    className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
+                  >
+                    <option value="all">Все менеджеры</option>
+                    <option value="unassigned">⚠️ Не назначены</option>
+                    {Array.from(new Set(orders.map((o) => o.assignedTo).filter(Boolean))).map((seller) => (
+                      <option key={seller} value={seller}>
+                        👤 {seller}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -716,7 +640,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <RefreshCw className="w-6 h-6 animate-spin text-[#D4AF37]" />
                     <span className="text-xs">Загрузка заказов из базы SQLite...</span>
                   </div>
-                ) : orders.filter(o => orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter).length === 0 ? (
+                ) : orders.filter(o => {
+                  const matchType = orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter;
+                  const matchSeller = sellerFilter === 'all' || (sellerFilter === 'unassigned' ? !o.assignedTo : o.assignedTo === sellerFilter);
+                  return matchType && matchSeller;
+                }).length === 0 ? (
                   <div className="p-12 text-center text-[#78716C] space-y-2">
                     <ClipboardList className="w-8 h-8 mx-auto text-[#78716C] opacity-40" />
                     <p className="text-sm font-medium text-white">Заказы не найдены</p>
@@ -727,7 +655,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ) : (
                   <div className="divide-y divide-white/5">
                     {orders
-                      .filter(o => orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter)
+                      .filter(o => {
+                        const matchType = orderTypeFilter === 'all' || o.type === orderTypeFilter || o.channelSource === orderTypeFilter;
+                        const matchSeller = sellerFilter === 'all' || (sellerFilter === 'unassigned' ? !o.assignedTo : o.assignedTo === sellerFilter);
+                        return matchType && matchSeller;
+                      })
                       .map((order) => {
                         const isNew = order.status === 'new';
                         const statusColors: Record<string, string> = {
@@ -764,7 +696,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             }`}
                           >
                             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                              {/* Left Info: Order Number, Customer, Channel, Timestamp */}
+                              {/* Left Info: Order Number, Customer, Channel, Manager, Cargo, Timestamp */}
                               <div className="space-y-3 flex-1">
                                 <div className="flex flex-wrap items-center gap-2.5">
                                   <span className="font-mono text-sm font-bold text-white px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">
@@ -774,7 +706,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <ChannelIcon className="w-3.5 h-3.5" />
                                     <span>{channel.label}</span>
                                   </span>
-                                  <span className="text-[11px] text-[#78716C] flex items-center gap-1">
+
+                                  {/* Manager Badge */}
+                                  {order.assignedTo ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                                      <Briefcase className="w-3.5 h-3.5 text-blue-400" />
+                                      <span>Менеджер: <strong>{order.assignedTo}</strong></span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] text-[#A8A29E] bg-white/5 border border-white/5">
+                                      Без менеджера
+                                    </span>
+                                  )}
+
+                                  {/* Cargo Batch Badge */}
+                                  {order.cargoBatchId && (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                                      <Plane className="w-3.5 h-3.5 text-sky-400" />
+                                      <span>Рейс #{order.cargoBatchId}</span>
+                                    </span>
+                                  )}
+
+                                  {/* City Badge */}
+                                  {order.city && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20">
+                                      <MapPin className="w-3 h-3" />
+                                      <span>{order.city}</span>
+                                    </span>
+                                  )}
+
+                                  <span className="text-[11px] text-[#78716C] flex items-center gap-1 ml-auto">
                                     <Clock className="w-3 h-3" />
                                     {new Date(order.createdAt).toLocaleString()}
                                   </span>
@@ -911,13 +872,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                               {/* Right Info: Status Dropdown, Total Amount, Manager Actions */}
                               <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-3 lg:w-64 flex-shrink-0 border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
-                                {/* Total Amount */}
+                                {/* Total Amount & Cost/Margin */}
                                 {order.totalAmount > 0 && (
                                   <div className="text-left lg:text-right">
                                     <span className="text-[10px] text-[#78716C] block uppercase">Сумма заказа:</span>
                                     <span className="text-lg font-bold text-[#D4AF37] font-serif">
                                       ₩ {order.totalAmount.toLocaleString()}
                                     </span>
+                                    {order.costPrice !== undefined && order.costPrice > 0 && (
+                                      <div className="text-[10px] text-emerald-400 font-semibold">
+                                        Маржа: +₩ {(order.totalAmount - order.costPrice).toLocaleString()}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
 
@@ -989,6 +955,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 )}
               </div>
             </div>
+          )}
+
+          {/* TAB: CARGO LOGISTICS */}
+          {activeTab === 'cargo' && (
+            <LogisticsCargoView token={token || ''} />
+          )}
+
+          {/* TAB: INVENTORY VARIANTS & SKU */}
+          {activeTab === 'variants' && (
+            <InventoryVariantsView posts={posts} token={token || ''} />
+          )}
+
+          {/* TAB: STAFF & SELLERS MANAGEMENT */}
+          {activeTab === 'staff' && (
+            <StaffManagementView token={token || ''} />
           )}
 
           {/* TAB 2: PRODUCTS MANAGEMENT */}
@@ -1599,6 +1580,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       )}
+      {/* Data Export Modal (Excel / CSV & JSON) */}
+      <DataExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        token={token || ''}
+        orders={orders}
+      />
     </div>
   );
 };

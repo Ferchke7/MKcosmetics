@@ -1,7 +1,9 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -29,11 +31,15 @@ type CreateOrderInput struct {
 	Type              string             `json:"type"`
 	Items             []entity.OrderItem `json:"items"`
 	TotalAmount       float64            `json:"totalAmount"`
+	CostPrice         float64            `json:"costPrice"`
 	Currency          string             `json:"currency"`
 	PaymentReceiptURL string             `json:"paymentReceiptUrl"`
 	PaymentMethod     string             `json:"paymentMethod"`
 	TrackingNumber    string             `json:"trackingNumber"`
 	ShippingAddress   string             `json:"shippingAddress"`
+	City              string             `json:"city"`
+	AssignedTo        string             `json:"assignedTo"`
+	CargoBatchID      int64              `json:"cargoBatchId"`
 	Notes             string             `json:"notes"`
 }
 
@@ -66,12 +72,16 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 		Type:              input.Type,
 		Items:             input.Items,
 		TotalAmount:       input.TotalAmount,
+		CostPrice:         input.CostPrice,
 		Currency:          input.Currency,
 		Status:            "new",
 		PaymentReceiptURL: strings.TrimSpace(input.PaymentReceiptURL),
 		PaymentMethod:     strings.TrimSpace(input.PaymentMethod),
 		TrackingNumber:    strings.TrimSpace(input.TrackingNumber),
 		ShippingAddress:   strings.TrimSpace(input.ShippingAddress),
+		City:              strings.TrimSpace(input.City),
+		AssignedTo:        strings.TrimSpace(input.AssignedTo),
+		CargoBatchID:      input.CargoBatchID,
 		Notes:             strings.TrimSpace(input.Notes),
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
@@ -93,9 +103,13 @@ type ProcessOrderInput struct {
 	PaymentMethod     string             `json:"paymentMethod"`
 	TrackingNumber    string             `json:"trackingNumber"`
 	ShippingAddress   string             `json:"shippingAddress"`
+	City              string             `json:"city"`
+	AssignedTo        string             `json:"assignedTo"`
+	CargoBatchID      *int64             `json:"cargoBatchId,omitempty"`
 	Notes             string             `json:"notes"`
 	Items             []entity.OrderItem `json:"items,omitempty"`
 	TotalAmount       *float64           `json:"totalAmount,omitempty"`
+	CostPrice         *float64           `json:"costPrice,omitempty"`
 	Currency          string             `json:"currency,omitempty"`
 }
 
@@ -141,6 +155,15 @@ func (uc *OrderUseCase) ProcessOrder(ctx context.Context, input ProcessOrderInpu
 	if input.ShippingAddress != "" {
 		order.ShippingAddress = strings.TrimSpace(input.ShippingAddress)
 	}
+	if input.City != "" {
+		order.City = strings.TrimSpace(input.City)
+	}
+	if input.AssignedTo != "" {
+		order.AssignedTo = strings.TrimSpace(input.AssignedTo)
+	}
+	if input.CargoBatchID != nil {
+		order.CargoBatchID = *input.CargoBatchID
+	}
 	if input.Notes != "" {
 		order.Notes = strings.TrimSpace(input.Notes)
 	}
@@ -149,6 +172,9 @@ func (uc *OrderUseCase) ProcessOrder(ctx context.Context, input ProcessOrderInpu
 	}
 	if input.TotalAmount != nil {
 		order.TotalAmount = *input.TotalAmount
+	}
+	if input.CostPrice != nil {
+		order.CostPrice = *input.CostPrice
 	}
 	if input.Currency != "" {
 		order.Currency = input.Currency
@@ -214,4 +240,95 @@ func (uc *OrderUseCase) UpdateNotes(ctx context.Context, id int64, notes string)
 
 func (uc *OrderUseCase) DeleteOrder(ctx context.Context, id int64) error {
 	return uc.orderRepo.Delete(ctx, id)
+}
+
+func (uc *OrderUseCase) ExportOrdersCSV(ctx context.Context, status, search string) ([]byte, error) {
+	orders, _, err := uc.orderRepo.FindAll(ctx, status, search, 5000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	// UTF-8 BOM for Excel compatibility
+	buf.WriteString("\xEF\xBB\xBF")
+
+	writer := csv.NewWriter(&buf)
+	writer.Comma = ';'
+
+	header := []string{
+		"Номер заказа",
+		"Дата создания",
+		"Клиент",
+		"Телефон",
+		"Состав заказа",
+		"Сумма заказа",
+		"Себестоимость",
+		"Валюта",
+		"Статус",
+		"Способ оплаты",
+		"Чек прикреплен",
+		"Трек-номер",
+		"Адрес доставки",
+		"Город / Регион",
+		"Ответственный менеджер",
+		"Карго партия",
+		"Заметки",
+	}
+	_ = writer.Write(header)
+
+	statusLabels := map[string]string{
+		"new":        "Новый",
+		"processing": "В обработке",
+		"paid":       "Оплачен",
+		"shipped":    "Отправлен из Кореи",
+		"delivered":  "Доставлен клиенту",
+		"cancelled":  "Отменен",
+	}
+
+	for _, o := range orders {
+		var itemTitles []string
+		for _, item := range o.Items {
+			itemTitles = append(itemTitles, fmt.Sprintf("%s (%d шт.)", item.Title, item.Quantity))
+		}
+		itemsStr := strings.Join(itemTitles, ", ")
+
+		hasReceipt := "Нет"
+		if o.PaymentReceiptURL != "" {
+			hasReceipt = "Да (чек загружен)"
+		}
+
+		st := statusLabels[o.Status]
+		if st == "" {
+			st = o.Status
+		}
+
+		cargoID := ""
+		if o.CargoBatchID > 0 {
+			cargoID = fmt.Sprintf("Рейс #%d", o.CargoBatchID)
+		}
+
+		row := []string{
+			o.OrderNumber,
+			o.CreatedAt.Format("2006-01-02 15:04:05"),
+			o.CustomerName,
+			o.Phone,
+			itemsStr,
+			fmt.Sprintf("%.2f", o.TotalAmount),
+			fmt.Sprintf("%.2f", o.CostPrice),
+			o.Currency,
+			st,
+			o.PaymentMethod,
+			hasReceipt,
+			o.TrackingNumber,
+			o.ShippingAddress,
+			o.City,
+			o.AssignedTo,
+			cargoID,
+			o.Notes,
+		}
+		_ = writer.Write(row)
+	}
+
+	writer.Flush()
+	return buf.Bytes(), nil
 }

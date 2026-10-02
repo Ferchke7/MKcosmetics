@@ -15,6 +15,8 @@ type OrderRepository interface {
 	UpdateStatus(ctx context.Context, id int64, status string) error
 	UpdateNotes(ctx context.Context, id int64, notes string) error
 	UpdatePaymentReceipt(ctx context.Context, id int64, receiptURL, paymentMethod string) error
+	FindByCargoBatchID(ctx context.Context, batchID int64) ([]*entity.Order, error)
+	BulkUpdateStatusByBatchID(ctx context.Context, batchID int64, status string, trackingPrefix string) error
 	Delete(ctx context.Context, id int64) error
 	Count(ctx context.Context) (int, error)
 	CountByStatus(ctx context.Context) (map[string]int, error)

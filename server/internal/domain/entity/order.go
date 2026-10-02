@@ -22,12 +22,16 @@ type Order struct {
 	Type              string      `json:"type"`          // 'order', 'quick_order', 'cart', 'quiz_consultation'
 	Items             []OrderItem `json:"items"`
 	TotalAmount       float64     `json:"totalAmount"`
+	CostPrice         float64     `json:"costPrice"` // Purchase cost in KRW for margin calculation
 	Currency          string      `json:"currency"`
 	Status            string      `json:"status"` // 'new', 'processing', 'paid', 'shipped', 'delivered', 'cancelled'
 	PaymentReceiptURL string      `json:"paymentReceiptUrl"`
 	PaymentMethod     string      `json:"paymentMethod"`
 	TrackingNumber    string      `json:"trackingNumber"`
 	ShippingAddress   string      `json:"shippingAddress"`
+	City              string      `json:"city"`
+	AssignedTo        string      `json:"assignedTo"`   // Manager username
+	CargoBatchID      int64       `json:"cargoBatchId"` // Linked shipment flight
 	Notes             string      `json:"notes"`
 	CreatedAt         time.Time   `json:"createdAt"`
 	UpdatedAt         time.Time   `json:"updatedAt"`

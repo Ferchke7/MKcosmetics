@@ -6,8 +6,11 @@ import "time"
 type User struct {
 	ID           int64     `json:"id"`
 	Username     string    `json:"username"`
+	DisplayName  string    `json:"displayName"`
+	Phone        string    `json:"phone"`
 	PasswordHash string    `json:"-"`
-	Role         string    `json:"role"`
+	Role         string    `json:"role"` // 'admin', 'manager', 'logistics'
+	IsActive     bool      `json:"isActive"`
 	CreatedAt    time.Time `json:"createdAt"`
 	LastLogin    time.Time `json:"lastLogin,omitempty"`
 }

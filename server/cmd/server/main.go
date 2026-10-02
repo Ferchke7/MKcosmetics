@@ -46,6 +46,8 @@ func main() {
 	visitorRepo := sqlite.NewVisitorRepository(db)
 	userRepo := sqlite.NewUserRepository(db)
 	orderRepo := sqlite.NewOrderRepository(db)
+	cargoRepo := sqlite.NewCargoRepository(db)
+	variantRepo := sqlite.NewVariantRepository(db)
 
 	// 4. Infrastructure Scraper
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
@@ -57,6 +59,10 @@ func main() {
 	authUC := usecase.NewAuthUseCase(userRepo, jwtSecret)
 	orderUC := usecase.NewOrderUseCase(orderRepo)
 	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo, orderRepo)
+	analyticsUC := usecase.NewAnalyticsUseCase(orderRepo, productRepo, userRepo, visitorRepo)
+	cargoUC := usecase.NewCargoUseCase(cargoRepo, orderRepo)
+	variantUC := usecase.NewVariantUseCase(variantRepo)
+	staffUC := usecase.NewStaffUseCase(userRepo, orderRepo)
 
 	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
@@ -67,6 +73,11 @@ func main() {
 	adminHandler := handler.NewAdminHandler(adminUC, syncUC)
 	uploadDir := getEnv("UPLOAD_DIR", "./data/uploads")
 	uploadHandler := handler.NewUploadHandler(uploadDir)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsUC)
+	cargoHandler := handler.NewCargoHandler(cargoUC)
+	variantHandler := handler.NewVariantHandler(variantUC)
+	staffHandler := handler.NewStaffHandler(staffUC)
+	exportHandler := handler.NewExportHandler(orderUC)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -79,6 +90,11 @@ func main() {
 		adminHandler,
 		orderHandler,
 		uploadHandler,
+		analyticsHandler,
+		cargoHandler,
+		variantHandler,
+		staffHandler,
+		exportHandler,
 		authMiddleware,
 	)
 
@@ -98,32 +114,32 @@ func main() {
 
 	// Listen for OS signals in a separate goroutine
 	shutdownChan := make(chan os.Signal, 1)
-	signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("🚀 MK Cosmetics API & Web server listening on http://0.0.0.0:%s", port)
+		log.Printf("🚀 MK Cosmetics backend server running on http://localhost:%s", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("❌ HTTP server listen failed: %v", err)
+			log.Fatalf("❌ HTTP server error: %v", err)
 		}
 	}()
 
 	// Wait for shutdown signal
 	sig := <-shutdownChan
-	log.Printf("🛑 Received shutdown signal (%v). Gracefully stopping server...", sig)
+	log.Printf("🛑 Received signal '%v', initiating graceful shutdown...", sig)
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("⚠️ Server forced to shutdown: %v", err)
+		log.Fatalf("❌ Server forced to shutdown: %v", err)
 	}
 
-	log.Println("👋 Server stopped gracefully. Goodbye!")
+	log.Println("👋 Server gracefully stopped. Goodbye!")
 }
 
-func getEnv(key, defaultVal string) string {
-	if val, ok := os.LookupEnv(key); ok && val != "" {
+func getEnv(key, fallback string) string {
+	if val := os.Getenv(key); val != "" {
 		return val
 	}
-	return defaultVal
+	return fallback
 }

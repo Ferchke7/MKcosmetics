@@ -101,8 +101,11 @@ func (db *DB) migrate() error {
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		username TEXT UNIQUE NOT NULL,
+		display_name TEXT NOT NULL DEFAULT '',
+		phone TEXT NOT NULL DEFAULT '',
 		password_hash TEXT NOT NULL,
 		role TEXT NOT NULL DEFAULT 'admin',
+		is_active INTEGER NOT NULL DEFAULT 1,
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		last_login TIMESTAMP
 	);
@@ -116,12 +119,16 @@ func (db *DB) migrate() error {
 		type TEXT NOT NULL DEFAULT 'order',
 		items_json TEXT NOT NULL DEFAULT '[]',
 		total_amount REAL NOT NULL DEFAULT 0,
+		cost_price REAL NOT NULL DEFAULT 0,
 		currency TEXT NOT NULL DEFAULT 'UZS',
 		status TEXT NOT NULL DEFAULT 'new',
 		payment_receipt_url TEXT NOT NULL DEFAULT '',
 		payment_method TEXT NOT NULL DEFAULT '',
 		tracking_number TEXT NOT NULL DEFAULT '',
 		shipping_address TEXT NOT NULL DEFAULT '',
+		city TEXT NOT NULL DEFAULT '',
+		assigned_to TEXT NOT NULL DEFAULT '',
+		cargo_batch_id INTEGER NOT NULL DEFAULT 0,
 		notes TEXT NOT NULL DEFAULT '',
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -129,6 +136,42 @@ func (db *DB) migrate() error {
 
 	CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 	CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_orders_cargo ON orders(cargo_batch_id);
+	CREATE INDEX IF NOT EXISTS idx_orders_assigned ON orders(assigned_to);
+
+	CREATE TABLE IF NOT EXISTS cargo_batches (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		batch_code TEXT UNIQUE NOT NULL,
+		title TEXT NOT NULL,
+		origin TEXT NOT NULL DEFAULT 'Seoul (ICN)',
+		destination TEXT NOT NULL DEFAULT 'Tashkent (TAS)',
+		awb_number TEXT NOT NULL DEFAULT '',
+		carrier TEXT NOT NULL DEFAULT '',
+		weight_kg REAL NOT NULL DEFAULT 0,
+		rate_per_kg REAL NOT NULL DEFAULT 0,
+		departure_date TEXT NOT NULL DEFAULT '',
+		arrival_date TEXT NOT NULL DEFAULT '',
+		status TEXT NOT NULL DEFAULT 'draft',
+		notes TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS product_variants (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		product_id TEXT NOT NULL,
+		variant_type TEXT NOT NULL DEFAULT 'volume',
+		name TEXT NOT NULL,
+		sku TEXT NOT NULL DEFAULT '',
+		cost_price REAL NOT NULL DEFAULT 0,
+		retail_price REAL NOT NULL DEFAULT 0,
+		stock_quantity INTEGER NOT NULL DEFAULT 10,
+		stock_status TEXT NOT NULL DEFAULT 'in_stock',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 	`
 
 	_, err := db.Exec(schema)
@@ -141,6 +184,14 @@ func (db *DB) migrate() error {
 	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT '';")
 	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN tracking_number TEXT NOT NULL DEFAULT '';")
 	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN shipping_address TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN cost_price REAL NOT NULL DEFAULT 0;")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN city TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN assigned_to TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE orders ADD COLUMN cargo_batch_id INTEGER NOT NULL DEFAULT 0;")
+
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT '';")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;")
 
 	// Ensure default admin user exists
 	db.seedDefaultAdmin()
