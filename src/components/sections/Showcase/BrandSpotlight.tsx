@@ -88,15 +88,17 @@ export const BrandSpotlight: React.FC<BrandSpotlightProps> = ({
 
   const activeBrand = FEATURED_BRANDS.find((b) => b.id === activeBrandId) || FEATURED_BRANDS[0];
 
+  const safeProducts = Array.isArray(products) ? products : [];
+
   // Find products belonging to active brand (or matching brand name)
-  const brandProducts = products
-    .filter((p) => p.brand.toLowerCase().includes(activeBrand.name.toLowerCase()))
+  const brandProducts = safeProducts
+    .filter((p) => (p?.brand || '').toLowerCase().includes(activeBrand.name.toLowerCase()))
     .slice(0, 4);
 
   // If active brand has fewer than 4, fill with general products
   const displayProducts = brandProducts.length > 0
     ? brandProducts
-    : products.slice(0, 4);
+    : safeProducts.slice(0, 4);
 
   return (
     <section className="py-14 sm:py-20 bg-gradient-to-b from-[#FAF7F2] to-[#F5EFEB] border-b border-[#EAE2DC]">

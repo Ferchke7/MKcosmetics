@@ -70,7 +70,8 @@ export const CountryVisitorCounter: React.FC = () => {
     };
   }, []);
 
-  const total = data.totalVisits || data.countries.reduce((acc, c) => acc + c.visits, 0);
+  const countriesList = Array.isArray(data?.countries) ? data.countries : [];
+  const total = data?.totalVisits || countriesList.reduce((acc, c) => acc + (c?.visits || 0), 0);
 
   return (
     <div className="rounded-2xl bg-[#1A2234] border border-[#2A344A] p-5 sm:p-6 text-white shadow-xl">
@@ -94,7 +95,7 @@ export const CountryVisitorCounter: React.FC = () => {
         </div>
 
         {/* User IP Box */}
-        {data.clientIp && (
+        {data?.clientIp && (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-mono">
             <MapPin className="w-3.5 h-3.5 text-blue-400" />
             <span className="text-gray-400 text-[11px]">{t('visitor_your_ip')}</span>
@@ -104,9 +105,9 @@ export const CountryVisitorCounter: React.FC = () => {
       </div>
 
       {/* Country List Progress Bars */}
-      {data.countries.length > 0 ? (
+      {countriesList.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
-          {data.countries.slice(0, 4).map((country) => {
+          {countriesList.slice(0, 4).map((country) => {
             const percent = total > 0 ? Math.round((country.visits / total) * 100) : 0;
             const countryName = language === 'uz' ? country.nameUz : country.nameRu;
 

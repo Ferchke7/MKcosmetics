@@ -177,9 +177,9 @@ export const TelegramPostCard: React.FC<TelegramPostCardProps> = ({
           )}
 
           {/* Tags */}
-          {tags.length > 0 && (
+          {(tags || []).length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
-              {tags.slice(0, 3).map((tag) => (
+              {(tags || []).slice(0, 3).map((tag) => (
                 <span
                   key={tag}
                   className="text-[10px] text-[#A89F97] hover:text-[#C2836B]"

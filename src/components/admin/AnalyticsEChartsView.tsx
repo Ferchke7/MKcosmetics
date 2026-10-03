@@ -78,9 +78,10 @@ export const AnalyticsEChartsView: React.FC<AnalyticsEChartsViewProps> = ({ toke
       const chart = echarts.init(revenueChartRef.current);
       chartInstances.current.push(chart);
 
-      const dates = data.revenueTimeline.map((p) => p.date.slice(5));
-      const revenues = data.revenueTimeline.map((p) => Math.round(p.revenueKRW * currencyRate));
-      const profits = data.revenueTimeline.map((p) => Math.round(p.profitKRW * currencyRate));
+      const timeline = data?.revenueTimeline || [];
+      const dates = timeline.map((p) => (p?.date || '').slice(5));
+      const revenues = timeline.map((p) => Math.round((p?.revenueKRW || 0) * currencyRate));
+      const profits = timeline.map((p) => Math.round((p?.profitKRW || 0) * currencyRate));
 
       chart.setOption({
         backgroundColor: 'transparent',
@@ -90,7 +91,7 @@ export const AnalyticsEChartsView: React.FC<AnalyticsEChartsViewProps> = ({ toke
           borderColor: 'rgba(212, 175, 55, 0.3)',
           textStyle: { color: '#EDE8E1', fontSize: 12 },
           formatter: (params: any) => {
-            let res = `<div style="font-weight:bold;margin-bottom:4px;color:#D4AF37">${params[0].axisValue}</div>`;
+            let res = `<div style="font-weight:bold;margin-bottom:4px;color:#D4AF37">${params[0]?.axisValue || ''}</div>`;
             params.forEach((item: any) => {
               res += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;">
                 <span style="color:${item.color}">● ${item.seriesName}:</span>
@@ -165,7 +166,7 @@ export const AnalyticsEChartsView: React.FC<AnalyticsEChartsViewProps> = ({ toke
       const chart = echarts.init(waterfallChartRef.current);
       chartInstances.current.push(chart);
 
-      const totalRev = Math.round(data.totalRevenueKRW * currencyRate);
+      const totalRev = Math.round((data?.totalRevenueKRW || 0) * currencyRate);
       const cogs = Math.round(totalRev * 0.55);
       const cargo = Math.round(totalRev * 0.08);
       const commission = Math.round(totalRev * 0.05);
@@ -237,9 +238,9 @@ export const AnalyticsEChartsView: React.FC<AnalyticsEChartsViewProps> = ({ toke
       const chart = echarts.init(brandChartRef.current);
       chartInstances.current.push(chart);
 
-      const topBrands = data.topBrands.slice(0, 6);
+      const topBrands = (data?.topBrands || []).slice(0, 6);
       const brandNames = topBrands.map((b) => b.brand || 'Без бренда').reverse();
-      const brandRevenues = topBrands.map((b) => Math.round(b.revenueKRW * currencyRate)).reverse();
+      const brandRevenues = topBrands.map((b) => Math.round((b.revenueKRW || 0) * currencyRate)).reverse();
 
       chart.setOption({
         backgroundColor: 'transparent',
@@ -290,10 +291,10 @@ export const AnalyticsEChartsView: React.FC<AnalyticsEChartsViewProps> = ({ toke
       const chart = echarts.init(geoChartRef.current);
       chartInstances.current.push(chart);
 
-      const cities = data.topCities.slice(0, 5);
+      const cities = (data?.topCities || []).slice(0, 5);
       const pieData = cities.map((c, i) => ({
         name: c.city || 'Ташкент',
-        value: Math.round(c.revenueKRW * currencyRate),
+        value: Math.round((c.revenueKRW || 0) * currencyRate),
         itemStyle: {
           color: ['#D4AF37', '#10B981', '#38BDF8', '#F59E0B', '#A855F7'][i % 5],
         },

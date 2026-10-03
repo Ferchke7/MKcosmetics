@@ -35,15 +35,16 @@ export const LatestShowcase: React.FC<LatestShowcaseProps> = ({
 
   // Filter products by active showcase tab
   const displayedList = React.useMemo(() => {
+    const safeList = Array.isArray(products) ? products : [];
     if (activeTab === 'sale') {
-      const sales = products.filter((p) => p.discountPercent && p.discountPercent > 0);
-      return sales.length >= 5 ? sales.slice(0, 10) : products.slice(0, 10);
+      const sales = safeList.filter((p) => p && p.discountPercent && p.discountPercent > 0);
+      return sales.length >= 5 ? sales.slice(0, 10) : safeList.slice(0, 10);
     }
     if (activeTab === 'newest') {
-      return [...products].reverse().slice(0, 10);
+      return [...safeList].reverse().slice(0, 10);
     }
     // Default: Bestsellers (top 10)
-    return products.slice(0, 10);
+    return safeList.slice(0, 10);
   }, [products, activeTab]);
 
   return (

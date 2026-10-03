@@ -263,7 +263,7 @@ export const StaffPayslipModal: React.FC<StaffPayslipModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {staff.Orders.slice(0, 8).map((o) => (
+                  {(staff?.Orders || []).slice(0, 8).map((o) => (
                     <tr key={o.id}>
                       <td className="py-1.5 px-2 font-mono font-bold">{o.OrderNumber}</td>
                       <td className="py-1.5 px-2 text-gray-500">{new Date(o.Date).toLocaleDateString()}</td>
@@ -276,7 +276,7 @@ export const StaffPayslipModal: React.FC<StaffPayslipModalProps> = ({
                   ))}
                 </tbody>
               </table>
-              {staff.Orders.length > 8 && (
+              {(staff?.Orders || []).length > 8 && (
                 <p className="text-[10px] text-gray-400 italic text-right mt-1">
                   ...и еще {staff.Orders.length - 8} заказов в полном отчете
                 </p>

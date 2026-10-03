@@ -207,10 +207,10 @@ export const InventoryVariantsView: React.FC<InventoryVariantsViewProps> = ({ po
             onChange={(e) => setSelectedProductFilter(e.target.value)}
             className="w-full bg-[#141312] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
           >
-            <option value="all">Все товары ({posts.length})</option>
-            {posts.slice(0, 50).map((p) => (
+            <option value="all">Все товары ({(posts || []).length})</option>
+            {(posts || []).slice(0, 50).map((p) => (
               <option key={p.id} value={p.id}>
-                {p.brand ? `[${p.brand}] ` : ''}{p.productTitle.slice(0, 35)}...
+                {p.brand ? `[${p.brand}] ` : ''}{(p.productTitle || '').slice(0, 35)}...
               </option>
             ))}
           </select>
@@ -361,9 +361,9 @@ export const InventoryVariantsView: React.FC<InventoryVariantsViewProps> = ({ po
                   onChange={(e) => setFormProductId(e.target.value)}
                   className="w-full bg-[#141312] border border-white/10 rounded-xl p-2.5 text-white focus:border-[#D4AF37] focus:outline-none cursor-pointer"
                 >
-                  {posts.map((p) => (
+                  {(posts || []).map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.brand ? `[${p.brand}] ` : ''}{p.productTitle.slice(0, 50)}...
+                      {p.brand ? `[${p.brand}] ` : ''}{(p.productTitle || '').slice(0, 50)}...
                     </option>
                   ))}
                 </select>
