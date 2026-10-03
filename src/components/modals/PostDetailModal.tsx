@@ -54,7 +54,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
         )
       : 0;
 
-  const handleOrderWhatsApp = () => {
+  const handleQuickOrderAction = () => {
     onQuickOrder(
       sanitized.title,
       displayPrice,
@@ -305,14 +305,15 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-4 border-t border-[#F0E6DE]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-4 border-t border-[#ECE8E1]">
           <Button
-            variant="whatsapp"
+            variant="primary"
             size="lg"
-            onClick={handleOrderWhatsApp}
-            icon={<MessageCircle className="w-4 h-4" />}
+            onClick={handleQuickOrderAction}
+            icon={<Sparkles className="w-4 h-4 text-[#B89254]" />}
+            className="rounded-xl font-bold bg-[#1A1917] hover:bg-[#B89254] text-white py-3"
           >
-            Заказать в WhatsApp
+            Быстрый заказ
           </Button>
 
           <a
@@ -322,10 +323,11 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
             className="w-full"
           >
             <Button
-              variant="telegram"
+              variant="outline"
               size="lg"
               fullWidth
-              icon={<Send className="w-4 h-4" />}
+              icon={<Send className="w-4 h-4 text-[#0088cc]" />}
+              className="rounded-xl border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254] py-3 font-semibold"
             >
               Открыть в Telegram
             </Button>

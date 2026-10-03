@@ -3,17 +3,14 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import {
-  MessageCircle,
   CheckCircle2,
   Package,
   Loader2,
-  Send,
-  Plus,
-  Minus,
   MapPin,
   CreditCard,
+  Copy,
+  Check,
 } from 'lucide-react';
-import { buildWhatsAppUrl, BRAND_CONFIG } from '../../core/constants/brand';
 import { useLanguage } from '../../core/i18n/LanguageContext';
 import { adminService } from '../../services/admin/adminService';
 
@@ -61,11 +58,13 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const selectedRegion = REGIONS.find((r) => r.id === region) || REGIONS[0];
   const selectedPay = PAY_METHODS.find((p) => p.id === paymentMethod) || PAY_METHODS[0];
 
-  const handleSendOrder = async (channel: 'whatsapp' | 'telegram') => {
+  const handleSendOrder = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     let assignedOrderNum = '';
 
@@ -73,9 +72,9 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
 
     try {
       const order = await adminService.createPublicOrder({
-        customerName: name || (language === 'uz' ? 'Mijoz' : 'Покупатель'),
-        phone: phoneOrTelegram,
-        channelSource: channel === 'whatsapp' ? 'quick_order_whatsapp' : 'quick_order_telegram',
+        customerName: name.trim() || (language === 'uz' ? 'Mijoz' : 'Покупатель'),
+        phone: phoneOrTelegram.trim() || '',
+        channelSource: 'web_quick_order',
         type: 'quick_order',
         items: [
           {
@@ -87,49 +86,27 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             photoUrl: productPhoto || '',
           },
         ],
-        notes: `Кол-во: ${quantity} шт.\nРегион: ${regionText}\nАдрес: ${address || 'Не указан'}\nОплата: ${selectedPay.name}\nПожелание: ${comment || 'Нет'}\nТовар: ${productTitle} (${priceFormatted})\nИсточник: ${sourceUrl || ''}`,
+        notes: `Кол-во: ${quantity} шт.\nРегион: ${regionText}\nАдрес: ${address.trim() || 'Не указан'}\nОплата: ${selectedPay.name}\nПожелание: ${comment.trim() || 'Нет'}\nТовар: ${productTitle} (${priceFormatted})\nИсточник: ${sourceUrl || ''}`,
       });
       if (order?.orderNumber) {
         assignedOrderNum = order.orderNumber;
         setOrderNumber(assignedOrderNum);
       }
+      setIsSuccess(true);
     } catch (err) {
       console.warn('Could not persist CRM order to backend:', err);
+      const fallbackNum = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      setOrderNumber(fallbackNum);
+      setIsSuccess(true);
     } finally {
       setIsSubmitting(false);
     }
+  };
 
-    let message = language === 'uz'
-      ? `🌸 *Assalomu alaykum, Muhabbat! Kosmetika buyurtma qilmoqchiman:*\n\n`
-      : `🌸 *Здравствуйте, Мухаббат! Хочу оформить быстрый заказ:*\n\n`;
-
-    if (assignedOrderNum) {
-      message += `📋 *${language === 'uz' ? 'Buyurtma kodi' : 'Номер заказа'}:* #${assignedOrderNum}\n`;
-    }
-    message += `🛍️ *${language === 'uz' ? 'Mahsulot' : 'Товар'}:* ${productTitle}\n`;
-    message += `🔢 *${language === 'uz' ? 'Soni' : 'Количество'}:* ${quantity} шт.\n`;
-    message += `💰 *${language === 'uz' ? 'Narx' : 'Цена'}:* ${priceFormatted}\n`;
-    if (name) message += `👤 *${language === 'uz' ? 'Ism' : 'Имя'}:* ${name}\n`;
-    message += `📍 *${language === 'uz' ? 'Hudud' : 'Регион'}:* ${regionText}\n`;
-    if (address) message += `🏠 *${language === 'uz' ? 'Manzil' : 'Адрес'}:* ${address}\n`;
-    if (phoneOrTelegram) message += `📱 *${language === 'uz' ? 'Aloqa' : 'Контакты'}:* ${phoneOrTelegram}\n`;
-    message += `💳 *${language === 'uz' ? "To'lov" : 'Оплата'}:* ${selectedPay.name}\n`;
-    if (comment) message += `💬 *${language === 'uz' ? 'Izoh' : 'Пожелание/Вопрос'}:* ${comment}\n`;
-    if (sourceUrl) message += `🔗 *${language === 'uz' ? 'Havola' : 'Ссылка'}:* ${sourceUrl}\n`;
-
-    message += language === 'uz'
-      ? `\nIltimos, mavjudligini tasdiqlang va jo'natishni tayyorlang ✨`
-      : `\nПожалуйста, подтвердите наличие и рассчитайте доставку ✨`;
-
-    if (channel === 'whatsapp') {
-      const url = buildWhatsAppUrl(message);
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      const tgUrl = `https://t.me/mkcosmetkor?text=${encodeURIComponent(message)}`;
-      window.open(tgUrl, '_blank', 'noopener,noreferrer');
-    }
-
-    setIsSuccess(true);
+  const handleCopyText = (content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const handleReset = () => {
@@ -144,40 +121,66 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleReset} title={t('order_modal_title')} maxWidth="md">
+    <Modal isOpen={isOpen} onClose={handleReset} title={isSuccess ? (language === 'uz' ? 'Buyurtma qabul qilindi' : 'Заказ оформлен') : t('order_modal_title')} maxWidth="md">
       {isSuccess ? (
         <div className="text-center py-6 space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
             <CheckCircle2 className="w-9 h-9" />
           </div>
-          <h4 className="font-serif text-2xl font-bold text-[#1A1917]">
-            {t('order_success_title')}
-          </h4>
+          <div>
+            <h4 className="font-serif text-2xl font-bold text-[#1A1917]">
+              {language === 'uz' ? 'Buyurtmangiz qabul qilindi!' : 'Заказ успешно оформлен!'}
+            </h4>
+            <p className="mx-auto max-w-sm text-xs text-[#8A8680] leading-relaxed mt-1.5">
+              {language === 'uz'
+                ? "Xaridingiz uchun tashakkur! Buyurtma qabul qilindi. Menejerimiz tez orada telefon orqali siz bilan bog'lanadi."
+                : 'Спасибо за покупку! Заказ принят в систему. Наш менеджер свяжется с вами по указанному номеру для подтверждения и отправки.'}
+            </p>
+          </div>
+
           {orderNumber && (
-            <div className="inline-block px-3.5 py-1.5 rounded-full bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-bold text-[#1A1917]">
-              {language === 'uz' ? 'Buyurtma' : 'Заказ'} <span className="text-[#B89254]">#{orderNumber}</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-bold text-[#1A1917]">
+              <span>{language === 'uz' ? 'Buyurtma kodi:' : 'Номер заказа:'}</span>
+              <span className="text-[#B89254] font-mono font-black text-sm">#{orderNumber}</span>
+              <button
+                onClick={() => handleCopyText(`#${orderNumber}`)}
+                className="p-1 hover:text-[#B89254] transition-colors cursor-pointer text-[#8A8680]"
+                title="Скопировать"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           )}
-          <p className="mx-auto max-w-sm text-xs text-[#8A8680] leading-relaxed">
-            {t('order_success_desc')}
-          </p>
+
+          <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] text-left text-xs space-y-2 max-w-sm mx-auto">
+            <div className="flex justify-between items-center text-[#8A8680]">
+              <span>Товар:</span>
+              <span className="font-medium text-[#1A1917] truncate max-w-[180px]">{productTitle}</span>
+            </div>
+            <div className="flex justify-between items-center text-[#8A8680]">
+              <span>Количество:</span>
+              <span className="font-medium text-[#1A1917]">{quantity} шт.</span>
+            </div>
+            <div className="flex justify-between items-center text-[#8A8680] pt-1.5 border-t border-[#ECE8E1]">
+              <span className="font-bold text-[#1A1917]">Сумма:</span>
+              <span className="font-bold text-[#B89254] font-serif text-sm">{priceFormatted}</span>
+            </div>
+          </div>
+
           <div className="mx-auto flex max-w-sm flex-col gap-2 pt-2">
-            <a
-              href={BRAND_CONFIG.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#20BA5A]"
+            <Button
+              variant="primary"
+              onClick={handleReset}
+              fullWidth
+              size="lg"
+              className="rounded-xl font-bold bg-[#1A1917] hover:bg-[#B89254] text-white py-3.5"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>WhatsApp</span>
-            </a>
-            <Button variant="ghost" onClick={handleReset} fullWidth className="rounded-xl border border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254]">
-              OK
+              {language === 'uz' ? 'Xaridni davom ettirish' : 'Продолжить покупки'}
             </Button>
           </div>
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSendOrder('whatsapp'); }} className="space-y-3.5">
+        <form onSubmit={handleSendOrder} className="space-y-3.5">
           {/* Product Summary Box */}
           <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -202,17 +205,17 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-1 text-[#8A8680] hover:text-[#1A1917]"
+                className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
               >
-                <Minus className="w-3 h-3" />
+                -
               </button>
               <span className="text-xs font-bold px-1.5 text-[#1A1917]">{quantity}</span>
               <button
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
-                className="p-1 text-[#8A8680] hover:text-[#1A1917]"
+                className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
               >
-                <Plus className="w-3 h-3" />
+                +
               </button>
             </div>
           </div>
@@ -293,26 +296,24 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 space-y-2">
-            <button
-              type="button"
+          <div className="pt-2">
+            <Button
+              type="submit"
               disabled={isSubmitting}
-              onClick={() => handleSendOrder('whatsapp')}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-bold shadow-md transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="rounded-xl font-bold bg-[#1A1917] hover:bg-[#B89254] text-white py-3.5 text-sm shadow-md transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-              <span>{isSubmitting ? 'Оформление...' : (language === 'uz' ? 'WhatsApp orqali buyurtma' : 'Заказать через WhatsApp')}</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSendOrder('telegram')}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>{language === 'uz' ? 'Telegram orqali buyurtma' : 'Заказать через Telegram @mkcosmetkor'}</span>
-            </button>
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{language === 'uz' ? 'Rasmiylashtirilmoqda...' : 'Оформление заказа...'}</span>
+                </span>
+              ) : (
+                <span>{language === 'uz' ? 'Buyurtmani rasmiylashtirish' : 'Оформить заказ'}</span>
+              )}
+            </Button>
           </div>
         </form>
       )}

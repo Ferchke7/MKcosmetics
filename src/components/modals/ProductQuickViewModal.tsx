@@ -4,7 +4,7 @@ import { Product } from '../../core/types/product';
 import {
   Star,
   ShoppingBag,
-  MessageCircle,
+  Zap,
   ShieldCheck,
   Plane,
   Plus,
@@ -44,7 +44,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
   const unitPrice = product.priceKrw > 0 ? formatPrice(product.priceKrw) : t('product_price_on_request');
   const totalPriceFormatted = product.priceKrw > 0 ? formatPrice(product.priceKrw * quantity) : t('product_price_on_request');
 
-  const handleOrderWhatsApp = () => {
+  const handleQuickBuyAction = () => {
     onQuickBuy(`${product.name} (${quantity} шт.)`, totalPriceFormatted, product.telegramPostUrl);
     onClose();
   };
@@ -296,10 +296,10 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
               <button
                 type="button"
-                onClick={handleOrderWhatsApp}
-                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md"
+                onClick={handleQuickBuyAction}
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1A1917] hover:bg-[#B89254] text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md"
               >
-                <MessageCircle className="w-4 h-4" />
+                <Zap className="w-4 h-4 text-[#B89254]" />
                 <span>{t('product_quick_buy')}</span>
               </button>
             </div>
