@@ -23,13 +23,13 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const variantClasses = {
-    brand: 'bg-[#F7EDE8] text-[#8A503C] border border-[#EED9CF]',
-    gold: 'bg-[#FAF5EE] text-[#9F8058] border border-[#E5D3B3]',
+    brand: 'bg-[#FAF8F5] text-[#B89254] border border-[#ECE8E1]',
+    gold: 'bg-[#F7F4EF] text-[#B89254] border border-[#DFCBA0]',
     rose: 'bg-[#FFF0F2] text-[#C26B7E] border border-[#FAD3DB]',
     sage: 'bg-[#EEF5F1] text-[#426855] border border-[#CCE3D6]',
-    outline: 'border border-[#D09E88] text-[#8A503C] bg-white/80 backdrop-blur-xs',
-    dark: 'bg-[#2D2A2E] text-white',
-    discount: 'bg-rose-500 text-white font-bold',
+    outline: 'border border-[#ECE8E1] text-[#1A1917] bg-white/90 backdrop-blur-xs',
+    dark: 'bg-[#1A1917] text-[#B89254]',
+    discount: 'bg-[#E53935] text-white font-bold',
   };
 
   return (

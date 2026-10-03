@@ -28,16 +28,16 @@ export const Logo: React.FC<LogoProps> = ({
 
   // Official Emblem Render
   const EmblemImage = !imgError ? (
-    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#AA7C11] shadow-sm transition-transform duration-300 group-hover:scale-105 ${currentSize.imgClass}`}>
+    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#B89254] via-[#DFCBA0] to-[#9E7B42] shadow-xs transition-transform duration-300 group-hover:scale-105 ${currentSize.imgClass}`}>
       <img
         src="/logo.png"
         alt="MK KOREA COSMETIC"
-        className="w-full h-full object-cover rounded-full bg-[#1F1012]"
+        className="w-full h-full object-cover rounded-full bg-[#FAF8F5]"
         onError={() => setImgError(true)}
       />
     </div>
   ) : (
-    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#AA7C11] shadow-sm flex items-center justify-center bg-[#231215] text-[#F3E5AB] font-serif font-bold ${currentSize.imgClass}`}>
+    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#B89254] via-[#DFCBA0] to-[#9E7B42] shadow-xs flex items-center justify-center bg-[#FAF8F5] text-[#B89254] font-serif font-bold ${currentSize.imgClass}`}>
       MK
     </div>
   );
@@ -51,11 +51,11 @@ export const Logo: React.FC<LogoProps> = ({
       <div className={`flex flex-col items-center text-center gap-2 group ${className}`}>
         {EmblemImage}
         <div>
-          <span className="font-serif font-black tracking-wider text-[#1F1615] block leading-tight">
+          <span className="font-serif font-black tracking-wider text-[#1A1917] block leading-tight">
             MK KOREA
           </span>
           {showSubtitle && (
-            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#C2836B] block mt-0.5">
+            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#B89254] block mt-0.5">
               COSMETIC • SEOUL
             </span>
           )}
@@ -70,15 +70,15 @@ export const Logo: React.FC<LogoProps> = ({
       {EmblemImage}
       <div className="flex flex-col text-left">
         <div className="flex items-center gap-1.5">
-          <span className={`font-serif tracking-wider text-[#1F1615] group-hover:text-[#C2836B] transition-colors leading-tight ${currentSize.titleClass}`}>
+          <span className={`font-serif tracking-wider text-[#1A1917] group-hover:text-[#B89254] transition-colors leading-tight ${currentSize.titleClass}`}>
             MK KOREA
           </span>
-          <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-white rounded-xs">
+          <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-[#B89254] to-[#9E7B42] text-white rounded-xs shadow-2xs">
             Direct
           </span>
         </div>
         {showSubtitle && (
-          <span className={`text-[#A96851] tracking-[0.18em] font-bold uppercase leading-none mt-0.5 ${currentSize.subClass}`}>
+          <span className={`text-[#B89254] tracking-[0.18em] font-bold uppercase leading-none mt-0.5 ${currentSize.subClass}`}>
             Cosmetic • Seoul
           </span>
         )}

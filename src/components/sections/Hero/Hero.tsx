@@ -34,7 +34,7 @@ const HERO_SLIDES: HeroSlide[] = [
     subUz: "To'g'ridan-to'g'ri ulgurji va chakana yetkazib berish. Janubiy Koreyaning yetakchi brendlaridan 250+ dan ortiq vositalar.",
     btnRu: 'Смотреть каталог',
     btnUz: 'Katalogga oʻtish',
-    bgGradient: 'from-[#231215] via-[#1A0E10] to-[#0F080A]',
+    bgGradient: 'from-[#342D28] via-[#29231E] to-[#1E1A17]',
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ const HERO_SLIDES: HeroSlide[] = [
     btnRu: 'Эксклюзивные бренды',
     btnUz: 'Eksklyuziv brendlar',
     categoryFilter: 'curacion',
-    bgGradient: 'from-[#1E1724] via-[#150F1A] to-[#0A070D]',
+    bgGradient: 'from-[#2F2926] via-[#26201D] to-[#1C1816]',
   },
   {
     id: 3,
@@ -59,7 +59,7 @@ const HERO_SLIDES: HeroSlide[] = [
     subUz: "Maksimal yaroqlilik muddatlari kafolati. Doimiy Seul-Toshkent reyslari va eshigingizgacha yetkazib berish.",
     btnRu: 'Оформить заказ',
     btnUz: 'Buyurtma berish',
-    bgGradient: 'from-[#141C24] via-[#0E141A] to-[#070A0D]',
+    bgGradient: 'from-[#2A2B30] via-[#202126] to-[#18191D]',
   },
 ];
 
@@ -97,18 +97,18 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
   };
 
   return (
-    <section id="top" className="relative pt-28 sm:pt-32 pb-8 sm:pb-12 bg-[#FAF7F2]">
+    <section id="top" className="relative pt-28 sm:pt-32 pb-8 sm:pb-12 bg-[#FAF8F5]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main Hero Slider Banner */}
         <div className={`relative rounded-3xl overflow-hidden bg-gradient-to-r ${slide.bgGradient} text-white p-6 sm:p-12 lg:p-16 shadow-xl border border-white/10 transition-all duration-700`}>
           {/* Subtle Decorative Gold & Glow Shapes */}
-          <div className="pointer-events-none absolute -right-20 -top-20 w-96 h-96 rounded-full bg-[#D4AF37]/15 blur-3xl animate-pulse" />
-          <div className="pointer-events-none absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-[#C2836B]/20 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 w-96 h-96 rounded-full bg-[#B89254]/20 blur-3xl animate-pulse" />
+          <div className="pointer-events-none absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-[#DFCBA0]/15 blur-3xl" />
 
           <div className="relative z-10 max-w-3xl space-y-4 sm:space-y-6">
             {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#F3E5AB] text-[11px] font-bold tracking-widest uppercase border border-white/15">
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#DFCBA0] text-[11px] font-bold tracking-widest uppercase border border-[#B89254]/30">
+              <Sparkles className="w-3.5 h-3.5 text-[#B89254]" />
               <span>{language === 'uz' ? slide.tagUz : slide.tagRu}</span>
             </div>
 
@@ -118,7 +118,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
             </h1>
 
             {/* Subtitle */}
-            <p className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-2xl font-normal">
+            <p className="text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-2xl font-normal">
               {language === 'uz' ? slide.subUz : slide.subRu}
             </p>
 
@@ -126,11 +126,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
             <div className="pt-2 sm:pt-4 flex flex-wrap items-center gap-3 sm:gap-4">
               <button
                 onClick={onOpenCatalog}
-                className="inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#C5A880] hover:from-[#E5C79E] hover:to-[#D4AF37] text-[#1F1615] px-7 py-3.5 text-xs sm:text-sm font-black uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#B89254] hover:bg-[#9E7B42] text-white px-7 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
               >
-                <ShoppingBag className="h-4 w-4 text-[#1F1615]" />
+                <ShoppingBag className="h-4 w-4 text-white" />
                 <span>{language === 'uz' ? slide.btnUz : slide.btnRu} {totalProductsCount ? `(${totalProductsCount})` : ''}</span>
-                <ArrowRight className="h-4 w-4 text-[#1F1615]" />
+                <ArrowRight className="h-4 w-4 text-white" />
               </button>
 
               <a
@@ -160,7 +160,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}
                   className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    idx === currentSlide ? 'w-6 bg-[#D4AF37]' : 'w-2 bg-white/40'
+                    idx === currentSlide ? 'w-6 bg-[#B89254]' : 'w-2 bg-white/40'
                   }`}
                   aria-label={`Slide ${idx + 1}`}
                 />
@@ -188,7 +188,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
                   onOpenCatalog();
                 }
               }}
-              className="whitespace-nowrap px-4 py-2 rounded-full bg-white hover:bg-[#FAF5EE] text-[#1F1615] hover:text-[#C2836B] text-xs font-bold border border-[#E8DCD5] transition-all shadow-2xs cursor-pointer active:scale-95"
+              className="whitespace-nowrap px-4 py-2 rounded-full bg-white hover:bg-[#F7F4EF] text-[#1A1917] hover:text-[#B89254] text-xs font-bold border border-[#ECE8E1] hover:border-[#B89254] transition-all shadow-2xs cursor-pointer active:scale-95"
             >
               {language === 'uz' ? pill.labelUz : pill.labelRu}
             </button>
@@ -197,43 +197,43 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
 
         {/* Trust Badges Ribbon (EvaCode Style) */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#EFE8E2] shadow-2xs">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF5EE] text-[#D4AF37] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#ECE8E1] shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F4EF] text-[#B89254] flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#1F1615]">100% Оригинал</h4>
-              <p className="text-[11px] text-[#7A6F68]">Прямые поставки из Кореи</p>
+              <h4 className="text-xs font-bold text-[#1A1917]">100% Оригинал</h4>
+              <p className="text-[11px] text-[#8A8680]">Прямые поставки из Кореи</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#EFE8E2] shadow-2xs">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF5EE] text-[#D4AF37] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#ECE8E1] shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F4EF] text-[#B89254] flex items-center justify-center shrink-0">
               <Plane className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#1F1615]">Экспресс Авиа</h4>
-              <p className="text-[11px] text-[#7A6F68]">Сеул ➔ Ташкент & СНГ</p>
+              <h4 className="text-xs font-bold text-[#1A1917]">Экспресс Авиа</h4>
+              <p className="text-[11px] text-[#8A8680]">Сеул ➔ Ташкент & СНГ</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#EFE8E2] shadow-2xs">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF5EE] text-[#D4AF37] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#ECE8E1] shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F4EF] text-[#B89254] flex items-center justify-center shrink-0">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#1F1615]">Опт & Розница</h4>
-              <p className="text-[11px] text-[#7A6F68]">Специальные цены от объема</p>
+              <h4 className="text-xs font-bold text-[#1A1917]">Опт & Розница</h4>
+              <p className="text-[11px] text-[#8A8680]">Специальные цены от объема</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#EFE8E2] shadow-2xs">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF5EE] text-[#25D366] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-[#ECE8E1] shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#F7F4EF] text-[#25D366] flex items-center justify-center shrink-0">
               <MessageCircle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#1F1615]">Подбор ухода</h4>
-              <p className="text-[11px] text-[#7A6F68]">Бесплатно от экспертов MK</p>
+              <h4 className="text-xs font-bold text-[#1A1917]">Подбор ухода</h4>
+              <p className="text-[11px] text-[#8A8680]">Бесплатно от экспертов MK</p>
             </div>
           </div>
         </div>

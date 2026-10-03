@@ -132,12 +132,12 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
   const displayedBrands = showAllBrands ? filteredBrands : filteredBrands.slice(0, 7);
 
   return (
-    <aside className="w-full space-y-8 bg-white p-5 sm:p-6 rounded-2xl border border-[#F0E6DE] text-[#2D2A2E]">
+    <aside className="w-full space-y-8 bg-white p-5 sm:p-6 rounded-2xl border border-[#ECE8E1] text-[#1A1917]">
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#F0E6DE]">
+      <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-[#A96851]" />
-          <h3 className="font-serif text-lg font-medium text-[#2D2A2E]">
+          <SlidersHorizontal className="w-4 h-4 text-[#B89254]" />
+          <h3 className="font-serif text-lg font-medium text-[#1A1917]">
             {t('catalog_filters_title')}
           </h3>
         </div>
@@ -145,7 +145,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
         {hasActiveFilters && (
           <button
             onClick={onResetFilters}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#A96851] hover:text-[#8A503C] hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#B89254] hover:text-[#9E7B42] hover:underline cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>{t('catalog_reset_all')}</span>
@@ -155,7 +155,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
 
       {/* 1. Category Tree Section */}
       <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#B89254]">
           {t('nav_catalog')}
         </h4>
 
@@ -165,15 +165,15 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
             onClick={() => onCategoryChange('all')}
             className={`flex items-center gap-2.5 w-full text-left text-xs font-medium py-1.5 transition-colors cursor-pointer ${
               selectedCategory === 'all'
-                ? 'text-[#A96851] font-bold'
-                : 'text-[#6C635B] hover:text-[#2D2A2E]'
+                ? 'text-[#B89254] font-bold'
+                : 'text-[#8A8680] hover:text-[#1A1917]'
             }`}
           >
             <span
               className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all ${
                 selectedCategory === 'all'
-                  ? 'border-[#A96851] bg-[#A96851]'
-                  : 'border-[#D0C7C0]'
+                  ? 'border-[#B89254] bg-[#B89254]'
+                  : 'border-[#ECE8E1]'
               }`}
             >
               {selectedCategory === 'all' && (
@@ -194,13 +194,13 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                 {/* Branch Header */}
                 <div
                   onClick={() => toggleBranch(branch.id)}
-                  className="flex items-center justify-between py-1 text-xs font-semibold text-[#2D2A2E] cursor-pointer select-none hover:text-[#A96851]"
+                  className="flex items-center justify-between py-1 text-xs font-semibold text-[#1A1917] cursor-pointer select-none hover:text-[#B89254]"
                 >
                   <span className="flex items-center gap-1.5">
                     {isOpen ? (
-                      <ChevronDown className="w-3.5 h-3.5 text-[#8C827A]" />
+                      <ChevronDown className="w-3.5 h-3.5 text-[#8A8680]" />
                     ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-[#8C827A]" />
+                      <ChevronRight className="w-3.5 h-3.5 text-[#8A8680]" />
                     )}
                     <span>{t(branch.titleKey as any)}</span>
                   </span>
@@ -208,7 +208,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
 
                 {/* Sub-items list */}
                 {isOpen && branch.children && (
-                  <div className="pl-5 space-y-1.5 border-l border-[#F0E6DE] ml-1.5 pt-1">
+                  <div className="pl-5 space-y-1.5 border-l border-[#ECE8E1] ml-1.5 pt-1">
                     {branch.children.map((child) => {
                       const isSelected = selectedCategory === child.id;
 
@@ -218,15 +218,15 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                           onClick={() => onCategoryChange(child.id)}
                           className={`flex items-center gap-2 w-full text-left text-xs py-1 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'text-[#A96851] font-bold'
-                              : 'text-[#6C635B] hover:text-[#2D2A2E]'
+                              ? 'text-[#B89254] font-bold'
+                              : 'text-[#8A8680] hover:text-[#1A1917]'
                           }`}
                         >
                           <span
                             className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${
                               isSelected
-                                ? 'border-[#A96851] bg-[#A96851]'
-                                : 'border-[#D0C7C0]'
+                                ? 'border-[#B89254] bg-[#B89254]'
+                                : 'border-[#ECE8E1]'
                             }`}
                           >
                             {isSelected && (
@@ -246,12 +246,12 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
       </div>
 
       {/* 2. Price Range Filter */}
-      <div className="space-y-3 pt-4 border-t border-[#F0E6DE]">
+      <div className="space-y-3 pt-4 border-t border-[#ECE8E1]">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#B89254]">
             {t('catalog_price_filter_title')}
           </h4>
-          <span className="text-[11px] text-[#8C827A] font-medium">
+          <span className="text-[11px] text-[#8A8680] font-medium">
             {formatPrice(currentPriceRange[1])}
           </span>
         </div>
@@ -266,23 +266,23 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
           onChange={(e) =>
             onPriceRangeChange([currentPriceRange[0], Number(e.target.value)])
           }
-          className="w-full accent-[#A96851] cursor-pointer"
+          className="w-full accent-[#B89254] cursor-pointer"
         />
 
         <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-          <div className="px-2.5 py-1 rounded-lg bg-[#FAF5EE] border border-[#EED9CF] font-medium text-[#4D2C20]">
+          <div className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#ECE8E1] font-medium text-[#1A1917]">
             {formatPrice(currentPriceRange[0])}
           </div>
-          <span className="text-[#8C827A]">—</span>
-          <div className="px-2.5 py-1 rounded-lg bg-[#FAF5EE] border border-[#EED9CF] font-medium text-[#4D2C20]">
+          <span className="text-[#8A8680]">—</span>
+          <div className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#ECE8E1] font-medium text-[#1A1917]">
             {formatPrice(currentPriceRange[1])}
           </div>
         </div>
       </div>
 
       {/* 3. Skin Type / Concerns Filter */}
-      <div className="space-y-3 pt-4 border-t border-[#F0E6DE]">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+      <div className="space-y-3 pt-4 border-t border-[#ECE8E1]">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#B89254]">
           {t('catalog_skin_type_title')}
         </h4>
 
@@ -294,13 +294,13 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
               <label
                 key={type.id}
                 onClick={() => onToggleSkinType(type.id)}
-                className="flex items-center gap-2.5 text-xs text-[#6C635B] hover:text-[#2D2A2E] cursor-pointer select-none"
+                className="flex items-center gap-2.5 text-xs text-[#8A8680] hover:text-[#1A1917] cursor-pointer select-none"
               >
                 <div
                   className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
                     isChecked
-                      ? 'border-[#A96851] bg-[#A96851] text-white'
-                      : 'border-[#D0C7C0] bg-white'
+                      ? 'border-[#B89254] bg-[#B89254] text-white'
+                      : 'border-[#ECE8E1] bg-white'
                   }`}
                 >
                   {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
@@ -313,24 +313,24 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
       </div>
 
       {/* 4. Brand Filter */}
-      <div className="space-y-3 pt-4 border-t border-[#F0E6DE]">
+      <div className="space-y-3 pt-4 border-t border-[#ECE8E1]">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#B89254]">
             {t('catalog_all_brands')}
           </h4>
-          <span className="text-[11px] text-[#8C827A]">({allBrands.length})</span>
+          <span className="text-[11px] text-[#8A8680]">({allBrands.length})</span>
         </div>
 
         {/* Search inside brands */}
         {allBrands.length > 8 && (
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#8A8680] absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={brandSearch}
               onChange={(e) => setBrandSearch(e.target.value)}
               placeholder="Поиск бренда..."
-              className="w-full text-xs py-1.5 pl-8 pr-2 rounded-lg bg-[#FAF5EE] border border-[#EED9CF] focus:outline-none focus:border-[#A96851]"
+              className="w-full text-xs py-1.5 pl-8 pr-2 rounded-lg bg-[#FAF8F5] border border-[#ECE8E1] focus:outline-none focus:border-[#B89254] text-[#1A1917]"
             />
           </div>
         )}
@@ -344,21 +344,21 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
               <label
                 key={brand}
                 onClick={() => onBrandChange(isSelected ? 'all' : brand)}
-                className="flex items-center justify-between text-xs text-[#6C635B] hover:text-[#2D2A2E] cursor-pointer select-none"
+                className="flex items-center justify-between text-xs text-[#8A8680] hover:text-[#1A1917] cursor-pointer select-none"
               >
                 <div className="flex items-center gap-2.5 truncate">
                   <div
                     className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                       isSelected
-                        ? 'border-[#A96851] bg-[#A96851] text-white'
-                        : 'border-[#D0C7C0] bg-white'
+                        ? 'border-[#B89254] bg-[#B89254] text-white'
+                        : 'border-[#ECE8E1] bg-white'
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
                   <span className="truncate uppercase font-medium">{brand}</span>
                 </div>
-                <span className="text-[11px] text-[#A89F97] ml-2">({count})</span>
+                <span className="text-[11px] text-[#8A8680] ml-2">({count})</span>
               </label>
             );
           })}
@@ -367,7 +367,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
         {filteredBrands.length > 7 && (
           <button
             onClick={() => setShowAllBrands(!showAllBrands)}
-            className="text-[11px] font-semibold text-[#A96851] hover:underline cursor-pointer"
+            className="text-[11px] font-semibold text-[#B89254] hover:underline cursor-pointer"
           >
             {showAllBrands ? t('catalog_show_less') : `${t('catalog_show_more')} (${filteredBrands.length - 7})`}
           </button>
@@ -375,8 +375,8 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
       </div>
 
       {/* 5. Status / Availability Filter */}
-      <div className="space-y-3 pt-4 border-t border-[#F0E6DE]">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-[#8A503C]">
+      <div className="space-y-3 pt-4 border-t border-[#ECE8E1]">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-[#B89254]">
           {t('catalog_status_title')}
         </h4>
 
@@ -384,13 +384,13 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
           {/* In-Stock */}
           <label
             onClick={() => onToggleWithPrice(!onlyWithPrice)}
-            className="flex items-center gap-2.5 text-xs text-[#6C635B] hover:text-[#2D2A2E] cursor-pointer select-none"
+            className="flex items-center gap-2.5 text-xs text-[#8A8680] hover:text-[#1A1917] cursor-pointer select-none"
           >
             <div
               className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
                 onlyWithPrice
-                  ? 'border-[#A96851] bg-[#A96851] text-white'
-                  : 'border-[#D0C7C0] bg-white'
+                  ? 'border-[#B89254] bg-[#B89254] text-white'
+                  : 'border-[#ECE8E1] bg-white'
               }`}
             >
               {onlyWithPrice && <Check className="w-3 h-3 stroke-[3]" />}
@@ -401,13 +401,13 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
           {/* On Sale */}
           <label
             onClick={() => onToggleDiscount(!onlyDiscount)}
-            className="flex items-center gap-2.5 text-xs text-[#6C635B] hover:text-[#2D2A2E] cursor-pointer select-none"
+            className="flex items-center gap-2.5 text-xs text-[#8A8680] hover:text-[#1A1917] cursor-pointer select-none"
           >
             <div
               className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
                 onlyDiscount
-                  ? 'border-[#FF0038] bg-[#FF0038] text-white'
-                  : 'border-[#D0C7C0] bg-white'
+                  ? 'border-[#E53935] bg-[#E53935] text-white'
+                  : 'border-[#ECE8E1] bg-white'
               }`}
             >
               {onlyDiscount && <Check className="w-3 h-3 stroke-[3]" />}

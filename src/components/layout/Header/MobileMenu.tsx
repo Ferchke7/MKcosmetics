@@ -72,14 +72,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       <div className="fixed inset-y-0 right-0 z-10 flex w-[88%] max-w-sm flex-col justify-between bg-white p-5 shadow-2xl sm:p-6 overflow-y-auto">
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#F0E6DE] pb-4">
-            <span className="font-serif text-lg font-bold tracking-wide text-[#2D2A2E]">
+          <div className="flex items-center justify-between border-b border-[#ECE8E1] pb-4">
+            <span className="font-serif text-lg font-bold tracking-wide text-[#1A1917]">
               {BRAND_CONFIG.brandName}
             </span>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-2 text-[#8C827A] transition-colors hover:bg-[#FAF5EE] hover:text-[#4D2C20]"
+              className="rounded-full p-2 text-[#8A8680] transition-colors hover:bg-[#F7F4EF] hover:text-[#1A1917]"
               aria-label="Закрыть меню"
             >
               <X className="h-5 w-5" />
@@ -87,14 +87,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </div>
 
           {/* Language, Currency and Cart actions */}
-          <div className="py-4 border-b border-[#F0E6DE]/60 space-y-3">
+          <div className="py-4 border-b border-[#ECE8E1] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#8C827A]">{t('nav_language')}:</span>
+              <span className="text-xs text-[#8A8680]">{t('nav_language')}:</span>
               <LanguageSelector />
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#8C827A]">{t('nav_currency')}:</span>
+              <span className="text-xs text-[#8A8680]">{t('nav_currency')}:</span>
               <CurrencySelector
                 currentCurrency={currentCurrency}
                 currencies={currencies}
@@ -107,9 +107,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 onClose();
                 onOpenCart();
               }}
-              className="w-full relative inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#EED9CF] text-xs font-semibold text-[#8A503C]"
+              className="w-full relative inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F7F4EF] border border-[#ECE8E1] text-xs font-semibold text-[#1A1917] hover:bg-[#ECE8E1]"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4 text-[#B89254]" />
               <span>{t('nav_cart')}</span>
               {cartCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-[#EF4444] text-white text-[11px] flex items-center justify-center font-bold">
@@ -136,11 +136,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left text-base font-semibold transition-colors ${
                     item.isSpecial
                       ? activeView === 'catalog'
-                        ? 'bg-[#111111] text-white shadow-xs'
-                        : 'border border-[#EED9CF] bg-[#FAF5EE] text-[#8A503C]'
+                        ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                        : 'border border-[#ECE8E1] bg-[#F7F4EF] text-[#B89254]'
                       : isItemActive
-                      ? 'bg-[#FAF5EE] text-[#4D2C20]'
-                      : 'text-[#2D2A2E] hover:bg-[#FAF5EE] hover:text-[#C2836B]'
+                      ? 'bg-[#F7F4EF] text-[#1A1917] font-bold border border-[#ECE8E1]'
+                      : 'text-[#1A1917] hover:bg-[#F7F4EF] hover:text-[#B89254]'
                   }`}
                 >
                   <span>{label}</span>

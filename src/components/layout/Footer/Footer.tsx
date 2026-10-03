@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="border-t border-[#2A181B] bg-[#140C0E] py-14 text-[#FAF5EE]">
+    <footer className="border-t border-[#ECE8E1] bg-[#FAF8F5] py-14 text-[#1A1917]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Main Footer Columns */}
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -37,10 +37,10 @@ export const Footer: React.FC = () => {
             <a href="#top" className="inline-flex items-center gap-3" aria-label={`${BRAND_CONFIG.brandName}, наверх`}>
               <Logo size="md" variant="horizontal" />
             </a>
-            <p className="text-xs leading-relaxed text-[#A89F97] max-w-xs">
+            <p className="text-xs leading-relaxed text-[#8A8680] max-w-xs">
               {t('footer_about_desc')}
             </p>
-            <div className="flex items-center gap-2 text-xs text-[#D4AF37] font-semibold">
+            <div className="flex items-center gap-2 text-xs text-[#B89254] font-semibold">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>100% Original Seoul Direct • 100% Оригинал</span>
             </div>
@@ -48,13 +48,13 @@ export const Footer: React.FC = () => {
 
           {/* Navigation */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#B89254]">
               {t('nav_catalog')}
             </h3>
-            <ul className="space-y-2.5 text-xs text-[#A89F97]">
+            <ul className="space-y-2.5 text-xs text-[#8A8680]">
               {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
-                  <a href={item.href} className="transition-colors hover:text-white">
+                  <a href={item.href} className="transition-colors hover:text-[#B89254]">
                     {getLocalizedLabel(item.href, item.label)}
                   </a>
                 </li>
@@ -64,16 +64,16 @@ export const Footer: React.FC = () => {
 
           {/* Delivery & Service */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#B89254]">
               {t('nav_delivery')}
             </h3>
-            <ul className="space-y-2.5 text-xs text-[#A89F97]">
+            <ul className="space-y-2.5 text-xs text-[#8A8680]">
               <li className="flex items-center gap-2">
-                <Truck className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                <Truck className="w-3.5 h-3.5 text-[#B89254] shrink-0" />
                 <span>{language === 'uz' ? 'Xalqaro ekspress yetkazib berish ✈️' : 'Международная экспресс-доставка ✈️'}</span>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#C2836B] shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-[#B89254] shrink-0" />
                 <span>{language === 'uz' ? 'Ombor: Seul, Janubiy Koreya' : 'Склад: Сеул, Южная Корея (Seoul, Korea)'}</span>
               </li>
               <li>{language === 'uz' ? 'Shaxsiy parvarish tanlash' : 'Индивидуальный подбор ухода'}</li>
@@ -83,7 +83,7 @@ export const Footer: React.FC = () => {
 
           {/* Social Networks & Contacts */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#B89254]">
               {t('footer_social_title')}
             </h3>
             <div className="space-y-3">
@@ -91,9 +91,9 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2.5 text-xs text-[#E2D8D0] hover:text-[#E1306C] transition-colors"
+                className="flex items-center gap-2.5 text-xs text-[#1A1917] hover:text-[#E1306C] transition-colors"
               >
-                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-[#E1306C]">
+                <div className="w-7 h-7 rounded-lg bg-white border border-[#ECE8E1] flex items-center justify-center text-[#E1306C] shadow-2xs">
                   <InstagramIcon className="w-4 h-4" />
                 </div>
                 <span>Instagram {BRAND_CONFIG.instagramHandle}</span>
@@ -103,9 +103,9 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.telegramChannelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2.5 text-xs text-[#E2D8D0] hover:text-[#229ED9] transition-colors"
+                className="flex items-center gap-2.5 text-xs text-[#1A1917] hover:text-[#229ED9] transition-colors"
               >
-                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-[#229ED9]">
+                <div className="w-7 h-7 rounded-lg bg-white border border-[#ECE8E1] flex items-center justify-center text-[#229ED9] shadow-2xs">
                   <Send className="w-4 h-4" />
                 </div>
                 <span>Telegram {BRAND_CONFIG.telegramChannel}</span>
@@ -115,9 +115,9 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2.5 text-xs text-[#E2D8D0] hover:text-[#25D366] transition-colors"
+                className="flex items-center gap-2.5 text-xs text-[#1A1917] hover:text-[#25D366] transition-colors"
               >
-                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-[#25D366]">
+                <div className="w-7 h-7 rounded-lg bg-white border border-[#ECE8E1] flex items-center justify-center text-[#25D366] shadow-2xs">
                   <MessageCircle className="w-4 h-4" />
                 </div>
                 <span>WhatsApp: {BRAND_CONFIG.phoneDisplay}</span>
@@ -125,9 +125,9 @@ export const Footer: React.FC = () => {
 
               <a
                 href={`tel:${BRAND_CONFIG.phone}`}
-                className="flex items-center gap-2.5 text-xs text-[#E2D8D0] hover:text-white transition-colors"
+                className="flex items-center gap-2.5 text-xs text-[#1A1917] hover:text-[#B89254] transition-colors"
               >
-                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-gray-300">
+                <div className="w-7 h-7 rounded-lg bg-white border border-[#ECE8E1] flex items-center justify-center text-[#8A8680] shadow-2xs">
                   <Phone className="w-4 h-4" />
                 </div>
                 <span>{BRAND_CONFIG.phoneDisplay}</span>
@@ -137,12 +137,12 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Live Visitor Statistics / Flag Counters */}
-        <div className="pt-6 border-t border-white/10">
+        <div className="pt-6 border-t border-[#ECE8E1]">
           <CountryVisitorCounter />
         </div>
 
         {/* Copyright & Disclaimer */}
-        <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#7A6F68] gap-4">
+        <div className="pt-6 border-t border-[#ECE8E1] flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#8A8680] gap-4">
           <p>© {new Date().getFullYear()} {BRAND_CONFIG.brandName}. {language === 'uz' ? 'Barcha huquqlar himoyalangan.' : 'Все права защищены.'}</p>
           <div className="flex items-center gap-4">
             <span>Direct Imports from Seoul, South Korea</span>

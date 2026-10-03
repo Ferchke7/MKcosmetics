@@ -9,29 +9,29 @@
   }
 
   body {
-    background-color: #FAF7F2;
-    color: #242120;
+    background-color: #FAF8F5;
+    color: #1A1917;
     overflow-x: hidden;
   }
 }
 
-/* Custom subtle scrollbar */
+/* Custom subtle EvaCode gold scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FAF5EE;
+  background: #F7F4EF;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D09E88;
+  background: #B89254;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #C2836B;
+  background: #9E7B42;
 }
 
 /* Hide scrollbar utility */

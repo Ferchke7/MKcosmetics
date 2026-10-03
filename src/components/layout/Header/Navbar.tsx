@@ -53,11 +53,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate }) => {
             className={`whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all xl:text-sm ${
               item.isSpecial
                 ? activeView === 'catalog'
-                  ? 'bg-[#111111] text-white shadow-xs'
-                  : 'bg-[#FAF5EE] text-[#8A503C] hover:bg-[#F2E8DC]'
+                  ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                  : 'bg-[#F7F4EF] text-[#B89254] hover:bg-[#ECE8E1] border border-[#ECE8E1]'
                 : isItemActive
-                ? 'bg-[#FAF5EE] text-[#4D2C20]'
-                : 'text-[#4D2C20] hover:text-[#C2836B] hover:bg-[#FAF5EE]'
+                ? 'bg-[#F7F4EF] text-[#1A1917] font-bold border border-[#ECE8E1]'
+                : 'text-[#1A1917] hover:text-[#B89254] hover:bg-[#F7F4EF]'
             }`}
           >
             {label}

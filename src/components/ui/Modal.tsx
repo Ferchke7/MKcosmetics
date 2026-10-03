@@ -48,16 +48,16 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-white rounded-3xl shadow-2xl z-10 overflow-hidden transform transition-all duration-300 animate-slide-up border border-[#F0E6DE]`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-white rounded-3xl shadow-2xl z-10 overflow-hidden transform transition-all duration-300 animate-slide-up border border-[#ECE8E1]`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#F0E6DE] bg-[#FAF7F2]">
-          <h3 className="font-serif text-lg sm:text-xl font-medium text-[#2D2A2E]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#ECE8E1] bg-[#FAF8F5]">
+          <h3 className="font-serif text-lg sm:text-xl font-semibold text-[#1A1917]">
             {title || ''}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#8C827A] hover:text-[#4D2C20] hover:bg-white rounded-full transition-colors"
+            className="p-1.5 text-[#8A8680] hover:text-[#1A1917] hover:bg-[#F7F4EF] rounded-full transition-colors cursor-pointer"
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -65,7 +65,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-6 max-h-[80vh] overflow-y-auto bg-white">
           {children}
         </div>
       </div>

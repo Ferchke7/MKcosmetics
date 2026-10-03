@@ -23,31 +23,31 @@ const ORDER_STEPS = [
 
 export const DeliveryInfo: React.FC = () => {
   return (
-    <section id="delivery" className="scroll-mt-20 bg-[#F7EDE8]/30 py-16 sm:py-24">
+    <section id="delivery" className="scroll-mt-20 bg-[#FAF8F5] py-16 sm:py-24 border-t border-[#ECE8E1]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           badge="Как заказать"
-          badgeIcon={<PackageCheck className="h-3.5 w-3.5 text-[#C2836B]" />}
+          badgeIcon={<PackageCheck className="h-3.5 w-3.5 text-[#B89254]" />}
           title="От публикации до заказа"
           subtitle="Сначала уточним детали заказа и только потом согласуем доставку."
         />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
           {ORDER_STEPS.map((step, index) => (
-            <Card key={step.title} glass className="border-[#EED9CF] p-5 sm:p-6">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-[#EED9CF] bg-[#FAF5EE] text-[#A96851]">
+            <Card key={step.title} glass className="border-[#ECE8E1] bg-white p-5 sm:p-6 shadow-sm">
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] text-[#B89254]">
                 {step.icon}
               </div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#A96851]">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#B89254]">
                 Шаг {index + 1}
               </p>
-              <h3 className="font-serif text-lg font-medium text-[#2D2A2E]">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#6C635B]">{step.description}</p>
+              <h3 className="font-serif text-lg font-bold text-[#1A1917]">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#8A8680]">{step.description}</p>
             </Card>
           ))}
         </div>
 
-        <p className="mx-auto mt-5 max-w-3xl text-center text-sm text-[#6C635B]">
+        <p className="mx-auto mt-5 max-w-3xl text-center text-sm text-[#8A8680]">
           Стоимость и срок доставки зависят от направления и подтверждаются при оформлении.
         </p>
       </div>

@@ -185,20 +185,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     >
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center py-16 space-y-4">
-          <div className="w-20 h-20 rounded-full bg-[#FAF5EE] text-[#D4AF37] flex items-center justify-center border border-[#EED9CF]">
+          <div className="w-20 h-20 rounded-full bg-[#FAF8F5] text-[#B89254] flex items-center justify-center border border-[#ECE8E1]">
             <ShoppingBag className="w-10 h-10" />
           </div>
           <div>
-            <h4 className="font-serif text-xl text-[#1F1615] font-bold">
+            <h4 className="font-serif text-xl text-[#1A1917] font-bold">
               {language === 'uz' ? 'Savatchangiz boʻsh' : 'Корзина пока пуста'}
             </h4>
-            <p className="text-xs text-[#7A6F68] mt-1 max-w-xs leading-relaxed">
+            <p className="text-xs text-[#8A8680] mt-1 max-w-xs leading-relaxed">
               {language === 'uz'
                 ? 'Katalogdan oʻzingizga yoqqan vositalarni tanlang va qulay buyurtma bering.'
                 : 'Выберите средства из каталога для быстрого оформления с доставкой.'}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={onClose} className="rounded-full px-6">
+          <Button variant="outline" size="sm" onClick={onClose} className="rounded-full px-6 border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254] hover:text-[#B89254]">
             {language === 'uz' ? 'Katalogga oʻtish' : 'Перейти в каталог'}
           </Button>
         </div>
@@ -211,10 +211,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
 
             <div>
-              <h3 className="font-serif text-2xl font-bold text-[#1F1615]">
+              <h3 className="font-serif text-2xl font-bold text-[#1A1917]">
                 {language === 'uz' ? 'Buyurtmangiz qabul qilindi!' : 'Ваш заказ успешно принят!'}
               </h3>
-              <p className="text-xs text-[#7A6F68] mt-1 max-w-xs mx-auto">
+              <p className="text-xs text-[#8A8680] mt-1 max-w-xs mx-auto">
                 {language === 'uz'
                   ? "Menejerimiz tez orada siz bilan bog'lanadi va jo'natmani tayyorlaydi."
                   : 'Мы уже готовим ваш заказ. Менеджер ответит вам в мессенджере.'}
@@ -222,9 +222,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
 
             {createdOrderNumber && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF5EE] border border-[#EED9CF] text-xs font-bold text-[#1F1615]">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-bold text-[#1A1917]">
                 <span>{language === 'uz' ? 'Buyurtma kodi' : 'Код заказа'}:</span>
-                <span className="text-[#C2836B] font-mono font-black text-sm">#{createdOrderNumber}</span>
+                <span className="text-[#B89254] font-mono font-black text-sm">#{createdOrderNumber}</span>
               </div>
             )}
 
@@ -252,7 +252,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-[#EFE8E2]">
+          <div className="pt-4 border-t border-[#ECE8E1]">
             <Button
               variant="outline"
               fullWidth
@@ -261,7 +261,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 onClear();
                 handleResetModal();
               }}
-              className="rounded-xl"
+              className="rounded-xl border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254]"
             >
               {language === 'uz' ? 'Xaridni davom ettirish' : 'Продолжить покупки'}
             </Button>
@@ -271,32 +271,32 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         /* 2-Step Checkout Flow inside Drawer */
         <div className="flex flex-col h-full justify-between space-y-4">
           {/* Top Progress / Free Shipping Indicator */}
-          <div className="p-3 rounded-2xl bg-[#FAF5EE] border border-[#EED9CF]/70 space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-bold text-[#1F1615]">
+          <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] font-bold text-[#1A1917]">
               <span className="flex items-center gap-1.5">
-                <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Truck className="w-3.5 h-3.5 text-[#B89254]" />
                 {progressPercent >= 100
                   ? (language === 'uz' ? '🎉 Bepul yetkazib berish huquqi!' : '🎉 Бесплатная доставка активна!')
                   : (language === 'uz' ? "Bepul yetkazib berishgacha:" : 'До бесплатной авиа-доставки:')}
               </span>
-              <span className="text-[#C2836B] font-extrabold">{progressPercent}%</span>
+              <span className="text-[#B89254] font-extrabold">{progressPercent}%</span>
             </div>
-            <div className="w-full h-2 rounded-full bg-[#E8DCD5] overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-[#ECE8E1] overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#D4AF37] to-[#C2836B] transition-all duration-500 rounded-full"
+                className="h-full bg-gradient-to-r from-[#B89254] to-[#DFCBA0] transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
           {/* Step Selector Tabs */}
-          <div className="grid grid-cols-2 p-1 bg-[#FAF7F2] rounded-xl border border-[#E8DCD5] text-xs font-bold text-center">
+          <div className="grid grid-cols-2 p-1 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1] text-xs font-bold text-center">
             <button
               onClick={() => setCheckoutStep(1)}
               className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                 checkoutStep === 1
-                  ? 'bg-[#1F1615] text-white shadow-2xs'
-                  : 'text-[#7A6F68] hover:text-[#1F1615]'
+                  ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                  : 'text-[#8A8680] hover:text-[#1A1917]'
               }`}
             >
               1. {language === 'uz' ? 'Mahsulotlar' : 'Товары'} ({items.length})
@@ -305,8 +305,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               onClick={() => setCheckoutStep(2)}
               className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                 checkoutStep === 2
-                  ? 'bg-[#1F1615] text-white shadow-2xs'
-                  : 'text-[#7A6F68] hover:text-[#1F1615]'
+                  ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                  : 'text-[#8A8680] hover:text-[#1A1917]'
               }`}
             >
               2. {language === 'uz' ? 'Yetkazish & Toʻlov' : 'Доставка и Оплата'}
@@ -319,37 +319,37 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               {items.map(({ product, quantity }) => (
                 <div
                   key={product.id}
-                  className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#EFE8E2] shadow-2xs"
+                  className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#ECE8E1] shadow-2xs"
                 >
                   <img
                     src={product.images?.[0] || '/logo.png'}
                     alt={product.name}
-                    className="w-16 h-16 rounded-xl object-cover bg-[#FAF7F2] shrink-0 border border-[#EAE2DC]"
+                    className="w-16 h-16 rounded-xl object-cover bg-[#FAF8F5] shrink-0 border border-[#ECE8E1]"
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-[#C2836B] uppercase tracking-wider block">
+                    <span className="text-[10px] font-bold text-[#B89254] uppercase tracking-wider block">
                       {product.brand}
                     </span>
-                    <h5 className="text-xs font-medium text-[#1F1615] truncate">
+                    <h5 className="text-xs font-medium text-[#1A1917] truncate">
                       {product.name}
                     </h5>
-                    <div className="text-xs font-bold text-[#1F1615] mt-0.5">
+                    <div className="text-xs font-bold text-[#1A1917] mt-0.5">
                       {formatPrice(product.priceKrw * quantity)}
                     </div>
 
                     {/* Quantity Controls */}
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-1.5 bg-[#FAF7F2] rounded-lg border border-[#E8DCD5] p-0.5">
+                      <div className="flex items-center gap-1.5 bg-[#FAF8F5] rounded-lg border border-[#ECE8E1] p-0.5">
                         <button
                           onClick={() => onUpdateQty(product.id, quantity - 1)}
-                          className="p-1 text-[#7A6F68] hover:text-[#1F1615] cursor-pointer"
+                          className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-xs font-bold px-1.5 text-[#1F1615]">{quantity}</span>
+                        <span className="text-xs font-bold px-1.5 text-[#1A1917]">{quantity}</span>
                         <button
                           onClick={() => onUpdateQty(product.id, quantity + 1)}
-                          className="p-1 text-[#7A6F68] hover:text-[#1F1615] cursor-pointer"
+                          className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -357,7 +357,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                       <button
                         onClick={() => onRemove(product.id)}
-                        className="text-xs text-[#A89F97] hover:text-red-500 p-1 cursor-pointer transition-colors"
+                        className="text-xs text-[#8A8680] hover:text-red-500 p-1 cursor-pointer transition-colors"
                         title="Удалить"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -374,7 +374,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="space-y-3.5 flex-1 overflow-y-auto pr-1">
               {/* Receiver Info */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F68] flex items-center gap-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#8A8680] flex items-center gap-1">
                   <span>{language === 'uz' ? 'Qabul qiluvchi maʼlumotlari' : 'Данные получателя'}</span>
                 </label>
                 <Input
@@ -391,14 +391,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               {/* Delivery Region Selection */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F68] flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#8A8680] flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#B89254]" />
                   <span>{language === 'uz' ? 'Yetkazib berish hududi' : 'Регион и способ доставки'}</span>
                 </label>
                 <select
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
-                  className="w-full text-xs font-medium bg-white border border-[#E8DCD5] rounded-xl p-2.5 text-[#1F1615] outline-none focus:border-[#C2836B]"
+                  className="w-full text-xs font-medium bg-white border border-[#ECE8E1] rounded-xl p-2.5 text-[#1A1917] outline-none focus:border-[#B89254]"
                 >
                   {DELIVERY_REGIONS.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -415,8 +415,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               {/* Payment Method Selector */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F68] flex items-center gap-1">
-                  <CreditCard className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#8A8680] flex items-center gap-1">
+                  <CreditCard className="w-3.5 h-3.5 text-[#B89254]" />
                   <span>{language === 'uz' ? "To'lov usuli" : 'Способ оплаты'}</span>
                 </label>
                 <div className="grid grid-cols-1 gap-1.5">
@@ -428,12 +428,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         onClick={() => setPaymentMethod(pm.id)}
                         className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-[#FAF5EE] border-[#C2836B] ring-1 ring-[#C2836B]'
-                            : 'bg-white border-[#E8DCD5] hover:bg-[#FAF7F2]'
+                            ? 'bg-[#FAF8F5] border-[#B89254] ring-1 ring-[#B89254]'
+                            : 'bg-white border-[#ECE8E1] hover:bg-[#FAF8F5]'
                         }`}
                       >
-                        <span className="text-xs font-semibold text-[#1F1615]">{pm.name}</span>
-                        <span className="text-[10px] font-bold text-[#A96851] bg-white px-2 py-0.5 rounded-md border border-[#EED9CF]">
+                        <span className="text-xs font-semibold text-[#1A1917]">{pm.name}</span>
+                        <span className="text-[10px] font-bold text-[#B89254] bg-[#F7F4EF] px-2 py-0.5 rounded-md border border-[#ECE8E1]">
                           {pm.badge}
                         </span>
                       </div>
@@ -454,18 +454,18 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
 
           {/* Bottom Total & Order Triggers */}
-          <div className="border-t border-[#EAE2DC] pt-3.5 space-y-3">
+          <div className="border-t border-[#ECE8E1] pt-3.5 space-y-3">
             {/* Total Row */}
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs text-[#7A6F68] font-medium block">
+                <span className="text-xs text-[#8A8680] font-medium block">
                   {language === 'uz' ? 'Jami summa:' : 'Итого к оплате:'}
                 </span>
-                <span className="text-[11px] text-[#A89F97]">
+                <span className="text-[11px] text-[#8A8680]">
                   {language === 'uz' ? `${items.length} ta mahsulot` : `${items.length} поз.`}
                 </span>
               </div>
-              <span className="font-serif text-2xl font-black text-[#1F1615]">
+              <span className="font-serif text-2xl font-black text-[#1A1917]">
                 {formattedTotal}
               </span>
             </div>
@@ -478,14 +478,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   size="lg"
                   fullWidth
                   onClick={() => setCheckoutStep(2)}
-                  className="rounded-xl font-bold bg-[#1F1615] hover:bg-[#381F23] text-white"
+                  className="rounded-xl font-bold bg-[#1A1917] hover:bg-[#B89254] text-white"
                 >
                   {language === 'uz' ? "Buyurtmani rasmiylashtirish ➔" : "Перейти к оформлению ➔"}
                 </Button>
 
                 <button
                   onClick={onClear}
-                  className="w-full text-center text-xs text-[#A89F97] hover:text-[#1F1615] py-1 cursor-pointer transition-colors"
+                  className="w-full text-center text-xs text-[#8A8680] hover:text-[#1A1917] py-1 cursor-pointer transition-colors"
                 >
                   {language === 'uz' ? 'Savatchani tozalash' : 'Очистить корзину'}
                 </button>
@@ -521,7 +521,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setCheckoutStep(1)}
-                  className="w-full text-center text-xs text-[#7A6F68] hover:text-[#1F1615] py-1 cursor-pointer"
+                  className="w-full text-center text-xs text-[#8A8680] hover:text-[#1A1917] py-1 cursor-pointer"
                 >
                   {language === 'uz' ? '⬅️ Mahsulotlar roʻyxatiga qaytish' : '⬅️ Вернуться к списку товаров'}
                 </button>

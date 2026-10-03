@@ -29,18 +29,18 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
           </Badge>
         </div>
       )}
-      <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#242120] font-normal tracking-tight leading-tight mb-4">
+      <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1A1917] font-bold tracking-tight leading-tight mb-4">
         {title}
       </h2>
       {subtitle && (
-        <p className="text-base sm:text-lg text-[#6C635B] font-light leading-relaxed">
+        <p className="text-base sm:text-lg text-[#8A8680] font-normal leading-relaxed">
           {subtitle}
         </p>
       )}
       <div className={`mt-4 flex items-center gap-2 ${align === 'center' ? 'justify-center' : 'justify-start'}`}>
-        <span className="w-12 h-[1.5px] bg-[#C5A880]/60 rounded-full" />
-        <span className="w-2 h-2 rounded-full bg-[#C2836B]" />
-        <span className="w-12 h-[1.5px] bg-[#C5A880]/60 rounded-full" />
+        <span className="w-12 h-[1.5px] bg-[#DFCBA0]/60 rounded-full" />
+        <span className="w-2 h-2 rounded-full bg-[#B89254]" />
+        <span className="w-12 h-[1.5px] bg-[#DFCBA0]/60 rounded-full" />
       </div>
     </div>
   );

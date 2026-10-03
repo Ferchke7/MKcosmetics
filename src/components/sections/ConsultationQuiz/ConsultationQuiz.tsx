@@ -50,20 +50,20 @@ export const ConsultationQuiz: React.FC = () => {
   };
 
   return (
-    <section id="skin-quiz" className="scroll-mt-20 bg-gradient-to-b from-[#FAF7F2] via-[#F7EDE8]/45 to-[#FAF7F2] py-16 sm:py-24">
+    <section id="skin-quiz" className="scroll-mt-20 bg-[#FAF8F5] py-16 sm:py-24 border-t border-[#ECE8E1]">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           badge="Консультация"
-          badgeIcon={<HeartHandshake className="h-3.5 w-3.5 text-[#C2836B]" />}
+          badgeIcon={<HeartHandshake className="h-3.5 w-3.5 text-[#B89254]" />}
           title="Подобрать уход"
           subtitle="Ответьте на три вопроса. Мы подготовим сообщение для консультации в WhatsApp."
         />
 
-        <Card glass className="relative overflow-hidden border-[#EED9CF] p-6 sm:p-9">
+        <Card glass className="relative overflow-hidden border-[#ECE8E1] bg-white p-6 sm:p-9 shadow-sm">
           {!isCompleted ? (
             <div className="space-y-7">
-              <div className="flex items-center justify-between border-b border-[#F0E6DE] pb-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#A96851]">
+              <div className="flex items-center justify-between border-b border-[#ECE8E1] pb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#B89254]">
                   Шаг {currentStep + 1} из {totalSteps}
                 </span>
                 <div className="flex items-center gap-1.5" aria-label={`Шаг ${currentStep + 1} из ${totalSteps}`}>
@@ -72,10 +72,10 @@ export const ConsultationQuiz: React.FC = () => {
                       key={index}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
                         index === currentStep
-                          ? 'w-8 bg-[#C2836B]'
+                          ? 'w-8 bg-[#B89254]'
                           : index < currentStep
-                          ? 'w-3 bg-[#E1BEAF]'
-                          : 'w-3 bg-[#F0E6DE]'
+                          ? 'w-3 bg-[#DFCBA0]'
+                          : 'w-3 bg-[#ECE8E1]'
                       }`}
                     />
                   ))}
@@ -83,10 +83,10 @@ export const ConsultationQuiz: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="font-serif text-xl font-medium text-[#2D2A2E] sm:text-2xl">
+                <h3 className="font-serif text-xl font-bold text-[#1A1917] sm:text-2xl">
                   {currentQuestion.title}
                 </h3>
-                <p className="mt-1 text-sm text-[#8C827A]">{currentQuestion.subtitle}</p>
+                <p className="mt-1 text-sm text-[#8A8680]">{currentQuestion.subtitle}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -95,16 +95,16 @@ export const ConsultationQuiz: React.FC = () => {
                     key={option.id}
                     type="button"
                     onClick={() => handleSelectOption(currentQuestion.key, option.id)}
-                    className="group flex items-start gap-3.5 rounded-2xl border border-[#EED9CF] bg-white p-4 text-left shadow-xs transition-colors hover:border-[#C2836B] hover:bg-[#FAF5EE]"
+                    className="group flex items-start gap-3.5 rounded-2xl border border-[#ECE8E1] bg-[#FAF8F5] p-4 text-left shadow-2xs transition-colors hover:border-[#B89254] hover:bg-[#F7F4EF] cursor-pointer"
                   >
-                    <span className="rounded-xl bg-[#FAF7F2] p-2 text-2xl transition-colors group-hover:bg-white">
+                    <span className="rounded-xl bg-white p-2 text-2xl transition-colors border border-[#ECE8E1]">
                       {option.icon}
                     </span>
                     <span>
-                      <span className="block text-sm font-semibold text-[#2D2A2E] transition-colors group-hover:text-[#A96851]">
+                      <span className="block text-sm font-semibold text-[#1A1917] transition-colors group-hover:text-[#B89254]">
                         {option.label}
                       </span>
-                      <span className="mt-0.5 block text-xs leading-relaxed text-[#8C827A]">
+                      <span className="mt-0.5 block text-xs leading-relaxed text-[#8A8680]">
                         {option.sublabel}
                       </span>
                     </span>
@@ -114,28 +114,28 @@ export const ConsultationQuiz: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
               <div>
-                <h3 className="font-serif text-2xl font-medium text-[#2D2A2E] sm:text-3xl">
+                <h3 className="font-serif text-2xl font-bold text-[#1A1917] sm:text-3xl">
                   Ваш запрос готов
                 </h3>
-                <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-[#6C635B]">
+                <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-[#8A8680]">
                   Проверьте ответы и продолжите в WhatsApp. Консультант обсудит с вами подходящий уход.
                 </p>
               </div>
 
-              <dl className="mx-auto max-w-lg divide-y divide-[#F0E6DE] rounded-2xl border border-[#F0E6DE] bg-white px-4 text-left">
+              <dl className="mx-auto max-w-lg divide-y divide-[#ECE8E1] rounded-2xl border border-[#ECE8E1] bg-[#FAF8F5] px-4 text-left">
                 {selectedAnswers.map(({ question, answer }) => (
                   <div key={question} className="py-3">
-                    <dt className="text-xs text-[#8C827A]">{question}</dt>
-                    <dd className="mt-0.5 text-sm font-medium text-[#2D2A2E]">{answer}</dd>
+                    <dt className="text-xs text-[#8A8680]">{question}</dt>
+                    <dd className="mt-0.5 text-sm font-medium text-[#1A1917]">{answer}</dd>
                   </div>
                 ))}
               </dl>
 
-              <div className="flex flex-col items-center justify-center gap-3 border-t border-[#F0E6DE] pt-5 sm:flex-row">
+              <div className="flex flex-col items-center justify-center gap-3 border-t border-[#ECE8E1] pt-5 sm:flex-row">
                 <Button
                   variant="whatsapp"
                   size="lg"
@@ -150,11 +150,12 @@ export const ConsultationQuiz: React.FC = () => {
                   size="md"
                   onClick={restartQuiz}
                   icon={<RotateCcw className="h-4 w-4" />}
+                  className="border border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254]"
                 >
                   Начать заново
                 </Button>
               </div>
-              <p className="text-xs text-[#8C827A]">В WhatsApp откроется черновик. Нажмите «Отправить».</p>
+              <p className="text-xs text-[#8A8680]">В WhatsApp откроется черновик. Нажмите «Отправить».</p>
             </div>
           )}
         </Card>

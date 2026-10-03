@@ -62,8 +62,8 @@ export const Header: React.FC<HeaderProps> = ({
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-[#EAE2DC]'
-            : 'bg-white/90 backdrop-blur-xs border-b border-[#F0E6DE]/70'
+            ? 'bg-white/95 backdrop-blur-md shadow-xs border-b border-[#ECE8E1]'
+            : 'bg-white/90 backdrop-blur-xs border-b border-[#ECE8E1]/80'
         }`}
       >
         {/* Main Header Container */}
@@ -100,10 +100,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                className="md:hidden p-2 rounded-full text-[#4D2C20] hover:bg-[#FAF5EE] transition-colors"
+                className="md:hidden p-2 rounded-full text-[#1A1917] hover:bg-[#F7F4EF] transition-colors"
                 aria-label="Поиск"
               >
-                {isMobileSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                {isMobileSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5 text-[#B89254]" />}
               </button>
 
               {/* Language Selector */}
@@ -124,10 +124,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenCart}
-                className="relative inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-full bg-[#1F1615] hover:bg-[#381F23] text-white px-3 sm:px-4 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="relative inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-full bg-[#1A1917] hover:bg-[#B89254] text-white px-3 sm:px-4 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
                 aria-label={`${t('nav_cart')} (${cartCount})`}
               >
-                <ShoppingBag className="h-4 w-4 text-[#D4AF37]" />
+                <ShoppingBag className="h-4 w-4 text-[#B89254] group-hover:text-white" />
                 <span className="hidden sm:inline">{t('nav_cart')}</span>
                 {cartCount > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E53935] px-1 text-[11px] font-black text-white shadow-xs">
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 )}
                 {cartTotalFormatted && cartCount > 0 && (
-                  <span className="hidden xl:inline-block pl-1 text-[11px] font-semibold text-[#D4AF37] border-l border-white/20">
+                  <span className="hidden xl:inline-block pl-1 text-[11px] font-semibold text-[#DFCBA0] border-l border-white/20">
                     {cartTotalFormatted}
                   </span>
                 )}
@@ -157,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="rounded-xl p-2 text-[#4D2C20] transition-colors hover:bg-[#FAF5EE] lg:hidden cursor-pointer"
+                className="rounded-xl p-2 text-[#1A1917] transition-colors hover:bg-[#F7F4EF] lg:hidden cursor-pointer"
                 aria-label="Открыть меню"
                 aria-expanded={isMobileMenuOpen}
               >

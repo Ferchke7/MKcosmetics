@@ -77,11 +77,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={() => onQuickView(product)}
-      className="group relative flex flex-col justify-between bg-white border border-[#EFE8E2] hover:border-[#D4AF37] transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer select-none hover:shadow-md hover:-translate-y-0.5"
+      className="group relative flex flex-col justify-between bg-white border border-[#ECE8E1] hover:border-[#B89254] transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer select-none hover:shadow-md hover:-translate-y-0.5"
     >
       <div>
         {/* Product Image Area */}
-        <div className="relative aspect-[1/1] sm:aspect-[4/5] bg-[#FAF7F2] overflow-hidden">
+        <div className="relative aspect-[1/1] sm:aspect-[4/5] bg-[#FAF8F5] overflow-hidden">
           {photos.length > 0 ? (
             <img
               src={photos[activePhotoIdx]}
@@ -90,20 +90,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#FAF7F2] text-[#A89F97]">
-              <span className="text-xs font-serif font-bold uppercase tracking-wider text-[#A96851]">MK Korea</span>
+            <div className="w-full h-full flex items-center justify-center bg-[#FAF8F5] text-[#8A8680]">
+              <span className="text-xs font-serif font-bold uppercase tracking-wider text-[#B89254]">MK Korea</span>
             </div>
           )}
 
           {/* Ranking Number Badge (e.g. 01, 02...) */}
           {rank !== undefined && rank <= 10 && (
             <div className="absolute top-0 left-0 z-10">
-              <div className={`px-2.5 py-1 text-xs font-black tracking-tight text-white rounded-br-xl shadow-xs ${
+              <div className={`px-2.5 py-1 text-xs font-black tracking-tight rounded-br-xl shadow-xs ${
                 rank === 1
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#1F1615]'
+                  ? 'bg-[#B89254] text-white'
                   : rank <= 3
-                  ? 'bg-[#1F1615] text-[#D4AF37]'
-                  : 'bg-[#382824] text-white'
+                  ? 'bg-[#1A1917] text-[#DFCBA0]'
+                  : 'bg-[#4A3E38] text-white'
               }`}>
                 {rank < 10 ? `0${rank}` : rank}
               </div>
@@ -118,7 +118,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             )}
             {product.isBestseller && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#1F1615] text-[#D4AF37] text-[10px] font-black uppercase tracking-wider border border-[#D4AF37]/30">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#1A1917] text-[#DFCBA0] text-[10px] font-black uppercase tracking-wider border border-[#B89254]/30">
                 BEST
               </span>
             )}
@@ -126,8 +126,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Direct Delivery Badge */}
           <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1F1615]/85 backdrop-blur-xs text-white text-[10px] font-semibold tracking-tight border border-white/10">
-              <Plane className="w-3 h-3 text-[#D4AF37]" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1A1917]/85 backdrop-blur-xs text-white text-[10px] font-semibold tracking-tight border border-white/10">
+              <Plane className="w-3 h-3 text-[#B89254]" />
               <span>{t('product_flight_badge')}</span>
             </span>
           </div>
@@ -151,21 +151,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <>
               <button
                 onClick={handlePrevPhoto}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#1A1917]/70 hover:bg-[#1A1917] text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNextPhoto}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#1A1917]/70 hover:bg-[#1A1917] text-white flex items-center justify-center backdrop-blur-xs transition-opacity opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
 
               {/* Dots indicator */}
-              <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-10 bg-black/50 backdrop-blur-xs px-1.5 py-0.5 rounded-full pointer-events-none">
+              <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-10 bg-[#1A1917]/60 backdrop-blur-xs px-1.5 py-0.5 rounded-full pointer-events-none">
                 {photos.slice(0, 5).map((_, idx) => (
                   <span
                     key={idx}
@@ -180,8 +180,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Quick View Overlay Button on Hover */}
           <div className="hidden sm:flex absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 pointer-events-none">
-            <div className="w-full py-1.5 bg-white/95 backdrop-blur-xs text-[#1F1615] text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-1.5 border border-[#EFE8E2]">
-              <Eye className="w-3.5 h-3.5 text-[#C2836B]" />
+            <div className="w-full py-1.5 bg-white/95 backdrop-blur-xs text-[#1A1917] text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-1.5 border border-[#ECE8E1]">
+              <Eye className="w-3.5 h-3.5 text-[#B89254]" />
               <span>{t('product_quick_view')}</span>
             </div>
           </div>
@@ -191,18 +191,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="p-3 sm:p-3.5 space-y-1.5">
           {/* Brand Name & Volume */}
           <div className="flex items-center justify-between gap-1.5">
-            <span className="font-bold text-[11px] text-[#A96851] uppercase tracking-wider truncate">
+            <span className="font-bold text-[11px] text-[#B89254] uppercase tracking-wider truncate">
               {product.brand}
             </span>
             {product.volume && (
-              <span className="text-[10px] text-[#777777] font-medium shrink-0 bg-[#FAF5EE] px-1.5 py-0.5 rounded-md border border-[#EED9CF]/60">
+              <span className="text-[10px] text-[#777777] font-medium shrink-0 bg-[#F7F4EF] px-1.5 py-0.5 rounded-md border border-[#ECE8E1]">
                 {product.volume}
               </span>
             )}
           </div>
 
           {/* Title (2 lines max) */}
-          <h3 className="font-sans text-[12.5px] sm:text-[13.5px] font-medium text-[#1F1615] line-clamp-2 leading-[1.35] group-hover:text-[#C2836B] transition-colors">
+          <h3 className="font-sans text-[12.5px] sm:text-[13.5px] font-medium text-[#1A1917] line-clamp-2 leading-[1.35] group-hover:text-[#B89254] transition-colors">
             {product.name}
           </h3>
 
@@ -211,7 +211,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="flex text-amber-400">
               <Star className="w-3 h-3 fill-current" />
             </div>
-            <span className="font-bold text-[#1F1615] text-[11px]">{product.rating}</span>
+            <span className="font-bold text-[#1A1917] text-[11px]">{product.rating}</span>
             <span className="text-[10px] text-[#888888]">({product.reviewCount})</span>
             <span className="text-[10px] text-emerald-600 font-semibold ml-auto flex items-center gap-0.5">
               <ShieldCheck className="w-3 h-3" />
@@ -234,13 +234,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       -{discountPercent}%
                     </span>
                   )}
-                  <span className="text-sm sm:text-base font-black text-[#1F1615] tracking-tight">
+                  <span className="text-sm sm:text-base font-black text-[#1A1917] tracking-tight">
                     {displayPrice}
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="text-xs font-bold text-[#1F1615] py-0.5">
+              <div className="text-xs font-bold text-[#1A1917] py-0.5">
                 {t('product_price_on_request')}
               </div>
             )}
@@ -253,10 +253,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <button
           type="button"
           onClick={handleAddCartClick}
-          className="inline-flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-[#E8DCD5] bg-[#FAF7F2] hover:bg-[#F2E8DC] text-[#1F1615] text-[11px] sm:text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
+          className="inline-flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] hover:bg-[#F7F4EF] text-[#1A1917] text-[11px] sm:text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
           title={t('product_add_cart')}
         >
-          <ShoppingBag className="w-3.5 h-3.5 text-[#8A503C]" />
+          <ShoppingBag className="w-3.5 h-3.5 text-[#B89254]" />
           <span>{t('product_add_cart')}</span>
         </button>
 

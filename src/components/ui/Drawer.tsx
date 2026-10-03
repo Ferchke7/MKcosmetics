@@ -40,18 +40,18 @@ export const Drawer: React.FC<DrawerProps> = ({
       <div className={`fixed inset-y-0 ${position === 'right' ? 'right-0' : 'left-0'} max-w-full flex pl-10 z-10`}>
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#F0E6DE] bg-[#FAF7F2]">
-            <h2 className="font-serif text-xl text-[#2D2A2E] font-medium">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#ECE8E1] bg-[#FAF8F5]">
+            <h2 className="font-serif text-xl text-[#1A1917] font-semibold">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 text-[#8C827A] hover:text-[#4D2C20] hover:bg-white rounded-full transition-colors"
+              className="p-1.5 text-[#8A8680] hover:text-[#1A1917] hover:bg-[#F7F4EF] rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 bg-white">
             {children}
           </div>
         </div>

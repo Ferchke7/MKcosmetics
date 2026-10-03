@@ -74,28 +74,28 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF8F5] border border-[#ECE8E1] text-[#B89254] text-xs font-bold uppercase tracking-widest">
+          <Sparkles className="w-3.5 h-3.5" />
           <span>Бьюти-Журнал & Гайды по Уходу</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+        <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#1A1917] tracking-tight">
           Секреты Корейского Ухода от MK Cosmetics
         </h2>
-        <p className="text-neutral-400 text-sm sm:text-base leading-relaxed">
+        <p className="text-[#8A8680] text-sm sm:text-base leading-relaxed">
           Экспертные разборы этапов ухода, трендов корейской косметики и персональные рекомендации напрямую из нашего Telegram-канала.
         </p>
       </div>
 
       {/* Toolbar: Search & Tag Filter */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-[#161412] p-4 rounded-2xl border border-amber-500/20 shadow-xl">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 rounded-2xl border border-[#ECE8E1] shadow-sm">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#8A8680] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск статей, ингредиентов..."
-            className="w-full pl-9 pr-4 py-2 bg-[#1F1C1A] border border-amber-500/20 rounded-xl text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-amber-400"
+            className="w-full pl-9 pr-4 py-2 bg-[#FAF8F5] border border-[#ECE8E1] rounded-xl text-sm text-[#1A1917] placeholder-[#8A8680] focus:outline-none focus:border-[#B89254]"
           />
         </div>
 
@@ -103,10 +103,10 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
           <button
             onClick={() => setSelectedTag('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedTag === 'all'
-                ? 'bg-amber-500 text-black shadow-md'
-                : 'bg-[#1F1C1A] text-neutral-400 hover:text-white border border-amber-500/10'
+                ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                : 'bg-[#FAF8F5] text-[#8A8680] hover:text-[#1A1917] border border-[#ECE8E1]'
             }`}
           >
             Все темы
@@ -115,10 +115,10 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
             <button
               key={t}
               onClick={() => setSelectedTag(t)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedTag === t
-                  ? 'bg-amber-500 text-black shadow-md'
-                  : 'bg-[#1F1C1A] text-neutral-400 hover:text-white border border-amber-500/10'
+                  ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                  : 'bg-[#FAF8F5] text-[#8A8680] hover:text-[#1A1917] border border-[#ECE8E1]'
               }`}
             >
               #{t}
@@ -130,7 +130,7 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
         <button
           onClick={handleSyncFromTelegram}
           disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2 bg-sky-950/40 hover:bg-sky-900/50 border border-sky-500/30 text-sky-300 text-xs font-semibold rounded-xl transition-all whitespace-nowrap"
+          className="flex items-center gap-2 px-4 py-2 bg-[#FAF8F5] hover:bg-[#F7F4EF] border border-[#0088cc]/30 text-[#0088cc] text-xs font-semibold rounded-xl transition-all whitespace-nowrap cursor-pointer"
         >
           <Send className="w-3.5 h-3.5" />
           <span>{syncing ? 'Синхронизация...' : 'Обновить из Telegram'}</span>
@@ -141,25 +141,25 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="bg-[#161412] rounded-3xl p-5 border border-amber-500/10 animate-pulse space-y-4">
-              <div className="w-full h-48 bg-neutral-800 rounded-2xl" />
-              <div className="h-5 bg-neutral-800 rounded w-3/4" />
-              <div className="h-4 bg-neutral-800/60 rounded w-full" />
-              <div className="h-4 bg-neutral-800/60 rounded w-1/2" />
+            <div key={n} className="bg-white rounded-3xl p-5 border border-[#ECE8E1] animate-pulse space-y-4">
+              <div className="w-full h-48 bg-[#FAF8F5] rounded-2xl" />
+              <div className="h-5 bg-[#FAF8F5] rounded w-3/4" />
+              <div className="h-4 bg-[#FAF8F5] rounded w-full" />
+              <div className="h-4 bg-[#FAF8F5] rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : filteredArticles.length === 0 ? (
-        <div className="text-center py-20 bg-[#161412] rounded-3xl border border-amber-500/20 space-y-3">
-          <BookOpen className="w-12 h-12 text-amber-500/40 mx-auto" />
-          <h3 className="text-lg font-bold text-white">Статьи пока не загружены</h3>
-          <p className="text-neutral-400 text-sm max-w-md mx-auto">
+        <div className="text-center py-20 bg-white rounded-3xl border border-[#ECE8E1] space-y-3 p-8">
+          <BookOpen className="w-12 h-12 text-[#B89254]/40 mx-auto" />
+          <h3 className="text-lg font-bold text-[#1A1917]">Статьи пока не загружены</h3>
+          <p className="text-[#8A8680] text-sm max-w-md mx-auto">
             Нажмите кнопку «Обновить из Telegram», чтобы автоматически сформировать бьюти-статьи из постов канала @mkcosmetkor.
           </p>
           <button
             onClick={handleSyncFromTelegram}
             disabled={syncing}
-            className="mt-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition-all"
+            className="mt-2 px-5 py-2.5 bg-[#1A1917] hover:bg-[#B89254] text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             Загрузить статьи из Telegram
           </button>
@@ -170,10 +170,10 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
             <div
               key={art.id}
               onClick={() => setSelectedArticle(art)}
-              className="group bg-[#161412] border border-amber-500/20 hover:border-amber-400/50 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1"
+              className="group bg-white border border-[#ECE8E1] hover:border-[#B89254] rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1"
             >
               {/* Card Cover */}
-              <div className="relative w-full h-52 overflow-hidden bg-[#221F1C]">
+              <div className="relative w-full h-52 overflow-hidden bg-[#FAF8F5]">
                 {art.coverImage ? (
                   <img
                     src={art.coverImage}
@@ -181,14 +181,14 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#25221F] to-[#161412] text-amber-500/40">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FAF8F5] to-[#F7F4EF] text-[#B89254]/40">
                     <BookOpen className="w-12 h-12" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#161412] via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60" />
 
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-medium flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-amber-400" />
+                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#1A1917]/80 backdrop-blur-md border border-white/10 text-white text-[11px] font-medium flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-[#DFCBA0]" />
                   <span>{art.readingTimeMinutes || 3} мин.</span>
                 </div>
               </div>
@@ -200,28 +200,28 @@ export const BeautyBlogView: React.FC<BeautyBlogViewProps> = ({ onOpenProduct })
                   {art.tags && art.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {art.tags.slice(0, 2).map((t, i) => (
-                        <span key={i} className="text-[11px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
+                        <span key={i} className="text-[11px] font-medium text-[#B89254] bg-[#FAF8F5] px-2 py-0.5 rounded-md border border-[#ECE8E1]">
                           #{t}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <h3 className="font-bold text-white text-base group-hover:text-amber-300 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="font-serif font-bold text-[#1A1917] text-base group-hover:text-[#B89254] transition-colors line-clamp-2 leading-snug">
                     {art.title}
                   </h3>
 
                   {art.subtitle && (
-                    <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#8A8680] line-clamp-2 leading-relaxed">
                       {art.subtitle}
                     </p>
                   )}
                 </div>
 
                 {/* Card Footer */}
-                <div className="pt-3 border-t border-amber-500/10 flex items-center justify-between text-xs text-neutral-400">
-                  <span className="font-medium text-neutral-300">{art.author || 'MK Editorial'}</span>
-                  <div className="flex items-center gap-1 text-amber-400 font-semibold group-hover:translate-x-0.5 transition-transform">
+                <div className="pt-3 border-t border-[#ECE8E1] flex items-center justify-between text-xs text-[#8A8680]">
+                  <span className="font-medium text-[#1A1917]">{art.author || 'MK Editorial'}</span>
+                  <div className="flex items-center gap-1 text-[#B89254] font-semibold group-hover:translate-x-0.5 transition-transform">
                     <span>Читать</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>

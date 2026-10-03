@@ -29,13 +29,13 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const variantClasses = {
-    primary: 'bg-[#C2836B] hover:bg-[#A96851] text-white shadow-soft hover:shadow-soft-lg focus:ring-[#C2836B]',
-    secondary: 'bg-[#FAF5EE] hover:bg-[#F2E8DC] text-[#4D2C20] border border-[#EED9CF] focus:ring-[#E1BEAF]',
-    outline: 'border border-[#C2836B] text-[#C2836B] hover:bg-[#C2836B] hover:text-white focus:ring-[#C2836B]',
-    gold: 'bg-gradient-to-r from-[#C5A880] to-[#B3936A] hover:from-[#B3936A] hover:to-[#9F8058] text-white shadow-gold-glow focus:ring-[#C5A880]',
-    telegram: 'bg-[#229ED9] hover:bg-[#1E8BC0] text-white shadow-sm hover:shadow-md focus:ring-[#229ED9]',
+    primary: 'bg-[#1A1917] hover:bg-[#B89254] text-white shadow-soft hover:shadow-soft-lg focus:ring-[#B89254]',
+    secondary: 'bg-[#FAF8F5] hover:bg-[#F7F4EF] text-[#1A1917] border border-[#ECE8E1] focus:ring-[#B89254]',
+    outline: 'border border-[#ECE8E1] text-[#1A1917] hover:border-[#B89254] hover:text-[#B89254] focus:ring-[#B89254]',
+    gold: 'bg-gradient-to-r from-[#B89254] via-[#DFCBA0] to-[#9E7B42] hover:brightness-105 text-white shadow-gold-glow focus:ring-[#B89254]',
+    telegram: 'bg-[#0088cc] hover:bg-[#0077b5] text-white shadow-sm hover:shadow-md focus:ring-[#0088cc]',
     whatsapp: 'bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-sm hover:shadow-md focus:ring-[#25D366]',
-    ghost: 'text-[#4D2C20] hover:bg-[#FAF5EE] hover:text-[#C2836B]',
+    ghost: 'text-[#1A1917] hover:bg-[#FAF8F5] hover:text-[#B89254]',
   };
 
   const widthClass = fullWidth ? 'w-full' : '';

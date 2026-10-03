@@ -58,10 +58,10 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start text-[#1F1615]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start text-[#1A1917]">
         {/* Left Column: Gallery */}
         <div className="space-y-3">
-          <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EFE8E2] relative shadow-2xs">
+          <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-[#FAF8F5] border border-[#ECE8E1] relative shadow-2xs">
             {photos.length > 0 ? (
               <img
                 src={photos[selectedImgIndex] || photos[0]}
@@ -69,7 +69,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-[#A89F97] text-xs font-bold font-serif">
+              <div className="w-full h-full flex items-center justify-center text-[#8A8680] text-xs font-bold font-serif">
                 MK KOREA COSMETIC
               </div>
             )}
@@ -82,15 +82,15 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 </span>
               )}
               {product.isBestseller && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#1F1615] text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider border border-[#D4AF37]/30">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#1A1917] text-[#B89254] text-[10px] font-bold uppercase tracking-wider border border-[#B89254]/30">
                   BESTSELLER
                 </span>
               )}
             </div>
 
             <div className="absolute bottom-3 left-3 z-10">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1F1615]/90 backdrop-blur-xs text-white text-[11px] font-semibold border border-white/10">
-                <Plane className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1A1917]/90 backdrop-blur-xs text-white text-[11px] font-semibold border border-white/10">
+                <Plane className="w-3.5 h-3.5 text-[#B89254]" />
                 <span>{t('product_flight_badge')}</span>
               </span>
             </div>
@@ -105,7 +105,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   onClick={() => setSelectedImgIndex(idx)}
                   className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
                     selectedImgIndex === idx
-                      ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]'
+                      ? 'border-[#B89254] ring-1 ring-[#B89254]'
                       : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
@@ -120,7 +120,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-[#A96851]">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-[#B89254]">
                 {product.brand}
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -129,13 +129,13 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               </span>
             </div>
 
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1F1615] mt-1 leading-snug">
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1A1917] mt-1 leading-snug">
               {product.name}
             </h2>
 
             {product.volume && (
-              <p className="text-xs font-medium text-[#7A6F68] mt-1">
-                {t('product_volume')} <strong className="text-[#1F1615]">{product.volume}</strong>
+              <p className="text-xs font-medium text-[#8A8680] mt-1">
+                {t('product_volume')} <strong className="text-[#1A1917]">{product.volume}</strong>
               </p>
             )}
           </div>
@@ -147,15 +147,15 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 <Star key={i} className="w-3.5 h-3.5 fill-current" />
               ))}
             </div>
-            <span className="font-bold text-[#1F1615]">{product.rating}</span>
-            <span className="text-[#888888]">({product.reviewCount} {t('product_reviews')})</span>
+            <span className="font-bold text-[#1A1917]">{product.rating}</span>
+            <span className="text-[#8A8680]">({product.reviewCount} {t('product_reviews')})</span>
           </div>
 
           {/* Price Box */}
-          <div className="p-3.5 rounded-2xl bg-[#FAF5EE] border border-[#EED9CF] flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] flex items-center justify-between">
             <div>
               {product.originalPriceKrw && product.originalPriceKrw > product.priceKrw && (
-                <div className="text-[11px] text-[#999999] line-through leading-none">
+                <div className="text-[11px] text-[#8A8680] line-through leading-none">
                   {formatPrice(product.originalPriceKrw * quantity)}
                 </div>
               )}
@@ -165,26 +165,26 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                     -{discountPercent}%
                   </span>
                 )}
-                <span className="text-xl sm:text-2xl font-black text-[#1F1615] tracking-tight">
+                <span className="text-xl sm:text-2xl font-black text-[#1A1917] tracking-tight">
                   {totalPriceFormatted}
                 </span>
               </div>
             </div>
 
             {/* Quantity Stepper */}
-            <div className="flex items-center gap-1.5 bg-white rounded-xl border border-[#E8DCD5] p-1 shadow-2xs">
+            <div className="flex items-center gap-1.5 bg-white rounded-xl border border-[#ECE8E1] p-1 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-1 text-[#7A6F68] hover:text-[#1F1615] cursor-pointer"
+                className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
-              <span className="text-xs font-bold px-2 text-[#1F1615]">{quantity}</span>
+              <span className="text-xs font-bold px-2 text-[#1A1917]">{quantity}</span>
               <button
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
-                className="p-1 text-[#7A6F68] hover:text-[#1F1615] cursor-pointer"
+                className="p-1 text-[#8A8680] hover:text-[#1A1917] cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -193,13 +193,13 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
           {/* Specification Tabs */}
           <div className="space-y-2">
-            <div className="flex border-b border-[#EFE8E2] text-xs font-bold">
+            <div className="flex border-b border-[#ECE8E1] text-xs font-bold">
               <button
                 onClick={() => setActiveTab('desc')}
                 className={`pb-2 px-2.5 transition-colors cursor-pointer ${
                   activeTab === 'desc'
-                    ? 'border-b-2 border-[#1F1615] text-[#1F1615]'
-                    : 'text-[#7A6F68] hover:text-[#1F1615]'
+                    ? 'border-b-2 border-[#1A1917] text-[#1A1917]'
+                    : 'text-[#8A8680] hover:text-[#1A1917]'
                 }`}
               >
                 {language === 'uz' ? 'Tavsif' : 'Описание'}
@@ -209,8 +209,8 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   onClick={() => setActiveTab('ingredients')}
                   className={`pb-2 px-2.5 transition-colors cursor-pointer ${
                     activeTab === 'ingredients'
-                      ? 'border-b-2 border-[#1F1615] text-[#1F1615]'
-                      : 'text-[#7A6F68] hover:text-[#1F1615]'
+                      ? 'border-b-2 border-[#1A1917] text-[#1A1917]'
+                      : 'text-[#8A8680] hover:text-[#1A1917]'
                   }`}
                 >
                   {language === 'uz' ? 'Tarkib' : 'Состав'}
@@ -221,8 +221,8 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   onClick={() => setActiveTab('usage')}
                   className={`pb-2 px-2.5 transition-colors cursor-pointer ${
                     activeTab === 'usage'
-                      ? 'border-b-2 border-[#1F1615] text-[#1F1615]'
-                      : 'text-[#7A6F68] hover:text-[#1F1615]'
+                      ? 'border-b-2 border-[#1A1917] text-[#1A1917]'
+                      : 'text-[#8A8680] hover:text-[#1A1917]'
                   }`}
                 >
                   {language === 'uz' ? 'Qoʻllash' : 'Применение'}
@@ -232,8 +232,8 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 onClick={() => setActiveTab('shipping')}
                 className={`pb-2 px-2.5 transition-colors cursor-pointer ${
                   activeTab === 'shipping'
-                    ? 'border-b-2 border-[#1F1615] text-[#1F1615]'
-                    : 'text-[#7A6F68] hover:text-[#1F1615]'
+                    ? 'border-b-2 border-[#1A1917] text-[#1A1917]'
+                    : 'text-[#8A8680] hover:text-[#1A1917]'
                 }`}
               >
                 {language === 'uz' ? 'Yetkazish' : 'Доставка'}
@@ -241,7 +241,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             </div>
 
             {/* Tab Contents */}
-            <div className="text-xs text-[#555555] leading-relaxed max-h-32 overflow-y-auto pr-1">
+            <div className="text-xs text-[#8A8680] leading-relaxed max-h-32 overflow-y-auto pr-1">
               {activeTab === 'desc' && (
                 <p>{product.description || (language === 'uz' ? 'Mahsulot Janubiy Koreyadan keltirilgan 100% original vosita.' : 'Оригинальный премиальный продукт из Южной Кореи.')}</p>
               )}
@@ -251,7 +251,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   {product.keyIngredients?.map((ing, idx) => (
                     <span
                       key={idx}
-                      className="px-2.5 py-1 rounded-md bg-[#FAF5EE] text-[#1F1615] text-[11px] font-semibold border border-[#EED9CF]"
+                      className="px-2.5 py-1 rounded-md bg-[#FAF8F5] text-[#1A1917] text-[11px] font-semibold border border-[#ECE8E1]"
                     >
                       {ing}
                     </span>
@@ -265,15 +265,15 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
               {activeTab === 'shipping' && (
                 <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center gap-2 text-[11px] text-[#1F1615]">
-                    <Plane className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <div className="flex items-center gap-2 text-[11px] text-[#1A1917]">
+                    <Plane className="w-3.5 h-3.5 text-[#B89254]" />
                     <span>{language === 'uz' ? 'Seuldan toʻgʻridan-toʻgʻri avia yetkazib berish' : 'Прямая авиа-доставка из Сеула 2 раза в неделю'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-[#1F1615]">
-                    <Truck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <div className="flex items-center gap-2 text-[11px] text-[#1A1917]">
+                    <Truck className="w-3.5 h-3.5 text-[#B89254]" />
                     <span>{language === 'uz' ? 'Toshkent boʻylab tezkor kuryer va Oʻzbekiston viloyatlariga yetkazish' : 'Экспресс-доставка по Ташкенту (2-4 часа) и по всем регионам'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-[#1F1615]">
+                  <div className="flex items-center gap-2 text-[11px] text-[#1A1917]">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{language === 'uz' ? '100% haqiqiylik va yangi partiya kafolati' : '100% гарантия свежих сроков и оригинальности'}</span>
                   </div>
@@ -283,14 +283,14 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2 pt-3 border-t border-[#EFE8E2]">
+          <div className="space-y-2 pt-3 border-t border-[#ECE8E1]">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleAddMultipleToCart}
-                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E8DCD5] bg-[#FAF7F2] hover:bg-[#F2E8DC] text-[#1F1615] text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] hover:bg-[#F7F4EF] text-[#1A1917] text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
               >
-                <ShoppingBag className="w-4 h-4 text-[#8A503C]" />
+                <ShoppingBag className="w-4 h-4 text-[#B89254]" />
                 <span>{t('product_add_cart')}</span>
               </button>
 

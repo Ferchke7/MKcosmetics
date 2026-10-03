@@ -78,11 +78,11 @@ export const Contact: React.FC = () => {
   ];
 
   return (
-    <section id="contacts" className="scroll-mt-20 bg-[#F7EDE8]/40 py-16 sm:py-24">
+    <section id="contacts" className="scroll-mt-20 bg-[#FAF8F5] py-16 sm:py-24 border-t border-[#ECE8E1]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           badge={t('contact_badge')}
-          badgeIcon={<MessageCircle className="h-3.5 w-3.5 text-[#C2836B]" />}
+          badgeIcon={<MessageCircle className="h-3.5 w-3.5 text-[#B89254]" />}
           title={t('contact_title')}
           subtitle={t('contact_subtitle')}
         />
@@ -97,18 +97,18 @@ export const Contact: React.FC = () => {
                 href={ch.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`p-4 rounded-2xl bg-white border border-[#EED9CF] transition-all duration-200 hover:shadow-md flex flex-col items-center text-center group ${ch.color}`}
+                className={`p-4 rounded-2xl bg-white border border-[#ECE8E1] transition-all duration-200 hover:shadow-md flex flex-col items-center text-center group ${ch.color}`}
               >
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110 ${ch.iconBg}`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h4 className="font-semibold text-sm text-[#2D2A2E] group-hover:text-inherit">
+                <h4 className="font-semibold text-sm text-[#1A1917] group-hover:text-inherit">
                   {ch.title}
                 </h4>
-                <p className="text-xs text-[#8C827A] mt-0.5 truncate max-w-full">
+                <p className="text-xs text-[#8A8680] mt-0.5 truncate max-w-full">
                   {ch.subtitle}
                 </p>
-                <span className="mt-3 text-[11px] font-bold text-[#C2836B] group-hover:underline">
+                <span className="mt-3 text-[11px] font-bold text-[#B89254] group-hover:underline">
                   {ch.btnText} →
                 </span>
               </a>
@@ -117,17 +117,17 @@ export const Contact: React.FC = () => {
         </div>
 
         {/* Fast question form */}
-        <Card className="border-[#F0E6DE] bg-white p-6 shadow-soft sm:p-8 max-w-2xl mx-auto">
+        <Card className="border-[#ECE8E1] bg-white p-6 shadow-soft sm:p-8 max-w-2xl mx-auto">
           {preparedUrl ? (
             <div className="space-y-4 text-center" role="status">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 text-[#20BA5A]">
                 <MessageCircle className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-medium text-[#2D2A2E]">
+                <h3 className="font-serif text-xl font-bold text-[#1A1917]">
                   {t('order_success_title')}
                 </h3>
-                <p className="mt-1 text-sm leading-relaxed text-[#6C635B]">
+                <p className="mt-1 text-sm leading-relaxed text-[#8A8680]">
                   {t('order_success_desc')}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export const Contact: React.FC = () => {
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp
                 </a>
-                <Button variant="ghost" size="md" onClick={resetForm}>
+                <Button variant="ghost" size="md" onClick={resetForm} className="border border-[#ECE8E1] text-[#1A1917]">
                   OK
                 </Button>
               </div>
@@ -149,10 +149,10 @@ export const Contact: React.FC = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="text-center mb-4">
-                <h3 className="font-serif text-xl font-medium text-[#2D2A2E]">
+                <h3 className="font-serif text-xl font-bold text-[#1A1917]">
                   {t('contact_quick_question')}
                 </h3>
-                <p className="text-xs text-[#8C827A] mt-1">
+                <p className="text-xs text-[#8A8680] mt-1">
                   {t('contact_quick_question_desc')}
                 </p>
               </div>
@@ -165,7 +165,7 @@ export const Contact: React.FC = () => {
               />
 
               <div>
-                <label htmlFor="contact-message" className="mb-1.5 block text-xs font-medium text-[#6C3E2E]">
+                <label htmlFor="contact-message" className="mb-1.5 block text-xs font-bold text-[#8A8680] uppercase tracking-wider">
                   {t('contact_your_question')}
                 </label>
                 <textarea
@@ -175,7 +175,7 @@ export const Contact: React.FC = () => {
                   onChange={(event) => setMessageText(event.target.value)}
                   placeholder={t('contact_question_placeholder')}
                   required
-                  className="w-full rounded-xl border border-[#EED9CF] bg-white px-4 py-2.5 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
+                  className="w-full rounded-xl border border-[#ECE8E1] bg-white px-4 py-2.5 text-sm text-[#1A1917] placeholder-[#8A8680] focus:border-[#B89254] focus:outline-none focus:ring-1 focus:ring-[#B89254]"
                 />
               </div>
 

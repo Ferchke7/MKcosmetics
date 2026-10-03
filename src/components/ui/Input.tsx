@@ -19,19 +19,19 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-[#6C3E2E] uppercase tracking-wider mb-1.5">
+        <label htmlFor={inputId} className="block text-xs font-bold text-[#8A8680] uppercase tracking-wider mb-1.5">
           {label}
         </label>
       )}
-      <div className="relative rounded-xl shadow-xs">
+      <div className="relative rounded-xl shadow-2xs">
         {icon && (
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8C827A]">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8680]">
             {icon}
           </div>
         )}
         <input
           id={inputId}
-          className={`block w-full rounded-xl border border-[#EED9CF] bg-white px-4 py-2.5 text-sm text-[#2D2A2E] placeholder-[#A89F97] transition-colors focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B] disabled:bg-[#FAF5EE] ${
+          className={`block w-full rounded-xl border border-[#ECE8E1] bg-white px-4 py-2.5 text-sm text-[#1A1917] placeholder-[#8A8680] transition-colors focus:border-[#B89254] focus:outline-none focus:ring-1 focus:ring-[#B89254] disabled:bg-[#FAF8F5] ${
             icon ? 'pl-10' : ''
           } ${error ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : ''} ${className}`}
           {...props}

@@ -32,17 +32,17 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF5EE] hover:bg-[#F2E8DC] border border-[#EED9CF] text-xs font-medium text-[#4D2C20] transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] hover:bg-[#F7F4EF] border border-[#ECE8E1] text-xs font-medium text-[#1A1917] transition-colors"
         aria-label="Выбрать валюту"
       >
         <span className="text-sm">{active.flag}</span>
         <span>{active.code}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-[#8C827A] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-[#8A8680] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-[#F0E6DE] py-1.5 z-50 animate-slide-up">
-          <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#A89F97] flex items-center gap-1 border-b border-[#F0E6DE]/60 mb-1">
+        <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-[#ECE8E1] py-1.5 z-50 animate-slide-up">
+          <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#8A8680] flex items-center gap-1 border-b border-[#ECE8E1] mb-1">
             <Globe className="w-3 h-3" />
             <span>Валюта цен</span>
           </div>
@@ -55,15 +55,15 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
               }}
               className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between transition-colors ${
                 curr.code === currentCurrency
-                  ? 'bg-[#FDF8F6] text-[#8A503C] font-semibold'
-                  : 'text-[#4D2C20] hover:bg-[#FAF5EE]'
+                  ? 'bg-[#F7F4EF] text-[#B89254] font-semibold'
+                  : 'text-[#1A1917] hover:bg-[#FAF8F5]'
               }`}
             >
               <div className="flex items-center gap-2">
                 <span className="text-base">{curr.flag}</span>
                 <span>{curr.label}</span>
               </div>
-              <span className="text-[11px] text-[#A89F97]">{curr.symbol}</span>
+              <span className="text-[11px] text-[#8A8680]">{curr.symbol}</span>
             </button>
           ))}
         </div>

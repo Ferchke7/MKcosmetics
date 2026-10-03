@@ -211,7 +211,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#242120]">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1A1917]">
       <Header
         activeView={currentView}
         onNavigate={handleNavigate}

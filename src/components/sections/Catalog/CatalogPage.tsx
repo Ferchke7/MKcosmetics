@@ -164,7 +164,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   };
 
   return (
-    <div className="bg-[#FAF7F2] min-h-screen pt-24 pb-24 text-[#2D2A2E]">
+    <div className="bg-[#FAF8F5] min-h-screen pt-24 pb-24 text-[#1A1917]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {/* 1. Elegant Shop Hero Header & Category Diamond Strip */}
@@ -206,42 +206,42 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           <div className="lg:col-span-8 xl:col-span-9 space-y-6">
             
             {/* Top Toolbar (Results Count, Mobile Filter Trigger, Sorting) */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#F0E6DE] shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#ECE8E1] shadow-2xs">
               
               {/* Results count */}
               <div className="flex items-center gap-3">
-                <span className="text-xs sm:text-sm font-medium text-[#6C635B]">
+                <span className="text-xs sm:text-sm font-medium text-[#8A8680]">
                   {t('catalog_showing')}{' '}
-                  <strong className="text-[#2D2A2E]">
+                  <strong className="text-[#1A1917]">
                     {filteredProducts.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length)}
                   </strong>{' '}
                   {t('catalog_of')}{' '}
-                  <strong className="text-[#2D2A2E]">{filteredProducts.length}</strong> {t('catalog_results')}
+                  <strong className="text-[#1A1917]">{filteredProducts.length}</strong> {t('catalog_results')}
                 </span>
 
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setIsMobileFilterOpen(true)}
-                  className="inline-flex lg:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-semibold text-[#8A503C] hover:bg-[#F2E8DC] cursor-pointer"
+                  className="inline-flex lg:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-semibold text-[#1A1917] hover:bg-[#F7F4EF] cursor-pointer"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#B89254]" />
                   <span>{t('catalog_filters_title')}</span>
                   {isCustomFilterActive && (
-                    <span className="w-2 h-2 rounded-full bg-[#A96851]" />
+                    <span className="w-2 h-2 rounded-full bg-[#B89254]" />
                   )}
                 </button>
               </div>
 
               {/* Sort By Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#8C827A] hidden sm:inline">
+                <span className="text-xs text-[#8A8680] hidden sm:inline">
                   {t('catalog_sort_label')}:
                 </span>
                 <div className="relative">
                   <select
                     value={sortBy}
                     onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
-                    className="appearance-none rounded-xl bg-[#FAF5EE] border border-[#EED9CF] py-2 pl-3 pr-8 text-xs font-bold text-[#4D2C20] focus:border-[#A96851] focus:outline-none cursor-pointer"
+                    className="appearance-none rounded-xl bg-[#FAF8F5] border border-[#ECE8E1] py-2 pl-3 pr-8 text-xs font-bold text-[#1A1917] focus:border-[#B89254] focus:outline-none cursor-pointer"
                   >
                     <option value="popular">{t('catalog_sort_default')}</option>
                     <option value="newest">{t('catalog_sort_newest')}</option>
@@ -250,20 +250,20 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                     <option value="price-desc">{t('catalog_sort_price_desc')}</option>
                     <option value="name-asc">{t('catalog_sort_name_asc')}</option>
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C827A]" />
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8A8680]" />
                 </div>
               </div>
             </div>
 
             {/* Active Filters Pill Row */}
             {isCustomFilterActive && (
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-xl border border-[#F0E6DE]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#8A503C] mr-1">
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-xl border border-[#ECE8E1]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#B89254] mr-1">
                   {t('catalog_active_filters')}
                 </span>
 
                 {searchQuery && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-medium text-[#1A1917]">
                     <span>{searchQuery}</span>
                     <button onClick={() => onSearchChange('')} className="hover:text-red-500 cursor-pointer">
                       <X className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                 )}
 
                 {selectedCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-medium text-[#1A1917]">
                     <span>{selectedCategory}</span>
                     <button onClick={() => onCategoryChange('all')} className="hover:text-red-500 cursor-pointer">
                       <X className="w-3.5 h-3.5" />
@@ -281,7 +281,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                 )}
 
                 {selectedBrand !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-medium text-[#1A1917]">
                     <span>{selectedBrand}</span>
                     <button onClick={() => onBrandChange('all')} className="hover:text-red-500 cursor-pointer">
                       <X className="w-3.5 h-3.5" />
@@ -301,7 +301,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                 {selectedSkinTypes.map((type) => (
                   <span
                     key={type}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5EE] border border-[#EED9CF] text-xs font-medium text-[#4D2C20]"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#ECE8E1] text-xs font-medium text-[#1A1917]"
                   >
                     <span>{type}</span>
                     <button onClick={() => handleToggleSkinType(type)} className="hover:text-red-500 cursor-pointer">
@@ -312,7 +312,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
                 <button
                   onClick={handleResetAll}
-                  className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#A96851] hover:underline cursor-pointer"
+                  className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#B89254] hover:underline cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>{t('catalog_reset_all')}</span>
@@ -320,11 +320,11 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               </div>
             )}
 
-            {/* Product Grid (3 Columns as in reference image) */}
+            {/* Product Grid (3 Columns) */}
             {isLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="space-y-3 rounded-2xl border border-[#F0E6DE] bg-white p-4">
+                  <div key={i} className="space-y-3 rounded-2xl border border-[#ECE8E1] bg-white p-4">
                     <Skeleton className="aspect-[4/5] rounded-xl" />
                     <Skeleton className="h-3 w-1/3" />
                     <Skeleton className="h-4 w-3/4" />
@@ -335,19 +335,19 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               </div>
             ) : paginatedProducts.length === 0 ? (
               /* Empty State */
-              <div className="text-center py-20 bg-white rounded-3xl border border-[#F0E6DE] p-8 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-[#FAF5EE] text-[#A89F97] flex items-center justify-center mx-auto">
-                  <Search className="w-8 h-8" />
+              <div className="text-center py-20 bg-white rounded-3xl border border-[#ECE8E1] p-8 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-[#8A8680] flex items-center justify-center mx-auto border border-[#ECE8E1]">
+                  <Search className="w-8 h-8 text-[#B89254]" />
                 </div>
-                <h3 className="font-serif text-2xl font-medium text-[#2D2A2E]">
+                <h3 className="font-serif text-2xl font-medium text-[#1A1917]">
                   {t('catalog_not_found_title')}
                 </h3>
-                <p className="text-xs sm:text-sm text-[#6C635B] max-w-md mx-auto">
+                <p className="text-xs sm:text-sm text-[#8A8680] max-w-md mx-auto">
                   {t('catalog_not_found_desc')}
                 </p>
                 <button
                   onClick={handleResetAll}
-                  className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C2836B] hover:bg-[#A96851] text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
+                  className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1A1917] hover:bg-[#B89254] text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>{t('catalog_show_all_btn')} ({totalCount})</span>
@@ -371,13 +371,13 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                   ))}
                 </div>
 
-                {/* Numbered Pagination (1 2 3 4 5 →) */}
+                {/* Numbered Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-1.5 pt-8 border-t border-[#F0E6DE]">
+                  <div className="flex items-center justify-center gap-1.5 pt-8 border-t border-[#ECE8E1]">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="p-2 rounded-xl text-[#6C635B] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      className="p-2 rounded-xl text-[#8A8680] hover:bg-[#FAF8F5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                       aria-label="Previous page"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -387,7 +387,6 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                       const pageNum = i + 1;
                       const isActive = currentPage === pageNum;
 
-                      // Show first, last, and window around current
                       if (
                         pageNum === 1 ||
                         pageNum === totalPages ||
@@ -402,8 +401,8 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                             }}
                             className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                               isActive
-                                ? 'bg-[#2D2A2E] text-white shadow-sm'
-                                : 'bg-white text-[#6C635B] hover:bg-[#FAF5EE] border border-[#F0E6DE]'
+                                ? 'bg-[#1A1917] text-[#B89254] shadow-xs'
+                                : 'bg-white text-[#8A8680] hover:bg-[#FAF8F5] border border-[#ECE8E1]'
                             }`}
                           >
                             {pageNum}
@@ -414,7 +413,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                         (pageNum === totalPages - 1 && currentPage < totalPages - 2)
                       ) {
                         return (
-                          <span key={pageNum} className="px-1 text-xs text-[#8C827A]">
+                          <span key={pageNum} className="px-1 text-xs text-[#8A8680]">
                             ...
                           </span>
                         );
@@ -425,7 +424,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
                     <button
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="p-2 rounded-xl text-[#6C635B] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      className="p-2 rounded-xl text-[#8A8680] hover:bg-[#FAF8F5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                       aria-label="Next page"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -449,17 +448,17 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         {isMobileFilterOpen && (
           <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
             <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+              className="fixed inset-0 bg-black/40 backdrop-blur-xs"
               onClick={() => setIsMobileFilterOpen(false)}
             />
             <div className="fixed inset-y-0 right-0 z-10 w-[88%] max-w-sm bg-white p-5 shadow-2xl overflow-y-auto">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F0E6DE]">
-                <span className="font-serif text-lg font-medium text-[#2D2A2E]">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#ECE8E1]">
+                <span className="font-serif text-lg font-semibold text-[#1A1917]">
                   {t('catalog_filters_title')}
                 </span>
                 <button
                   onClick={() => setIsMobileFilterOpen(false)}
-                  className="p-1 rounded-full text-gray-500 hover:bg-gray-100"
+                  className="p-1 rounded-full text-[#8A8680] hover:bg-[#FAF8F5]"
                 >
                   <X className="w-5 h-5" />
                 </button>
