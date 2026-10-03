@@ -42,12 +42,11 @@ import {
   Crown,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
-import { adminService, AdminStats, Order } from '../../services/admin/adminService';
+import { adminService, AdminStats, Order, StaffMember } from '../../services/admin/adminService';
 import { TelegramPost } from '../../core/types/telegram';
 import { ProductEditModal } from './ProductEditModal';
 import { OrderProcessingModal } from './OrderProcessingModal';
 import { AnalyticsEChartsView } from './AnalyticsEChartsView';
-import { SalesUnitEconomicsView } from './SalesUnitEconomicsView';
 import { InventoryVariantsView } from './InventoryVariantsView';
 import { StaffManagementView } from './StaffManagementView';
 import { DataExportModal } from './DataExportModal';
@@ -64,7 +63,6 @@ interface AdminDashboardProps {
 
 type TabType =
   | 'overview'
-  | 'sales'
   | 'orders'
   | 'customers'
   | 'staff'
@@ -114,6 +112,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isChangingPass, setIsChangingPass] = useState(false);
 
+  // Staff State for order assignment
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+
   // Load CRM dashboard stats
   const fetchStats = async () => {
     if (!token) return;
@@ -124,6 +125,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       console.error('Failed to load admin stats:', err);
     } finally {
       setIsLoadingStats(false);
+    }
+  };
+
+  // Load Staff for Seller Assignment
+  const fetchStaff = async () => {
+    if (!token) return;
+    try {
+      const list = await adminService.getStaff(token);
+      setStaffList(list || []);
+    } catch (err) {
+      console.error('Failed to load staff for assignment:', err);
     }
   };
 
@@ -151,6 +163,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     fetchStats();
+    fetchStaff();
   }, [token]);
 
   useEffect(() => {
@@ -158,6 +171,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       fetchOrders();
     }
   }, [activeTab, orderStatusFilter, token]);
+
+  // Order Handlers
+  const handleAssignOrder = async (orderId: number, assignedTo: string) => {
+    if (!token) return;
+    try {
+      await adminService.processOrder(orderId, { assignedTo }, token);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, assignedTo } : o))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Ошибка назначения продавца');
+    }
+  };
 
   // Order Handlers
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
@@ -351,6 +377,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="text-right">
           <div className="font-bold text-emerald-400">{fmtMoney(o.totalAmount)}</div>
           <div className="text-[11px] text-neutral-500">{o.items?.length || 0} тов.</div>
+        </div>
+      ),
+    },
+    {
+      key: 'assignedTo',
+      header: 'Ответственный продавец',
+      sortable: true,
+      render: (o) => (
+        <div className="min-w-[150px]">
+          <select
+            value={o.assignedTo || ''}
+            onChange={(e) => handleAssignOrder(o.id, e.target.value)}
+            className={`text-xs py-1 px-2.5 rounded-xl border outline-none cursor-pointer transition-all w-full ${
+              o.assignedTo
+                ? 'bg-[#1C1A18] text-[#D4AF37] border-amber-500/30 font-semibold'
+                : 'bg-amber-500/10 text-amber-300 border-amber-500/20 hover:bg-amber-500/20'
+            }`}
+          >
+            <option value="" className="bg-[#1C1A18] text-neutral-400">⚡ Не назначен</option>
+            {staffList.map((s) => (
+              <option key={s.username} value={s.username} className="bg-[#1C1A18] text-white">
+                👤 {s.displayName || s.username}
+              </option>
+            ))}
+          </select>
         </div>
       ),
     },
@@ -627,20 +678,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <LineChart className="w-4 h-4" />
-              <span>Аналитика ECharts</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('sales')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === 'sales'
-                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
-                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <span>Юнит-Экономика</span>
+              <TrendingUp className="w-4 h-4" />
+              <span>Аналитика & Выручка</span>
             </button>
 
             <button
@@ -780,13 +819,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB: ECHARTS OVERVIEW */}
           {activeTab === 'overview' && <AnalyticsEChartsView token={token || ''} />}
 
-          {/* TAB: SALES UNIT ECONOMICS */}
-          {activeTab === 'sales' && <SalesUnitEconomicsView token={token || ''} />}
-
           {/* TAB: ORDERS & LEADS (Unified DataGrid) */}
           {activeTab === 'orders' && (
             <div className="space-y-6">
-              {/* Status Pills */}
+              {/* Filter Row 1: Seller Assignment Filter */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-amber-500/10 pb-3">
+                <span className="text-xs text-neutral-400 font-semibold flex items-center gap-1.5 mr-1">
+                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Продавец:</span>
+                </span>
+                <button
+                  onClick={() => setSellerFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    sellerFilter === 'all'
+                      ? 'bg-[#D4AF37] text-black font-bold shadow-sm'
+                      : 'bg-[#1C1A18] text-neutral-400 hover:text-white border border-white/5'
+                  }`}
+                >
+                  Все ({orders.length})
+                </button>
+                <button
+                  onClick={() => setSellerFilter('unassigned')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    sellerFilter === 'unassigned'
+                      ? 'bg-amber-500 text-black font-bold shadow-sm'
+                      : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20'
+                  }`}
+                >
+                  <span>⚡ Не назначены</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-bold">
+                    {orders.filter((o) => !o.assignedTo).length}
+                  </span>
+                </button>
+                {staffList.map((s) => {
+                  const count = orders.filter((o) => o.assignedTo === s.username).length;
+                  return (
+                    <button
+                      key={s.username}
+                      onClick={() => setSellerFilter(s.username)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        sellerFilter === s.username
+                          ? 'bg-[#D4AF37] text-black font-bold shadow-sm'
+                          : 'bg-[#1C1A18] text-neutral-400 hover:text-white border border-white/5'
+                      }`}
+                    >
+                      <span>👤 {s.displayName || s.username}</span>
+                      {count > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white font-mono">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Filter Row 2: Status Pills */}
               <div className="flex flex-wrap items-center gap-2 border-b border-amber-500/10 pb-4">
                 {[
                   { id: 'all', label: 'Все заявки', count: ordersTotal },
@@ -800,7 +888,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button
                     key={st.id}
                     onClick={() => setOrderStatusFilter(st.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
                       orderStatusFilter === st.id
                         ? 'bg-amber-500 text-black shadow-md font-bold'
                         : 'bg-[#1C1A18] text-neutral-400 hover:text-white border border-amber-500/10'
@@ -823,7 +911,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <UnifiedDataGrid<Order>
-                data={orders}
+                data={orders.filter((o) => {
+                  if (sellerFilter === 'all') return true;
+                  if (sellerFilter === 'unassigned') return !o.assignedTo;
+                  return o.assignedTo === sellerFilter;
+                })}
                 columns={orderColumns}
                 keyExtractor={(item) => item.id}
                 title="Реестр Заказов и Лидов CRM"
