@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Menu, MessageCircle, ShoppingBag, Heart, Search, X } from 'lucide-react';
+import { Menu, MessageCircle, ShoppingBag, Search } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { MobileMenu } from './MobileMenu';
 import { CurrencySelector } from './CurrencySelector';
-import { LanguageSelector } from './LanguageSelector';
 import { SocialChannelsBar } from './SocialChannelsBar';
 import { GlobalSearchBar } from './GlobalSearchBar';
 import { Logo } from '../../ui/Logo';
@@ -44,7 +43,6 @@ export const Header: React.FC<HeaderProps> = ({
   const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -68,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
       >
         {/* Main Header Container */}
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center justify-between gap-3 lg:gap-6">
             {/* Logo */}
             <a
               href="#top"
@@ -79,13 +77,8 @@ export const Header: React.FC<HeaderProps> = ({
               <Logo size="md" variant="horizontal" />
             </a>
 
-            {/* Desktop Navbar */}
-            <div className="hidden lg:block shrink-0">
-              <Navbar activeView={activeView} onNavigate={onNavigate} />
-            </div>
-
-            {/* Global Search Bar on Desktop & Tablet */}
-            <div className="hidden md:flex flex-1 justify-center max-w-sm lg:max-w-md">
+            {/* Desktop & Tablet Wide Global Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-xl lg:max-w-2xl mx-2">
               <GlobalSearchBar
                 products={products}
                 onSelectProduct={onSelectProduct}
@@ -94,23 +87,13 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </div>
 
+            {/* Desktop Navbar (Nav Links) */}
+            <div className="hidden xl:flex items-center shrink-0">
+              <Navbar activeView={activeView} onNavigate={onNavigate} />
+            </div>
+
             {/* Right Action Icons & Selectors */}
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              {/* Mobile Search Icon Toggle */}
-              <button
-                type="button"
-                onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                className="md:hidden p-2 rounded-full text-[#1A1917] hover:bg-[#F7F4EF] transition-colors"
-                aria-label="Поиск"
-              >
-                {isMobileSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5 text-[#B89254]" />}
-              </button>
-
-              {/* Language Selector */}
-              <div className="hidden sm:block">
-                <LanguageSelector />
-              </div>
-
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
               {/* Currency Selector */}
               <div className="hidden sm:block">
                 <CurrencySelector
@@ -120,22 +103,22 @@ export const Header: React.FC<HeaderProps> = ({
                 />
               </div>
 
-              {/* Cart Drawer Trigger (EvaCode Style with sum preview) */}
+              {/* Cart Drawer Trigger */}
               <button
                 type="button"
                 onClick={onOpenCart}
-                className="relative inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 rounded-full bg-[#1A1917] hover:bg-[#B89254] text-white px-3 sm:px-4 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+                className="relative inline-flex h-10 sm:h-11 items-center justify-center gap-2 rounded-full bg-[#1A1917] hover:bg-[#B89254] text-white px-3.5 sm:px-5 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
                 aria-label={`${t('nav_cart')} (${cartCount})`}
               >
-                <ShoppingBag className="h-4 w-4 text-[#B89254] group-hover:text-white" />
-                <span className="hidden sm:inline">{t('nav_cart')}</span>
+                <ShoppingBag className="h-4 w-4 text-[#B89254]" />
+                <span className="hidden sm:inline font-semibold">Корзина</span>
                 {cartCount > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E53935] px-1 text-[11px] font-black text-white shadow-xs">
                     {cartCount}
                   </span>
                 )}
                 {cartTotalFormatted && cartCount > 0 && (
-                  <span className="hidden xl:inline-block pl-1 text-[11px] font-semibold text-[#DFCBA0] border-l border-white/20">
+                  <span className="hidden xl:inline-block pl-1.5 text-[11px] font-semibold text-[#DFCBA0] border-l border-white/20">
                     {cartTotalFormatted}
                   </span>
                 )}
@@ -147,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="hidden lg:inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-white shadow-xs transition-colors hover:bg-[#20BA5A] font-bold text-xs"
+                className="hidden lg:inline-flex h-10 sm:h-11 items-center justify-center gap-1.5 rounded-full bg-[#25D366] px-4 text-white shadow-xs transition-colors hover:bg-[#20BA5A] font-bold text-xs"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>WhatsApp</span>
@@ -166,23 +149,15 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Mobile Search Bar Dropdown Row */}
-          {isMobileSearchOpen && (
-            <div className="pt-2 pb-1 md:hidden animate-in fade-in slide-in-from-top-1">
-              <GlobalSearchBar
-                products={products}
-                onSelectProduct={(p) => {
-                  setIsMobileSearchOpen(false);
-                  onSelectProduct(p);
-                }}
-                onOpenCatalogWithQuery={(q) => {
-                  setIsMobileSearchOpen(false);
-                  onOpenCatalogWithQuery(q);
-                }}
-                formatPrice={formatPrice}
-              />
-            </div>
-          )}
+          {/* Full-width Mobile Search Bar */}
+          <div className="pt-2 pb-0.5 md:hidden">
+            <GlobalSearchBar
+              products={products}
+              onSelectProduct={onSelectProduct}
+              onOpenCatalogWithQuery={onOpenCatalogWithQuery}
+              formatPrice={formatPrice}
+            />
+          </div>
         </div>
 
         {/* Social Channels Bar */}

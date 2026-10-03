@@ -10,25 +10,18 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
+  const [language, setLanguageState] = useState<Language>('ru');
+
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('mk_language') as Language;
-      if (saved && (saved === 'ru' || saved === 'uz')) {
-        return saved;
-      }
+      localStorage.setItem('mk_language', 'ru');
     } catch {
       // ignore
     }
-    return 'ru';
-  });
+  }, []);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    try {
-      localStorage.setItem('mk_language', lang);
-    } catch {
-      // ignore
-    }
+    setLanguageState('ru');
   };
 
   const t = (key: keyof Translations, params?: Record<string, string | number>): string => {
