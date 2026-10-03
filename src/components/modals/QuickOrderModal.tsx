@@ -2,8 +2,18 @@ import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { MessageCircle, CheckCircle2, Package, Loader2 } from 'lucide-react';
-import { buildWhatsAppUrl } from '../../core/constants/brand';
+import {
+  MessageCircle,
+  CheckCircle2,
+  Package,
+  Loader2,
+  Send,
+  Plus,
+  Minus,
+  MapPin,
+  CreditCard,
+} from 'lucide-react';
+import { buildWhatsAppUrl, BRAND_CONFIG } from '../../core/constants/brand';
 import { useLanguage } from '../../core/i18n/LanguageContext';
 import { adminService } from '../../services/admin/adminService';
 
@@ -13,7 +23,24 @@ interface QuickOrderModalProps {
   productTitle: string;
   priceFormatted: string;
   sourceUrl?: string;
+  productPhoto?: string;
 }
+
+const REGIONS = [
+  { id: 'tashkent', nameRu: '⚡ Ташкент — Экспресс курьер (2-4 часа)', nameUz: '⚡ Toshkent — Ekspress kuryer (2-4 soat)' },
+  { id: 'samarkand', nameRu: '📦 Самарканд (1 день)', nameUz: '📦 Samarqand (1 kun)' },
+  { id: 'bukhara', nameRu: '📦 Бухара (1-2 дня)', nameUz: '📦 Buxoro (1-2 kun)' },
+  { id: 'fergana', nameRu: '📦 Ферганская долина (1-2 дня)', nameUz: "📦 Fargʻona vodiysi (1-2 kun)" },
+  { id: 'uzb_other', nameRu: '🚚 Другие регионы Узбекистана (2-3 дня)', nameUz: "🚚 O'zbekistonning boshqa hududlari (2-3 kun)" },
+  { id: 'cis_world', nameRu: '✈️ Международная доставка / СНГ', nameUz: '✈️ Xalqaro avia / MDH' },
+];
+
+const PAY_METHODS = [
+  { id: 'payme_click', name: 'Payme / Click' },
+  { id: 'card', name: 'Банковская карта (Uzcard/Humo/Visa)' },
+  { id: 'cash', name: 'Наличными при получении' },
+  { id: 'kaspi_usdt', name: 'Kaspi / USDT (Crypto)' },
+];
 
 export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   isOpen,
@@ -21,27 +48,34 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
   productTitle,
   priceFormatted,
   sourceUrl,
+  productPhoto,
 }) => {
   const { t, language } = useLanguage();
   const [name, setName] = useState('');
-  const [countryCity, setCountryCity] = useState('');
   const [phoneOrTelegram, setPhoneOrTelegram] = useState('');
+  const [region, setRegion] = useState(REGIONS[0].id);
+  const [address, setAddress] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(PAY_METHODS[0].id);
+  const [quantity, setQuantity] = useState(1);
   const [comment, setComment] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [preparedUrl, setPreparedUrl] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendWhatsApp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const selectedRegion = REGIONS.find((r) => r.id === region) || REGIONS[0];
+  const selectedPay = PAY_METHODS.find((p) => p.id === paymentMethod) || PAY_METHODS[0];
 
+  const handleSendOrder = async (channel: 'whatsapp' | 'telegram') => {
+    setIsSubmitting(true);
     let assignedOrderNum = '';
+
+    const regionText = language === 'uz' ? selectedRegion.nameUz : selectedRegion.nameRu;
+
     try {
       const order = await adminService.createPublicOrder({
-        customerName: name || 'Клиент',
+        customerName: name || (language === 'uz' ? 'Mijoz' : 'Покупатель'),
         phone: phoneOrTelegram,
-        channelSource: 'quick_order',
+        channelSource: channel === 'whatsapp' ? 'quick_order_whatsapp' : 'quick_order_telegram',
         type: 'quick_order',
         items: [
           {
@@ -49,10 +83,11 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             title: productTitle,
             price: 0,
             currency: 'KRW',
-            quantity: 1,
+            quantity: quantity,
+            photoUrl: productPhoto || '',
           },
         ],
-        notes: `Город/Страна: ${countryCity}\nПожелание: ${comment}\nТовар: ${productTitle} (${priceFormatted})\nИсточник: ${sourceUrl || ''}`,
+        notes: `Кол-во: ${quantity} шт.\nРегион: ${regionText}\nАдрес: ${address || 'Не указан'}\nОплата: ${selectedPay.name}\nПожелание: ${comment || 'Нет'}\nТовар: ${productTitle} (${priceFormatted})\nИсточник: ${sourceUrl || ''}`,
       });
       if (order?.orderNumber) {
         assignedOrderNum = order.orderNumber;
@@ -66,34 +101,43 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
 
     let message = language === 'uz'
       ? `🌸 *Assalomu alaykum, Muhabbat! Kosmetika buyurtma qilmoqchiman:*\n\n`
-      : `🌸 *Здравствуйте, Мухаббат! Хочу заказать косметику:*\n\n`;
+      : `🌸 *Здравствуйте, Мухаббат! Хочу оформить быстрый заказ:*\n\n`;
 
     if (assignedOrderNum) {
-      message += `📋 *${language === 'uz' ? 'Buyurtma raqami' : 'Номер заказа'}:* ${assignedOrderNum}\n`;
+      message += `📋 *${language === 'uz' ? 'Buyurtma kodi' : 'Номер заказа'}:* #${assignedOrderNum}\n`;
     }
     message += `🛍️ *${language === 'uz' ? 'Mahsulot' : 'Товар'}:* ${productTitle}\n`;
+    message += `🔢 *${language === 'uz' ? 'Soni' : 'Количество'}:* ${quantity} шт.\n`;
     message += `💰 *${language === 'uz' ? 'Narx' : 'Цена'}:* ${priceFormatted}\n`;
     if (name) message += `👤 *${language === 'uz' ? 'Ism' : 'Имя'}:* ${name}\n`;
-    if (countryCity) message += `📍 *${language === 'uz' ? 'Yetkazib berish manzili' : 'Город/Страна доставки'}:* ${countryCity}\n`;
+    message += `📍 *${language === 'uz' ? 'Hudud' : 'Регион'}:* ${regionText}\n`;
+    if (address) message += `🏠 *${language === 'uz' ? 'Manzil' : 'Адрес'}:* ${address}\n`;
     if (phoneOrTelegram) message += `📱 *${language === 'uz' ? 'Aloqa' : 'Контакты'}:* ${phoneOrTelegram}\n`;
+    message += `💳 *${language === 'uz' ? "To'lov" : 'Оплата'}:* ${selectedPay.name}\n`;
     if (comment) message += `💬 *${language === 'uz' ? 'Izoh' : 'Пожелание/Вопрос'}:* ${comment}\n`;
     if (sourceUrl) message += `🔗 *${language === 'uz' ? 'Havola' : 'Ссылка'}:* ${sourceUrl}\n`;
+
     message += language === 'uz'
-      ? `\nIltimos, mavjudligini tasdiqlang va yetkazib berish narxini hisoblab bering ✨`
+      ? `\nIltimos, mavjudligini tasdiqlang va jo'natishni tayyorlang ✨`
       : `\nПожалуйста, подтвердите наличие и рассчитайте доставку ✨`;
 
-    const url = buildWhatsAppUrl(message);
-    setPreparedUrl(url);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (channel === 'whatsapp') {
+      const url = buildWhatsAppUrl(message);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      const tgUrl = `https://t.me/mkcosmetkor?text=${encodeURIComponent(message)}`;
+      window.open(tgUrl, '_blank', 'noopener,noreferrer');
+    }
+
     setIsSuccess(true);
   };
 
   const handleReset = () => {
     setName('');
-    setCountryCity('');
+    setAddress('');
     setPhoneOrTelegram('');
+    setQuantity(1);
     setComment('');
-    setPreparedUrl('');
     setOrderNumber('');
     setIsSuccess(false);
     onClose();
@@ -103,56 +147,77 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
     <Modal isOpen={isOpen} onClose={handleReset} title={t('order_modal_title')} maxWidth="md">
       {isSuccess ? (
         <div className="text-center py-6 space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
             <CheckCircle2 className="w-9 h-9" />
           </div>
-          <h4 className="font-serif text-2xl font-medium text-[#2D2A2E]">
+          <h4 className="font-serif text-2xl font-bold text-[#1F1615]">
             {t('order_success_title')}
           </h4>
           {orderNumber && (
-            <div className="inline-block px-3 py-1 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-bold text-[#8A503C]">
-              {language === 'uz' ? 'Buyurtma' : 'Заказ'} #{orderNumber}
+            <div className="inline-block px-3.5 py-1.5 rounded-full bg-[#FAF5EE] border border-[#EED9CF] text-xs font-bold text-[#1F1615]">
+              {language === 'uz' ? 'Buyurtma' : 'Заказ'} <span className="text-[#C2836B]">#{orderNumber}</span>
             </div>
           )}
-          <p className="mx-auto max-w-sm text-sm leading-relaxed text-[#8C827A]">
+          <p className="mx-auto max-w-sm text-xs text-[#7A6F68] leading-relaxed">
             {t('order_success_desc')}
           </p>
           <div className="mx-auto flex max-w-sm flex-col gap-2 pt-2">
             <a
-              href={preparedUrl}
+              href={BRAND_CONFIG.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#20BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#20BA5A]"
             >
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
+              <MessageCircle className="w-4 h-4" />
+              <span>WhatsApp</span>
             </a>
-            <Button variant="ghost" onClick={handleReset} fullWidth>
+            <Button variant="ghost" onClick={handleReset} fullWidth className="rounded-xl">
               OK
             </Button>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSendWhatsApp} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSendOrder('whatsapp'); }} className="space-y-3.5">
           {/* Product Summary Box */}
-          <div className="p-4 rounded-2xl bg-[#FAF5EE] border border-[#EED9CF] flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-white text-[#C2836B] shadow-xs">
-              <Package className="w-5 h-5" />
+          <div className="p-3 rounded-2xl bg-[#FAF5EE] border border-[#EED9CF] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-2 rounded-xl bg-white text-[#C2836B] shadow-2xs shrink-0">
+                <Package className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h5 className="text-[11px] font-bold text-[#A96851] uppercase tracking-wider">
+                  {t('order_modal_selected')}
+                </h5>
+                <p className="text-xs font-bold text-[#1F1615] truncate">
+                  {productTitle}
+                </p>
+                <span className="text-xs font-extrabold text-[#C2836B]">
+                  {priceFormatted}
+                </span>
+              </div>
             </div>
-            <div className="flex-1">
-              <h5 className="text-xs font-semibold text-[#8A503C] uppercase tracking-wider">
-                {t('order_modal_selected')}
-              </h5>
-              <p className="text-sm font-medium text-[#2D2A2E] line-clamp-2 mt-0.5">
-                {productTitle}
-              </p>
-              <span className="mt-1 inline-block text-sm font-semibold text-[#C2836B]">
-                {priceFormatted}
-              </span>
+
+            {/* Quantity Stepper */}
+            <div className="flex items-center gap-1 bg-white rounded-lg border border-[#E8DCD5] p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="p-1 text-[#7A6F68] hover:text-[#1F1615]"
+              >
+                <Minus className="w-3 h-3" />
+              </button>
+              <span className="text-xs font-bold px-1.5">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity(quantity + 1)}
+                className="p-1 text-[#7A6F68] hover:text-[#1F1615]"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <Input
               label={t('order_name')}
               placeholder={t('order_name_placeholder')}
@@ -162,22 +227,60 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             />
 
             <Input
-              label={t('order_city')}
-              placeholder={t('order_city_placeholder')}
-              value={countryCity}
-              onChange={(e) => setCountryCity(e.target.value)}
-              required
-            />
-
-            <Input
               label={t('order_contact')}
               placeholder={t('order_contact_placeholder')}
               value={phoneOrTelegram}
               onChange={(e) => setPhoneOrTelegram(e.target.value)}
+              required
             />
 
+            {/* Region Selector */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F68] flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>{language === 'uz' ? 'Yetkazib berish hududi' : 'Регион доставки'}</span>
+              </label>
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full text-xs font-medium bg-white border border-[#E8DCD5] rounded-xl p-2.5 text-[#1F1615] outline-none"
+              >
+                {REGIONS.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {language === 'uz' ? r.nameUz : r.nameRu}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label={language === 'uz' ? 'Manzil' : 'Адрес доставки'}
+              placeholder={t('order_city_placeholder')}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+
+            {/* Payment Method */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F68] flex items-center gap-1">
+                <CreditCard className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>{language === 'uz' ? "To'lov usuli" : 'Способ оплаты'}</span>
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full text-xs font-medium bg-white border border-[#E8DCD5] rounded-xl p-2.5 text-[#1F1615] outline-none"
+              >
+                {PAY_METHODS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
-              <label className="block text-xs font-medium text-[#6C3E2E] uppercase tracking-wider mb-1.5">
+              <label className="block text-[11px] font-bold text-[#7A6F68] uppercase tracking-wider mb-1">
                 {t('order_comment')}
               </label>
               <textarea
@@ -185,25 +288,31 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={t('order_comment_placeholder')}
-                className="w-full rounded-xl border border-[#EED9CF] bg-white px-4 py-2 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
+                className="w-full rounded-xl border border-[#E8DCD5] bg-white px-3 py-2 text-xs text-[#1F1615] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="pt-2">
-            <Button
-              type="submit"
-              variant="whatsapp"
-              size="lg"
-              fullWidth
+          <div className="pt-2 space-y-2">
+            <button
+              type="button"
               disabled={isSubmitting}
-              icon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
+              onClick={() => handleSendOrder('whatsapp')}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-bold shadow-md transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
             >
-              {isSubmitting ? 'Оформление...' : t('order_btn_whatsapp')}
-            </Button>
-            <p className="text-[11px] text-center text-[#8C827A] mt-2">
-              {t('order_disclaimer')}
-            </p>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+              <span>{isSubmitting ? 'Оформление...' : (language === 'uz' ? 'WhatsApp orqali buyurtma' : 'Заказать через WhatsApp')}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleSendOrder('telegram')}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
+            >
+              <Send className="w-4 h-4" />
+              <span>{language === 'uz' ? 'Telegram orqali buyurtma' : 'Заказать через Telegram @mkcosmetkor'}</span>
+            </button>
           </div>
         </form>
       )}

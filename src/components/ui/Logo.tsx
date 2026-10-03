@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface LogoProps {
   variant?: 'horizontal' | 'vertical' | 'icon' | 'badge';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   theme?: 'dark' | 'light' | 'gold';
+  showSubtitle?: boolean;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -12,140 +13,75 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   className = '',
   theme = 'dark',
+  showSubtitle = true,
 }) => {
+  const [imgError, setImgError] = useState(false);
+
   const sizeMap = {
-    sm: { iconSize: 32, textClass: 'text-sm' },
-    md: { iconSize: 42, textClass: 'text-base' },
-    lg: { iconSize: 54, textClass: 'text-xl' },
-    xl: { iconSize: 72, textClass: 'text-2xl' },
+    sm: { imgClass: 'w-8 h-8', sizePx: 32, titleClass: 'text-sm font-bold', subClass: 'text-[9px]' },
+    md: { imgClass: 'w-10 h-10 sm:w-11 sm:h-11', sizePx: 44, titleClass: 'text-base sm:text-lg font-bold', subClass: 'text-[10px]' },
+    lg: { imgClass: 'w-14 h-14 sm:w-16 sm:h-16', sizePx: 64, titleClass: 'text-xl sm:text-2xl font-bold', subClass: 'text-xs' },
+    xl: { imgClass: 'w-20 h-20 sm:w-24 sm:h-24', sizePx: 96, titleClass: 'text-2xl sm:text-3xl font-extrabold', subClass: 'text-sm' },
   };
 
   const currentSize = sizeMap[size];
 
-  // Bespoke Royal Crest SVG Icon
-  const CrestIcon = (
-    <svg
-      width={currentSize.iconSize}
-      height={currentSize.iconSize}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="shrink-0 drop-shadow-xs transition-transform duration-300 group-hover:scale-105"
-    >
-      <defs>
-        {/* Luxury Gold & Rose Gold Gradients */}
-        <linearGradient id="mkGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E5C79E" />
-          <stop offset="35%" stopColor="#C5A880" />
-          <stop offset="70%" stopColor="#D49B88" />
-          <stop offset="100%" stopColor="#A96851" />
-        </linearGradient>
-
-        <linearGradient id="mkCrownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF2D6" />
-          <stop offset="50%" stopColor="#E5C79E" />
-          <stop offset="100%" stopColor="#C5A880" />
-        </linearGradient>
-
-        <linearGradient id="mkBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2D2825" />
-          <stop offset="100%" stopColor="#1A1614" />
-        </linearGradient>
-      </defs>
-
-      {/* Dark Luxury Shield / Circle Background */}
-      <circle cx="50" cy="50" r="47" fill="url(#mkBgGrad)" stroke="url(#mkGoldGrad)" strokeWidth="2.5" />
-      <circle cx="50" cy="50" r="43" fill="none" stroke="#EED9CF" strokeWidth="0.75" strokeDasharray="2 2" opacity="0.6" />
-
-      {/* Crown (👑) at top */}
-      <g transform="translate(32, 16) scale(0.72)">
-        <path
-          d="M25 0L32 15L48 5L40 25H10L2 5L18 15L25 0Z"
-          fill="url(#mkCrownGrad)"
-          stroke="#9F8058"
-          strokeWidth="0.8"
-        />
-        {/* Crown Jewels */}
-        <circle cx="2" cy="5" r="2.2" fill="#E8A598" />
-        <circle cx="25" cy="0" r="2.5" fill="#FFF2D6" />
-        <circle cx="48" cy="5" r="2.2" fill="#E8A598" />
-        <rect x="12" y="22" width="26" height="3.5" rx="1.5" fill="url(#mkCrownGrad)" />
-      </g>
-
-      {/* Intertwined Monogram "M K" */}
-      <g id="MK-Monogram">
-        {/* Letter M */}
-        <text
-          x="36"
-          y="68"
-          fontFamily="'Playfair Display', Georgia, serif"
-          fontSize="36"
-          fontWeight="bold"
-          fontStyle="italic"
-          fill="url(#mkGoldGrad)"
-          textAnchor="middle"
-          letterSpacing="-1"
-        >
-          M
-        </text>
-
-        {/* Letter K */}
-        <text
-          x="62"
-          y="72"
-          fontFamily="'Playfair Display', Georgia, serif"
-          fontSize="38"
-          fontWeight="bold"
-          fill="url(#mkCrownGrad)"
-          textAnchor="middle"
-        >
-          K
-        </text>
-      </g>
-
-      {/* Subtle Laurel Sprigs at bottom */}
-      <path
-        d="M25 78 C35 88, 65 88, 75 78"
-        fill="none"
-        stroke="url(#mkGoldGrad)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
+  // Official Emblem Render
+  const EmblemImage = !imgError ? (
+    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#AA7C11] shadow-sm transition-transform duration-300 group-hover:scale-105 ${currentSize.imgClass}`}>
+      <img
+        src="/logo.png"
+        alt="MK KOREA COSMETIC"
+        className="w-full h-full object-cover rounded-full bg-[#1F1012]"
+        onError={() => setImgError(true)}
       />
-      <circle cx="50" cy="85" r="2" fill="#E8A598" />
-    </svg>
+    </div>
+  ) : (
+    <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#AA7C11] shadow-sm flex items-center justify-center bg-[#231215] text-[#F3E5AB] font-serif font-bold ${currentSize.imgClass}`}>
+      MK
+    </div>
   );
 
   if (variant === 'icon') {
-    return <div className={`inline-flex items-center ${className}`}>{CrestIcon}</div>;
+    return <div className={`inline-flex items-center ${className}`}>{EmblemImage}</div>;
   }
 
   if (variant === 'vertical') {
     return (
       <div className={`flex flex-col items-center text-center gap-2 group ${className}`}>
-        {CrestIcon}
+        {EmblemImage}
         <div>
-          <span className="font-serif font-bold text-xl tracking-widest text-[#2D2A2E] block leading-tight">
-            MK COSMET
+          <span className="font-serif font-black tracking-wider text-[#1F1615] block leading-tight">
+            MK KOREA
           </span>
-          <span className="text-[10px] uppercase font-semibold tracking-[0.25em] text-[#A96851] block mt-0.5">
-            KOREA COSMETICS
-          </span>
+          {showSubtitle && (
+            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#C2836B] block mt-0.5">
+              COSMETIC • SEOUL
+            </span>
+          )}
         </div>
       </div>
     );
   }
 
-  // Default: Horizontal
+  // Horizontal / Default
   return (
-    <div className={`flex items-center gap-3 group ${className}`}>
-      {CrestIcon}
-      <div className="flex flex-col">
-        <span className="font-serif text-lg sm:text-xl font-bold tracking-wider text-[#2D2A2E] group-hover:text-[#C2836B] transition-colors leading-none">
-          MK COSMET
-        </span>
-        <span className="text-[9px] sm:text-[10px] text-[#A96851] tracking-[0.2em] font-semibold uppercase mt-1">
-          Korea Cosmetics
-        </span>
+    <div className={`flex items-center gap-2.5 sm:gap-3 group ${className}`}>
+      {EmblemImage}
+      <div className="flex flex-col text-left">
+        <div className="flex items-center gap-1.5">
+          <span className={`font-serif tracking-wider text-[#1F1615] group-hover:text-[#C2836B] transition-colors leading-tight ${currentSize.titleClass}`}>
+            MK KOREA
+          </span>
+          <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-white rounded-xs">
+            Direct
+          </span>
+        </div>
+        {showSubtitle && (
+          <span className={`text-[#A96851] tracking-[0.18em] font-bold uppercase leading-none mt-0.5 ${currentSize.subClass}`}>
+            Cosmetic • Seoul
+          </span>
+        )}
       </div>
     </div>
   );

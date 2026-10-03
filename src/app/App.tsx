@@ -15,6 +15,7 @@ import { Footer } from '../components/layout/Footer/Footer';
 // Sections
 import { Hero } from '../components/sections/Hero/Hero';
 import { LatestShowcase } from '../components/sections/Showcase/LatestShowcase';
+import { BrandSpotlight } from '../components/sections/Showcase/BrandSpotlight';
 import { CatalogPage } from '../components/sections/Catalog/CatalogPage';
 import { ConsultationQuiz } from '../components/sections/ConsultationQuiz/ConsultationQuiz';
 import { DeliveryInfo } from '../components/sections/DeliveryInfo/DeliveryInfo';
@@ -103,6 +104,7 @@ export function App() {
     productTitle: string;
     priceFormatted: string;
     sourceUrl?: string;
+    productPhoto?: string;
   }>({
     isOpen: false,
     productTitle: '',
@@ -165,13 +167,33 @@ export function App() {
   const handleOpenQuickOrder = (
     productTitle: string,
     priceFormatted: string,
-    sourceUrl?: string
+    sourceUrl?: string,
+    productPhoto?: string
   ) => {
-    setQuickOrderData({ isOpen: true, productTitle, priceFormatted, sourceUrl });
+    setQuickOrderData({ isOpen: true, productTitle, priceFormatted, sourceUrl, productPhoto });
   };
 
   const handleOpenProductDetails = (product: Product) => {
     setQuickViewProduct(product);
+  };
+
+  const handleOpenCatalogWithQuery = (query: string) => {
+    setCatalogSearch(query);
+    handleNavigate('catalog');
+  };
+
+  const handleSelectCategoryFromHero = (cat: string) => {
+    if (cat === 'all') {
+      resetCatalogFilters();
+    } else {
+      setSelectedCategory(cat);
+    }
+    handleNavigate('catalog');
+  };
+
+  const handleOpenBrandInCatalog = (brandName: string) => {
+    setSelectedBrand(brandName);
+    handleNavigate('catalog');
   };
 
   // ADMIN VIEW ROUTING
@@ -194,10 +216,15 @@ export function App() {
         activeView={currentView}
         onNavigate={handleNavigate}
         cartCount={cartCount}
+        cartTotalFormatted={cartFormattedTotal}
         onOpenCart={() => setIsCartOpen(true)}
         currentCurrency={currency}
         currencies={allCurrencies}
         onSelectCurrency={setCurrency}
+        products={allProducts}
+        onSelectProduct={handleOpenProductDetails}
+        onOpenCatalogWithQuery={handleOpenCatalogWithQuery}
+        formatPrice={formatPrice}
       />
 
       <main className="flex-1">
@@ -237,12 +264,14 @@ export function App() {
           />
         ) : (
           <>
+            {/* EvaCode Inspired Hero Carousel */}
             <Hero
               onOpenCatalog={() => handleNavigate('catalog')}
+              onSelectCategory={handleSelectCategoryFromHero}
               totalProductsCount={allProducts.length}
             />
 
-            {/* Top 10 Latest Products Showcase */}
+            {/* Top 10 Bestsellers / Latest Arrivals Rail */}
             <LatestShowcase
               products={allProducts}
               totalCount={allProducts.length}
@@ -256,6 +285,19 @@ export function App() {
               onOpenFullCatalog={() => handleNavigate('catalog')}
             />
 
+            {/* EvaCode Inspired Brand Spotlight (Curación, JOGABI, Sulwhasoo, etc.) */}
+            <BrandSpotlight
+              products={allProducts}
+              formatPrice={formatPrice}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleWishlist}
+              onAddToCart={addToCart}
+              onQuickView={handleOpenProductDetails}
+              onQuickBuy={handleOpenQuickOrder}
+              onOpenBrandInCatalog={handleOpenBrandInCatalog}
+            />
+
+            {/* Telegram Beauty Articles & Magazine */}
             <section id="magazine">
               <BeautyBlogView
                 onOpenProduct={(id) => {
@@ -282,6 +324,7 @@ export function App() {
         productTitle={quickOrderData.productTitle}
         priceFormatted={quickOrderData.priceFormatted}
         sourceUrl={quickOrderData.sourceUrl}
+        productPhoto={quickOrderData.productPhoto}
       />
 
       {/* Post Detail Modal */}
