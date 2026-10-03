@@ -306,6 +306,44 @@ export const adminService = {
     return { url: data.url, filename: data.filename };
   },
 
+  // Public Orders (Storefront / Cart / Quick Order / Quiz)
+  async createPublicOrder(orderData: {
+    customerName: string;
+    phone: string;
+    channelSource?: string;
+    type?: string;
+    items?: OrderItem[];
+    totalAmount?: number;
+    costPrice?: number;
+    currency?: string;
+    shippingAddress?: string;
+    city?: string;
+    paymentMethod?: string;
+    notes?: string;
+  }): Promise<Order> {
+    const res = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Ошибка оформления заказа');
+    }
+    return data.order;
+  },
+
+  async trackPublicOrder(orderNumber: string): Promise<Order> {
+    const res = await fetch(`${API_BASE}/orders/track/${encodeURIComponent(orderNumber)}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Заказ не найден');
+    }
+    return data.order;
+  },
+
   // Orders Management
   async getAdminOrders(
     status: string = '',

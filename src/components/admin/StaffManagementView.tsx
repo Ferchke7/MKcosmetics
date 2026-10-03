@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
   FileSpreadsheet,
+  TrendingUp,
 } from 'lucide-react';
 import {
   adminService,
@@ -30,6 +31,7 @@ import {
   StaffPayrollSummary,
 } from '../../services/admin/adminService';
 import { StaffPayslipModal } from './StaffPayslipModal';
+import { SellerAnalyticsModal } from './SellerAnalyticsModal';
 
 interface StaffManagementViewProps {
   token: string;
@@ -67,6 +69,15 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({ token 
   // Payslip Modal State
   const [selectedPayslipStaff, setSelectedPayslipStaff] = useState<StaffPayrollSummary | null>(null);
   const [isPayslipOpen, setIsPayslipOpen] = useState(false);
+
+  // Seller Sales Analytics Modal State
+  const [selectedAnalyticsStaff, setSelectedAnalyticsStaff] = useState<StaffMember | null>(null);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+  const handleOpenSellerAnalytics = (s: StaffMember) => {
+    setSelectedAnalyticsStaff(s);
+    setIsAnalyticsOpen(true);
+  };
 
   const fetchStaff = async () => {
     setIsLoading(true);
@@ -340,21 +351,28 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({ token 
                   className="p-5 rounded-3xl bg-[#1C1A18] border border-white/10 space-y-4 relative overflow-hidden flex flex-col justify-between hover:border-white/20 transition-all shadow-xl"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center font-bold text-base">
+                    <div
+                      onClick={() => handleOpenSellerAnalytics(s)}
+                      className="flex items-center gap-3 cursor-pointer group flex-1"
+                      title="Нажмите для просмотра подробной аналитики продаж"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-[#D4AF37]/20 group-hover:bg-[#D4AF37]/30 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center font-bold text-base transition-colors shadow-md">
                         {s.displayName.charAt(0).toUpperCase() || s.username.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="font-bold text-white text-sm">{s.displayName}</h3>
+                        <h3 className="font-bold text-white text-sm group-hover:text-[#D4AF37] transition-colors flex items-center gap-1.5">
+                          <span>{s.displayName}</span>
+                          <TrendingUp className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-[#D4AF37] transition-opacity" />
+                        </h3>
                         <span className="font-mono text-xs text-[#A8A29E]">@{s.username}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleOpenEdit(s)}
                         className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] transition-colors"
-                        title="Редактировать"
+                        title="Редактировать профиль"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -397,16 +415,29 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({ token 
                   </div>
 
                   {/* Performance Badges */}
-                  <div className="pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-center text-xs">
-                    <div className="p-2 rounded-xl bg-white/5 border border-white/5">
+                  <div
+                    onClick={() => handleOpenSellerAnalytics(s)}
+                    className="pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-center text-xs cursor-pointer"
+                    title="Нажмите для просмотра аналитики"
+                  >
+                    <div className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors">
                       <span className="text-[10px] text-[#78716C] block">Всего заявок</span>
                       <strong className="text-white font-bold">{s.ordersCount}</strong>
                     </div>
-                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors">
                       <span className="text-[10px] text-emerald-400 block">Оплачено / Доставлено</span>
                       <strong className="text-emerald-300 font-bold">{s.paidCount}</strong>
                     </div>
                   </div>
+
+                  {/* Dedicated Seller Analytics Button */}
+                  <button
+                    onClick={() => handleOpenSellerAnalytics(s)}
+                    className="w-full mt-2 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#D4AF37]/15 to-[#B89254]/10 hover:from-[#D4AF37]/25 hover:to-[#B89254]/20 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#D4AF37]/10"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>📊 Аналитика продаж продавца</span>
+                  </button>
                 </div>
               );
             })}
@@ -639,16 +670,40 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({ token 
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedPayslipStaff(s);
-                            setIsPayslipOpen(true);
-                          }}
-                          className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B38F24] hover:from-[#E5C158] hover:to-[#C49E30] text-[#141312] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#D4AF37]/20 transition-all cursor-pointer ml-auto"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>Листок PDF</span>
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              const found = staff.find((m) => m.username === s.username) || {
+                                id: 0,
+                                username: s.username,
+                                displayName: s.displayName,
+                                phone: s.phone,
+                                role: (s.role || 'manager') as any,
+                                isActive: true,
+                                ordersCount: s.ordersCount,
+                                paidCount: s.paidCount,
+                              };
+                              handleOpenSellerAnalytics(found);
+                            }}
+                            className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Открыть аналитику продаж"
+                          >
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Аналитика</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedPayslipStaff(s);
+                              setIsPayslipOpen(true);
+                            }}
+                            className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B38F24] hover:from-[#E5C158] hover:to-[#C49E30] text-[#141312] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#D4AF37]/20 transition-all cursor-pointer"
+                            title="Сформировать расчетный листок PDF"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Листок PDF</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -786,6 +841,18 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({ token 
         onClose={() => setIsPayslipOpen(false)}
         staff={selectedPayslipStaff}
         month={payrollMonth}
+      />
+
+      {/* Seller Sales Analytics Modal */}
+      <SellerAnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        staff={selectedAnalyticsStaff}
+        token={token}
+        onOpenPayslip={(ps) => {
+          setSelectedPayslipStaff(ps);
+          setIsPayslipOpen(true);
+        }}
       />
     </div>
   );

@@ -61,7 +61,7 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 		input.CustomerName = "Покупатель"
 	}
 	if strings.TrimSpace(input.Phone) == "" {
-		return nil, errors.New("укажите номер телефона или WhatsApp")
+		input.Phone = "Не указан"
 	}
 	if input.Currency == "" {
 		input.Currency = "UZS"
