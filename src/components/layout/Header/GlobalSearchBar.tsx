@@ -97,14 +97,14 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
             if (!isOpen) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Поиск косметики, бренда, состава (SPF, Коллаген, Peptides)..."
-          className="w-full h-11 sm:h-12 pl-12 pr-11 bg-[#FAF8F5] hover:bg-[#F7F4EF] focus:bg-white text-sm sm:text-base text-[#1A1917] rounded-full border border-[#ECE8E1] hover:border-[#B89254]/60 focus:border-[#B89254] focus:ring-4 focus:ring-[#B89254]/10 shadow-2xs outline-none transition-all placeholder:text-[#8A8680] placeholder:text-xs sm:placeholder:text-sm font-normal"
+          placeholder="Поиск косметики, бренда, состава (SPF, Коллаген, Medi-Peel)..."
+          className="w-full h-12 sm:h-13 lg:h-14 pl-12 lg:pl-14 pr-11 lg:pr-12 bg-[#FAF8F5] hover:bg-[#F7F4EF] focus:bg-white text-sm sm:text-base lg:text-base text-[#1A1917] rounded-2xl border border-[#ECE8E1] hover:border-[#B89254]/60 focus:border-[#B89254] focus:ring-4 focus:ring-[#B89254]/10 shadow-xs outline-none transition-all placeholder:text-[#8A8680] placeholder:text-xs sm:placeholder:text-sm lg:placeholder:text-sm font-medium"
         />
-        <Search className="w-5 h-5 text-[#B89254] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search className="w-5 h-5 lg:w-5.5 lg:h-5.5 text-[#B89254] absolute left-4 lg:left-4.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="w-6 h-6 absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#8A8680] hover:text-[#1A1917] rounded-full hover:bg-black/5 cursor-pointer transition-colors"
+            className="w-6 h-6 lg:w-7 lg:h-7 absolute right-3.5 lg:right-4 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#8A8680] hover:text-[#1A1917] rounded-full hover:bg-black/5 cursor-pointer transition-colors"
             title="Очистить"
           >
             <X className="w-4 h-4" />
@@ -114,7 +114,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({
 
       {/* Live Dropdown */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-3xl shadow-2xl border border-[#ECE8E1] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-2.5 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-[#ECE8E1] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Quick Keywords when query is empty */}
           {query.trim().length < 2 && (
             <div className="p-4 space-y-2.5">

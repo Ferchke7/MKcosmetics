@@ -46,14 +46,14 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       {/* Search and Sort Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Search */}
-        <div className="relative w-full sm:max-w-md">
-          <Search className="w-4 h-4 text-[#8C827A] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full sm:max-w-xl lg:max-w-2xl">
+          <Search className="w-5 h-5 text-[#B89254] absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Поиск по бренду, названию, компонентам (ретинол, женьшень)..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-[#EED9CF] text-xs sm:text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
+            placeholder="Поиск по бренду, названию, компонентам (SPF, Коллаген, Peptides)..."
+            className="w-full h-12 pl-12 pr-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE8E1] text-sm text-[#1A1917] placeholder-[#8A8680] focus:border-[#B89254] focus:outline-none focus:ring-2 focus:ring-[#B89254]/20"
           />
         </div>
 

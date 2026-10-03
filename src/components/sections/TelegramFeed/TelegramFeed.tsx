@@ -106,15 +106,15 @@ export const TelegramFeed: React.FC<TelegramFeedProps> = ({
         )}
 
         <div className="mb-7 space-y-4">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C827A]" />
+          <div className="relative w-full sm:max-w-xl lg:max-w-2xl">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#B89254]" />
             <input
               type="search"
               aria-label="Поиск по публикациям"
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Поиск по товарам и публикациям…"
-              className="w-full rounded-2xl border border-[#EED9CF] bg-white py-2.5 pl-10 pr-4 text-sm text-[#2D2A2E] placeholder-[#A89F97] focus:border-[#C2836B] focus:outline-none focus:ring-1 focus:ring-[#C2836B]"
+              className="w-full h-12 rounded-2xl border border-[#ECE8E1] bg-[#FAF8F5] pl-12 pr-4 text-sm text-[#1A1917] placeholder-[#8A8680] focus:border-[#B89254] focus:outline-none focus:ring-2 focus:ring-[#B89254]/20"
             />
           </div>
 

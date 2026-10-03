@@ -65,8 +65,8 @@ export const Header: React.FC<HeaderProps> = ({
         }`}
       >
         {/* Main Header Container */}
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5">
-          <div className="flex items-center justify-between gap-3 lg:gap-6">
+        <div className="mx-auto max-w-[1600px] 2xl:max-w-[1800px] px-3 sm:px-6 lg:px-8 py-2 sm:py-3">
+          <div className="flex items-center justify-between gap-3 lg:gap-8">
             {/* Logo */}
             <a
               href="#top"
@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
             </a>
 
             {/* Desktop & Tablet Wide Global Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-xl lg:max-w-2xl mx-2">
+            <div className="hidden md:flex flex-1 max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-2 lg:mx-6">
               <GlobalSearchBar
                 products={products}
                 onSelectProduct={onSelectProduct}
