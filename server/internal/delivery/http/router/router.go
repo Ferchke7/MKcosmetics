@@ -35,6 +35,7 @@ func NewRouter(
 	salesHandler *handler.SalesHandler,
 	customerHandler *handler.CustomerHandler,
 	articleHandler *handler.ArticleHandler,
+	telegramHandler *handler.TelegramHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -65,10 +66,11 @@ func NewRouter(
 	r.Route("/api", func(api chi.Router) {
 		api.Get("/health", healthHandler.HealthCheck)
 
-		// Public Telegram & Visitor feeds
+		// Public Telegram Webhook & Feed
 		api.Route("/telegram", func(tg chi.Router) {
 			tg.Get("/feed", feedHandler.GetFeed)
 			tg.Post("/sync", feedHandler.Sync)
+			tg.Post("/webhook", telegramHandler.HandleWebhook)
 		})
 
 		// Public Beauty Articles Magazine (From Telegram)
@@ -111,6 +113,7 @@ func NewRouter(
 			admin.Post("/sync", adminHandler.TriggerSync)
 			admin.Post("/upload", uploadHandler.UploadFile)
 			admin.Post("/telegram/import-dummy", adminHandler.ImportDummyProducts)
+			admin.Get("/telegram/bot-config", telegramHandler.GetBotConfig)
 
 			// Deep ECharts Analytics
 			admin.Route("/analytics", func(an chi.Router) {
@@ -125,7 +128,7 @@ func NewRouter(
 				p.Delete("/{id}", adminHandler.DeleteProduct)
 			})
 
-			// Orders & Multi-format Export
+			// Orders & Multi-format Export & Telegram Bot Forwarding
 			admin.Route("/orders", func(o chi.Router) {
 				o.Get("/", orderHandler.GetAdminOrders)
 				o.Get("/export/csv", exportHandler.ExportCSV)
@@ -134,6 +137,7 @@ func NewRouter(
 				o.Put("/{id}/notes", orderHandler.UpdateNotes)
 				o.Put("/{id}/process", orderHandler.ProcessOrder)
 				o.Post("/{id}/receipt", orderHandler.AttachReceipt)
+				o.Post("/{id}/notify-telegram", telegramHandler.NotifyOrderTelegram)
 				o.Delete("/{id}", orderHandler.DeleteOrder)
 			})
 
@@ -146,80 +150,65 @@ func NewRouter(
 				c.Delete("/{id}", customerHandler.Delete)
 			})
 
-			// Enterprise HRM: Staff & Seller Management & Commission Payroll
+			// Enterprise HRM: Staff & Commission Management
 			admin.Route("/staff", func(s chi.Router) {
 				s.Get("/", staffHandler.GetAll)
 				s.Post("/", staffHandler.Create)
-				s.Get("/payroll", staffHandler.GetPayroll)
-				s.Get("/payroll/export-csv", staffHandler.ExportPayrollCSV)
-				s.Get("/payroll/export-xlsx", exportHandler.ExportPayrollXLSX)
 				s.Put("/{id}", staffHandler.Update)
 				s.Delete("/{id}", staffHandler.Delete)
+				s.Get("/payroll", staffHandler.GetPayroll)
+				s.Get("/payroll/export-csv", staffHandler.ExportPayrollCSV)
+				s.Get("/export/payroll/xlsx", exportHandler.ExportPayrollXLSX)
 			})
 
-			// Telegram Beauty Articles Magazine Management
-			admin.Route("/articles", func(art chi.Router) {
-				art.Get("/", articleHandler.GetAll)
-				art.Post("/", articleHandler.Upsert)
-				art.Post("/sync", articleHandler.SyncFromTelegram)
-				art.Delete("/{id}", articleHandler.Delete)
+			// Unit Economics & Sales Ledger
+			admin.Route("/sales", func(sl chi.Router) {
+				sl.Get("/unit-economics", salesHandler.GetUnitEconomics)
+				sl.Get("/export-ledger", salesHandler.ExportLedgerCSV)
 			})
 
-			// ERP: Product Variants & Inventory SKUs
+			// Air Cargo Logistics Management
+			admin.Route("/cargo", func(cg chi.Router) {
+				cg.Get("/batches", cargoHandler.GetAll)
+				cg.Get("/batches/{id}", cargoHandler.GetByID)
+				cg.Post("/batches", cargoHandler.Create)
+				cg.Put("/batches/{id}", cargoHandler.Update)
+				cg.Delete("/batches/{id}", cargoHandler.Delete)
+				cg.Post("/batches/assign-order", cargoHandler.AssignOrder)
+			})
+
+			// Product Variants & Matrix
 			admin.Route("/variants", func(v chi.Router) {
 				v.Get("/", variantHandler.GetAll)
 				v.Post("/", variantHandler.Create)
 				v.Put("/{id}", variantHandler.Update)
-				v.Put("/{id}/stock", variantHandler.UpdateStock)
 				v.Delete("/{id}", variantHandler.Delete)
-			})
-
-			// Advanced Unit Economics & Sales Analysis
-			admin.Route("/sales", func(sl chi.Router) {
-				sl.Get("/unit-economics", salesHandler.GetUnitEconomics)
-				sl.Get("/export-ledger", salesHandler.ExportLedgerCSV)
-				sl.Get("/export-xlsx", exportHandler.ExportSalesLedgerXLSX)
-			})
-
-			// Optional Cargo Batches (retained for backward compat)
-			admin.Route("/cargo", func(cg chi.Router) {
-				cg.Get("/", cargoHandler.GetAll)
-				cg.Post("/", cargoHandler.Create)
-				cg.Get("/{id}", cargoHandler.GetByID)
-				cg.Put("/{id}", cargoHandler.Update)
-				cg.Post("/assign", cargoHandler.AssignOrder)
-				cg.Delete("/{id}", cargoHandler.Delete)
 			})
 		})
 	})
 
-	// Static SPA Serving
+	// Static SPA Serving (Frontend Build)
 	if cfg.StaticDir != "" {
-		setupSPAServer(r, cfg.StaticDir)
+		if _, err := os.Stat(cfg.StaticDir); err == nil {
+			fileServer := http.FileServer(http.Dir(cfg.StaticDir))
+			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+				if strings.HasPrefix(r.URL.Path, "/api") || strings.HasPrefix(r.URL.Path, "/uploads") {
+					http.NotFound(w, r)
+					return
+				}
+
+				requestedPath := filepath.Join(cfg.StaticDir, filepath.Clean(r.URL.Path))
+				if info, err := os.Stat(requestedPath); err == nil && !info.IsDir() {
+					fileServer.ServeHTTP(w, r)
+					return
+				}
+
+				// SPA Fallback: serve index.html
+				indexPath := filepath.Join(cfg.StaticDir, "index.html")
+				http.ServeFile(w, r, indexPath)
+			})
+		}
 	}
 
 	return r
-}
-
-func setupSPAServer(r *chi.Mux, staticDir string) {
-	fs := http.FileServer(http.Dir(staticDir))
-
-	r.Get("/*", func(w http.ResponseWriter, req *http.Request) {
-		// Don't intercept API routes
-		if strings.HasPrefix(req.URL.Path, "/api") {
-			http.NotFound(w, req)
-			return
-		}
-
-		path := filepath.Join(staticDir, filepath.Clean(req.URL.Path))
-		info, err := os.Stat(path)
-		if err == nil && !info.IsDir() {
-			fs.ServeHTTP(w, req)
-			return
-		}
-
-		// Fallback to index.html for SPA client-side routes
-		indexPath := filepath.Join(staticDir, "index.html")
-		http.ServeFile(w, req, indexPath)
-	})
 }

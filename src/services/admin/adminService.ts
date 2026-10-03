@@ -387,6 +387,22 @@ export const adminService = {
     }
   },
 
+  async notifyOrderTelegram(orderId: number, customChatId: string = '', token: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/admin/orders/${orderId}/notify-telegram`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ customChatId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Ошибка отправки в Telegram');
+    }
+    return data;
+  },
+
   async exportOrdersCsv(status: string, search: string, token: string): Promise<Blob> {
     const params = new URLSearchParams();
     if (status && status !== 'all') params.append('status', status);

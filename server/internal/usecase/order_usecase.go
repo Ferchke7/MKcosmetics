@@ -13,23 +13,27 @@ import (
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
 	"mkcosmetics/server/internal/infrastructure/excel"
+	"mkcosmetics/server/internal/infrastructure/telegram"
 )
 
 type OrderUseCase struct {
 	orderRepo     repository.OrderRepository
 	customerRepo  repository.CustomerRepository
 	excelExporter *excel.ExcelExporter
+	botService    *telegram.BotService
 }
 
 func NewOrderUseCase(
 	orderRepo repository.OrderRepository,
 	customerRepo repository.CustomerRepository,
 	excelExporter *excel.ExcelExporter,
+	botService *telegram.BotService,
 ) *OrderUseCase {
 	return &OrderUseCase{
 		orderRepo:     orderRepo,
 		customerRepo:  customerRepo,
 		excelExporter: excelExporter,
+		botService:    botService,
 	}
 }
 
@@ -100,7 +104,7 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 		return nil, err
 	}
 
-	// Auto sync with CRM customer record
+	// 1. Auto sync with CRM customer record
 	if uc.customerRepo != nil && order.Phone != "" {
 		_, _ = uc.customerRepo.UpsertFromOrder(ctx, entity.Customer{
 			Name:            order.CustomerName,
@@ -110,6 +114,13 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 			TotalOrders:     1,
 			TotalSpent:      order.TotalAmount,
 		})
+	}
+
+	// 2. Auto dispatch real-time Telegram Bot Notification to Admin/Manager Chat!
+	if uc.botService != nil {
+		go func(ord *entity.Order) {
+			_ = uc.botService.SendOrderNotification(context.Background(), ord, "")
+		}(order)
 	}
 
 	return order, nil
@@ -201,6 +212,8 @@ func (uc *OrderUseCase) ProcessOrder(ctx context.Context, input ProcessOrderInpu
 		order.Currency = input.Currency
 	}
 
+	order.UpdatedAt = time.Now()
+
 	if err := uc.orderRepo.Update(ctx, order); err != nil {
 		return nil, err
 	}
@@ -240,6 +253,10 @@ func (uc *OrderUseCase) GetOrderByNumber(ctx context.Context, orderNumber string
 	return uc.orderRepo.FindByOrderNumber(ctx, strings.TrimSpace(orderNumber))
 }
 
+func (uc *OrderUseCase) GetOrderByID(ctx context.Context, id int64) (*entity.Order, error) {
+	return uc.orderRepo.FindByID(ctx, id)
+}
+
 func (uc *OrderUseCase) UpdateStatus(ctx context.Context, id int64, status string) error {
 	validStatuses := map[string]bool{
 		"new":        true,
@@ -253,6 +270,44 @@ func (uc *OrderUseCase) UpdateStatus(ctx context.Context, id int64, status strin
 		return errors.New("неверный статус заказа")
 	}
 	return uc.orderRepo.UpdateStatus(ctx, id, status)
+}
+
+func (uc *OrderUseCase) UpdateStatusFromTelegram(ctx context.Context, orderID int64, newStatus string, managerName string) (*entity.Order, error) {
+	order, err := uc.orderRepo.FindByID(ctx, orderID)
+	if err != nil || order == nil {
+		return nil, errors.New("order not found")
+	}
+
+	order.Status = newStatus
+	if order.AssignedTo == "" && managerName != "" {
+		order.AssignedTo = managerName
+	}
+	order.UpdatedAt = time.Now()
+
+	if err := uc.orderRepo.Update(ctx, order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
+func (uc *OrderUseCase) AssignManagerFromTelegram(ctx context.Context, orderID int64, managerName string) (*entity.Order, error) {
+	order, err := uc.orderRepo.FindByID(ctx, orderID)
+	if err != nil || order == nil {
+		return nil, errors.New("order not found")
+	}
+
+	order.AssignedTo = managerName
+	if order.Status == "new" {
+		order.Status = "processing"
+	}
+	order.UpdatedAt = time.Now()
+
+	if err := uc.orderRepo.Update(ctx, order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (uc *OrderUseCase) UpdateNotes(ctx context.Context, id int64, notes string) error {
@@ -270,7 +325,6 @@ func (uc *OrderUseCase) ExportOrdersCSV(ctx context.Context, status, search stri
 	}
 
 	var buf bytes.Buffer
-	// UTF-8 BOM for Excel compatibility
 	buf.WriteString("\xEF\xBB\xBF")
 
 	writer := csv.NewWriter(&buf)

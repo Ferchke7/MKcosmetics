@@ -16,6 +16,7 @@ import (
 	"mkcosmetics/server/internal/infrastructure/excel"
 	"mkcosmetics/server/internal/infrastructure/persistence/sqlite"
 	"mkcosmetics/server/internal/infrastructure/scraper"
+	"mkcosmetics/server/internal/infrastructure/telegram"
 	"mkcosmetics/server/internal/usecase"
 )
 
@@ -52,16 +53,17 @@ func main() {
 	customerRepo := sqlite.NewSQLiteCustomerRepository(db)
 	articleRepo := sqlite.NewSQLiteArticleRepository(db)
 
-	// 4. Infrastructure (Scraper & Excelize Exporter)
+	// 4. Infrastructure (Scraper, Excelize Exporter & Telegram Bot Service)
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
 	excelExporter := excel.NewExcelExporter()
+	tgBotService := telegram.NewBotService()
 
 	// 5. Use Cases (Clean Architecture Layer)
 	feedUC := usecase.NewFeedUseCase(productRepo, channelRepo)
 	syncUC := usecase.NewSyncUseCase(tgScraper, productRepo, channelRepo)
 	visitorUC := usecase.NewVisitorUseCase(visitorRepo)
 	authUC := usecase.NewAuthUseCase(userRepo, jwtSecret)
-	orderUC := usecase.NewOrderUseCase(orderRepo, customerRepo, excelExporter)
+	orderUC := usecase.NewOrderUseCase(orderRepo, customerRepo, excelExporter, tgBotService)
 	adminUC := usecase.NewAdminUseCase(productRepo, visitorRepo, channelRepo, orderRepo, excelExporter)
 	analyticsUC := usecase.NewAnalyticsUseCase(orderRepo, productRepo, userRepo, visitorRepo)
 	cargoUC := usecase.NewCargoUseCase(cargoRepo, orderRepo)
@@ -88,6 +90,7 @@ func main() {
 	salesHandler := handler.NewSalesHandler(salesUC)
 	customerHandler := handler.NewCustomerHandler(customerUC)
 	articleHandler := handler.NewArticleHandler(articleUC)
+	telegramHandler := handler.NewTelegramHandler(tgBotService, orderUC)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -108,6 +111,7 @@ func main() {
 		salesHandler,
 		customerHandler,
 		articleHandler,
+		telegramHandler,
 		authMiddleware,
 	)
 
@@ -138,16 +142,16 @@ func main() {
 
 	// Wait for shutdown signal
 	sig := <-shutdownChan
-	log.Printf("🛑 Received signal '%v', initiating graceful shutdown...", sig)
+	log.Printf("🛑 Received shutdown signal: %v. Gracefully stopping server...", sig)
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("❌ Server forced to shutdown: %v", err)
+		log.Printf("❌ Error during server shutdown: %v", err)
 	}
 
-	log.Println("👋 Server gracefully stopped. Goodbye!")
+	log.Println("👋 MK Cosmetics server stopped.")
 }
 
 func getEnv(key, fallback string) string {

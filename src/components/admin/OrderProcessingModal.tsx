@@ -184,6 +184,25 @@ export const OrderProcessingModal: React.FC<OrderProcessingModalProps> = ({
     }
   };
 
+  // Telegram Bot Dispatch
+  const [isNotifyingTg, setIsNotifyingTg] = useState(false);
+  const [tgMsg, setTgMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [customChatId, setCustomChatId] = useState('');
+
+  const handleSendToTelegram = async () => {
+    if (!order) return;
+    setIsNotifyingTg(true);
+    setTgMsg(null);
+    try {
+      const res = await adminService.notifyOrderTelegram(order.id, customChatId, token);
+      setTgMsg({ type: 'success', text: res.message || 'Заказ успешно отправлен в Telegram!' });
+    } catch (err: any) {
+      setTgMsg({ type: 'error', text: err.message || 'Ошибка отправки в Telegram' });
+    } finally {
+      setIsNotifyingTg(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div className="bg-[#1C1A18] text-[#EDE8E1] border border-white/15 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
@@ -556,7 +575,57 @@ export const OrderProcessingModal: React.FC<OrderProcessingModalProps> = ({
             </div>
           )}
 
-          {/* 6. Manager Notes */}
+          {/* 6. Multi-Channel Dispatch (Telegram Bot & Direct WhatsApp) */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-[#17202A] to-[#121A22] border border-[#0088cc]/30 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+              <div className="flex items-center gap-2 text-sky-400 font-bold text-xs">
+                <Send className="w-4 h-4" />
+                <span>Отправка заказа в Telegram бота & Менеджеру</span>
+              </div>
+              {tgMsg && (
+                <span className={`text-[11px] font-bold ${tgMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {tgMsg.text}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <input
+                type="text"
+                value={customChatId}
+                onChange={(e) => setCustomChatId(e.target.value)}
+                placeholder="ID чата / группы менеджера (необязательно)"
+                className="flex-1 bg-[#0F172A] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-[#64748B] text-xs focus:outline-none focus:border-[#0088cc]"
+              />
+
+              <button
+                type="button"
+                disabled={isNotifyingTg}
+                onClick={handleSendToTelegram}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+              >
+                {isNotifyingTg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                <span>{isNotifyingTg ? 'Отправка...' : '📤 Отправить в Telegram'}</span>
+              </button>
+
+              {cleanWaNumber && (
+                <a
+                  href={`https://wa.me/${cleanWaNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-bold transition-all shadow-sm"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>WhatsApp</span>
+                </a>
+              )}
+            </div>
+            <p className="text-[10px] text-[#64748B]">
+              💡 Заказ придет в Telegram с интерактивными кнопками изменения статуса («В обработку», «Отправлен», «Доставлен») и привязкой к менеджеру.
+            </p>
+          </div>
+
+          {/* 7. Manager Notes */}
           <div>
             <label className="text-[11px] text-[#A8A29E] font-semibold block mb-1">
               Внутренние заметки менеджера:
