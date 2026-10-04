@@ -199,6 +199,53 @@ func (db *DB) migrate() error {
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS catalog_categories (
+		id INTEGER PRIMARY KEY,
+		parent_id INTEGER NOT NULL DEFAULT 0,
+		title TEXT NOT NULL,
+		slug TEXT NOT NULL,
+		photo_url TEXT NOT NULL DEFAULT '',
+		count INTEGER NOT NULL DEFAULT 0
+	);
+
+	CREATE TABLE IF NOT EXISTS catalog_products (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		source_id INTEGER UNIQUE NOT NULL,
+		slug TEXT NOT NULL,
+		title TEXT NOT NULL,
+		brand TEXT NOT NULL DEFAULT '',
+		description TEXT NOT NULL DEFAULT '',
+		excerpt TEXT NOT NULL DEFAULT '',
+		category_id INTEGER NOT NULL DEFAULT 0,
+		category_title TEXT NOT NULL DEFAULT '',
+		category_slug TEXT NOT NULL DEFAULT '',
+		price_krw INTEGER NOT NULL DEFAULT 0,
+		old_price_krw INTEGER NOT NULL DEFAULT 0,
+		discount_pct INTEGER NOT NULL DEFAULT 0,
+		stock INTEGER NOT NULL DEFAULT 0,
+		in_stock INTEGER NOT NULL DEFAULT 1,
+		archived INTEGER NOT NULL DEFAULT 0,
+		photos_json TEXT NOT NULL DEFAULT '[]',
+		is_hit INTEGER NOT NULL DEFAULT 0,
+		is_hidden INTEGER NOT NULL DEFAULT 0,
+		brand_override TEXT NOT NULL DEFAULT '',
+		excerpt_override TEXT NOT NULL DEFAULT '',
+		synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS catalog_sync_log (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		added INTEGER NOT NULL DEFAULT 0,
+		updated INTEGER NOT NULL DEFAULT 0,
+		archived INTEGER NOT NULL DEFAULT 0,
+		total INTEGER NOT NULL DEFAULT 0,
+		duration_ms INTEGER NOT NULL DEFAULT 0,
+		error_message TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
 	`
 
 	if _, err := db.Exec(tables); err != nil {
@@ -240,6 +287,13 @@ func (db *DB) migrate() error {
 	CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
 	CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at DESC);
 	CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_cat ON catalog_products(category_id);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_brand ON catalog_products(brand);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_price ON catalog_products(price_krw);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_source ON catalog_products(source_id);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_slug ON catalog_products(slug);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_flags ON catalog_products(is_hidden, archived, in_stock);
+	CREATE INDEX IF NOT EXISTS idx_cat_sync_date ON catalog_sync_log(created_at DESC);
 	`
 	if _, err := db.Exec(indexes); err != nil {
 		return fmt.Errorf("failed to create indexes: %w", err)

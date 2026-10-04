@@ -13,6 +13,7 @@ import (
 	"mkcosmetics/server/internal/delivery/http/handler"
 	"mkcosmetics/server/internal/delivery/http/middleware"
 	"mkcosmetics/server/internal/delivery/http/router"
+	"mkcosmetics/server/internal/infrastructure/bcatalog"
 	"mkcosmetics/server/internal/infrastructure/excel"
 	"mkcosmetics/server/internal/infrastructure/persistence/sqlite"
 	"mkcosmetics/server/internal/infrastructure/scraper"
@@ -52,13 +53,17 @@ func main() {
 	variantRepo := sqlite.NewVariantRepository(db)
 	customerRepo := sqlite.NewSQLiteCustomerRepository(db)
 	articleRepo := sqlite.NewSQLiteArticleRepository(db)
+	catalogRepo := sqlite.NewCatalogRepository(db)
 
-	// 4. Infrastructure (Scraper, Excelize Exporter & Telegram Bot Service)
+	// 4. Infrastructure (Scraper, Excelize Exporter, b-catalog Client & Telegram Bot Service)
 	tgScraper := scraper.NewTelegramScraper(channelUsername)
 	excelExporter := excel.NewExcelExporter()
 	tgBotService := telegram.NewBotService()
+	bcatShopCode := getEnv("BCATALOG_SHOP_CODE", "roznmkkoreacosmetic")
+	bcatClient := bcatalog.NewClient(bcatShopCode)
 
 	// 5. Use Cases (Clean Architecture Layer)
+	catalogUC := usecase.NewCatalogUseCase(bcatClient, catalogRepo)
 	feedUC := usecase.NewFeedUseCase(productRepo, channelRepo)
 	syncUC := usecase.NewSyncUseCase(tgScraper, productRepo, channelRepo)
 	visitorUC := usecase.NewVisitorUseCase(visitorRepo)
@@ -75,6 +80,7 @@ func main() {
 
 	// 6. HTTP Handlers & Middlewares
 	healthHandler := handler.NewHealthHandler(productRepo)
+	catalogHandler := handler.NewCatalogHandler(catalogUC)
 	feedHandler := handler.NewFeedHandler(feedUC, syncUC)
 	visitorHandler := handler.NewVisitorHandler(visitorUC)
 	authHandler := handler.NewAuthHandler(authUC)
@@ -112,13 +118,15 @@ func main() {
 		customerHandler,
 		articleHandler,
 		telegramHandler,
+		catalogHandler,
 		authMiddleware,
 	)
 
-	// 8. Start Telegram Background Sync Worker
+	// 8. Start Background Sync Workers
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	syncUC.StartBackgroundWorker(ctx, time.Duration(syncMinutes)*time.Minute)
+	catalogUC.StartBackgroundWorker(ctx, 30*time.Minute)
 
 	// 9. HTTP Server with Graceful Shutdown
 	srv := &http.Server{

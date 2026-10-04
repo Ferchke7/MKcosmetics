@@ -36,6 +36,7 @@ func NewRouter(
 	customerHandler *handler.CustomerHandler,
 	articleHandler *handler.ArticleHandler,
 	telegramHandler *handler.TelegramHandler,
+	catalogHandler *handler.CatalogHandler,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -85,6 +86,16 @@ func NewRouter(
 			v.Get("/stats", visitorHandler.GetStats)
 		})
 
+		// Public Catalog (b-catalog sync)
+		api.Route("/catalog", func(c chi.Router) {
+			c.Get("/home", catalogHandler.GetHome)
+			c.Get("/products", catalogHandler.GetProducts)
+			c.Get("/products/{slug}", catalogHandler.GetBySlug)
+			c.Get("/categories", catalogHandler.GetCategories)
+			c.Get("/brands", catalogHandler.GetBrands)
+			c.Get("/delivery", catalogHandler.GetDeliveryOptions)
+		})
+
 		// Public Orders & Tracking
 		api.Route("/orders", func(o chi.Router) {
 			o.Post("/", orderHandler.CreateOrder)
@@ -118,6 +129,14 @@ func NewRouter(
 			// Deep ECharts Analytics
 			admin.Route("/analytics", func(an chi.Router) {
 				an.Get("/deep", analyticsHandler.GetDeepAnalytics)
+			})
+
+			// Catalog Sync & Overrides (b-catalog)
+			admin.Route("/catalog", func(cat chi.Router) {
+				cat.Post("/sync", catalogHandler.AdminSync)
+				cat.Get("/status", catalogHandler.AdminGetStatus)
+				cat.Get("/products", catalogHandler.AdminGetProducts)
+				cat.Put("/products/{id}", catalogHandler.AdminUpdateOverrides)
 			})
 
 			// Products Management & Full Catalog XLSX Export
