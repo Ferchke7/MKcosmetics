@@ -13,7 +13,7 @@ export const BRAND_CONFIG: ContactInfo = {
   instagram: '@muhabbat.kim.mk',
   instagramHandle: '@muhabbat.kim.mk',
   instagramUrl: 'https://www.instagram.com/muhabbat.kim.mk/',
-  address: 'Республика Корея, Сеул (Склад и офис прямых поставок)',
+  address: 'Республика Корея, Сеул',
 };
 
 export const buildWhatsAppUrl = (message: string): string => {

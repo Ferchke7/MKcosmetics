@@ -28,32 +28,32 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-paper border-b border-line text-ink">
-      {/* 1. Top Bar: Prominent Social Networks with @Handles & Verification */}
-      <div className="bg-[#191A15] text-[#FAF7F2] border-b border-[#2B2C27] py-2 px-4 sm:px-6 lg:px-8">
+      {/* 1. Top Bar: Social Networks & Key Status in Soft Warm Palette */}
+      <div className="bg-[#F7F3EC] text-ink border-b border-line py-2 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5">
-          {/* Location & Authentic badge */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs text-[#FAF7F2]/80 flex-wrap justify-center md:justify-start">
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#FAF7F2]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Офис и склад в Сеуле (Южная Корея)</span>
+          {/* Status badge: Clean & Minimal (without office/warehouse) */}
+          <div className="flex items-center gap-2 sm:gap-3 text-xs text-ink/75 flex-wrap justify-center md:justify-start">
+            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>100% Оригинальная корейская косметика</span>
             </span>
-            <span className="hidden lg:inline text-[#FAF7F2]/30">•</span>
-            <span className="hidden lg:inline text-[#FAF7F2]/70">100% Оригинальная корейская косметика в ₩ KRW</span>
+            <span className="hidden sm:inline text-line">•</span>
+            <span className="hidden sm:inline text-ink/60">Прямые поставки из Кореи в ₩ KRW</span>
           </div>
 
-          {/* Social Network Channels with bold @handles */}
+          {/* Social Network Channels with soft, harmonious badges */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
             {/* Telegram Channel */}
             <a
               href={BRAND_CONFIG.telegramChannelUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229ED9]/20 hover:bg-[#229ED9] text-[#FAF7F2] border border-[#229ED9]/40 hover:border-[#229ED9] text-xs transition-all shadow-sm group"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229ED9]/10 hover:bg-[#229ED9] text-[#1E77A8] hover:text-white border border-[#229ED9]/25 hover:border-[#229ED9] text-xs transition-all shadow-xs group"
               title="Наш Telegram-канал"
             >
-              <Send className="w-3.5 h-3.5 text-[#64B5F6] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">Telegram:</span>
-              <span className="font-mono font-bold text-[#90CAF9] group-hover:text-white">
+              <Send className="w-3.5 h-3.5 text-[#229ED9] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">Telegram:</span>
+              <span className="font-mono font-bold text-[#1E77A8] group-hover:text-white">
                 {BRAND_CONFIG.telegramChannel || '@mkcosmetkor'}
               </span>
             </a>
@@ -63,12 +63,12 @@ export const Header: React.FC<HeaderProps> = ({
               href={BRAND_CONFIG.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1306C]/20 hover:bg-[#E1306C] text-[#FAF7F2] border border-[#E1306C]/40 hover:border-[#E1306C] text-xs transition-all shadow-sm group"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1306C]/10 hover:bg-[#E1306C] text-[#C1275B] hover:text-white border border-[#E1306C]/25 hover:border-[#E1306C] text-xs transition-all shadow-xs group"
               title="Наш Instagram"
             >
-              <InstagramIcon className="w-3.5 h-3.5 text-[#FF8DA1] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">Insta:</span>
-              <span className="font-mono font-bold text-[#FFAB91] group-hover:text-white">
+              <InstagramIcon className="w-3.5 h-3.5 text-[#E1306C] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">Insta:</span>
+              <span className="font-mono font-bold text-[#C1275B] group-hover:text-white">
                 {BRAND_CONFIG.instagramHandle || '@muhabbat.kim.mk'}
               </span>
             </a>
@@ -78,12 +78,12 @@ export const Header: React.FC<HeaderProps> = ({
               href={BRAND_CONFIG.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/20 hover:bg-[#25D366] text-[#FAF7F2] border border-[#25D366]/40 hover:border-[#25D366] text-xs transition-all shadow-sm group"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#1E824C] hover:text-white border border-[#25D366]/25 hover:border-[#25D366] text-xs transition-all shadow-xs group"
               title="WhatsApp для заказов и консультаций"
             >
-              <Phone className="w-3.5 h-3.5 text-[#81C784] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">WA:</span>
-              <span className="font-mono font-bold text-[#A5D6A7] group-hover:text-white">
+              <Phone className="w-3.5 h-3.5 text-[#25D366] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">WA:</span>
+              <span className="font-mono font-bold text-[#1E824C] group-hover:text-white">
                 {BRAND_CONFIG.phoneDisplay || '+82 10 8390 5577'}
               </span>
             </a>
