@@ -91,11 +91,11 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* 2. Main Header: Centered Logo + Currency + Right Icons */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      {/* 2. Main Header: Perfectly Balanced Symmetrical Luxury Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          {/* Left: Currency badge (fixed KRW) + Mobile trigger */}
-          <div className="flex items-center gap-2">
+          {/* Left: Desktop Nav Links or Mobile Hamburger */}
+          <div className="flex items-center gap-6">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -105,31 +105,73 @@ export const Header: React.FC<HeaderProps> = ({
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Currency Chip (Styled like EvaCode's KRW chip) */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-card bg-cream-soft border border-line text-xs font-semibold text-ink">
-              <span className="text-gold font-bold">₩</span>
-              <span>KRW</span>
-            </div>
+            <nav className="hidden lg:flex items-center gap-7 text-xs uppercase tracking-[0.14em] font-semibold text-ink">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  `transition-colors hover:text-gold pb-0.5 border-b-2 ${
+                    isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
+                  }`
+                }
+              >
+                Главная
+              </NavLink>
+              <NavLink
+                to="/catalog"
+                className={({ isActive }) =>
+                  `transition-colors hover:text-gold pb-0.5 border-b-2 ${
+                    isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
+                  }`
+                }
+              >
+                Каталог
+              </NavLink>
+              <NavLink
+                to="/delivery"
+                className={({ isActive }) =>
+                  `transition-colors hover:text-gold pb-0.5 border-b-2 ${
+                    isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
+                  }`
+                }
+              >
+                Доставка
+              </NavLink>
+            </nav>
           </div>
 
           {/* Center: Brand Logo Emblem */}
-          <Link to="/" className="flex items-center justify-center group py-1" title="MK KOREA COSMETIC">
+          <Link to="/" className="flex items-center justify-center group py-0.5" title="MK KOREA COSMETIC">
             <img
               src="/logo.png"
               alt="MK KOREA COSMETIC"
-              className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
+              className="h-16 w-16 sm:h-20 sm:w-20 md:h-22 md:w-22 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
             />
           </Link>
 
-          {/* Right: Contacts / Wishlist / Cart */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link
-              to="/contacts"
-              className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-ink hover:text-gold transition-colors"
-            >
-              <Phone className="w-4 h-4 text-gold" />
-              <span>Контакты</span>
-            </Link>
+          {/* Right: Company Info & Wishlist */}
+          <div className="flex items-center gap-5 sm:gap-7">
+            <nav className="hidden lg:flex items-center gap-7 text-xs uppercase tracking-[0.14em] font-semibold text-ink">
+              <NavLink
+                to="/about"
+                className={({ isActive }) =>
+                  `transition-colors hover:text-gold pb-0.5 border-b-2 ${
+                    isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
+                  }`
+                }
+              >
+                О бренде
+              </NavLink>
+              <NavLink
+                to="/contacts"
+                className={({ isActive }) =>
+                  `transition-colors hover:text-gold pb-0.5 border-b-2 ${
+                    isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
+                  }`
+                }
+              >
+                Контакты
+              </NavLink>
+            </nav>
 
             <Link
               to="/catalog?favorite=true"
@@ -143,44 +185,9 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </Link>
-
-            <button
-              type="button"
-              onClick={onOpenCart}
-              className="relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-card bg-gold text-white hover:bg-gold-hover transition-colors shadow-sm"
-              title="Открыть корзину"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs font-semibold">Корзина</span>
-              <span className="w-5 h-5 rounded-full bg-white/20 text-white text-[11px] font-bold flex items-center justify-center">
-                {cartCount}
-              </span>
-            </button>
           </div>
         </div>
       </div>
-
-      {/* 3. Navigation Menu Bar (Desktop) */}
-      <nav className="hidden lg:block border-t border-line/60 bg-cream-soft/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ul className="flex items-center justify-center gap-8 py-3 text-xs uppercase tracking-[0.14em] font-semibold text-ink">
-            {navLinks.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `transition-colors hover:text-gold pb-1 border-b-2 ${
-                      isActive ? 'text-gold border-gold' : 'border-transparent text-ink/80'
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
@@ -225,6 +232,28 @@ export const Header: React.FC<HeaderProps> = ({
                     </NavLink>
                   </li>
                 ))}
+                {onOpenCart && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenCart();
+                      }}
+                      className="w-full text-left py-2 px-3 rounded-card text-ink hover:bg-cream-soft flex items-center justify-between transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <ShoppingBag className="w-4 h-4 text-gold" />
+                        <span>Корзина</span>
+                      </span>
+                      {cartCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-gold text-white text-xs font-bold font-mono">
+                          {cartCount}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
 

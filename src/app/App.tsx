@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingBag } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalogApi';
 import { useCart } from '../hooks/useCart';
@@ -53,8 +54,13 @@ const StorefrontLayout: React.FC = () => {
         onOpenCart={() => setIsCartOpen(true)}
       />
 
-      {/* Sticky Catalog Bar with search and dropdowns */}
-      <CatalogBar categories={categories} brands={brands} />
+      {/* Sticky Catalog Bar with search, dropdowns, and Cart */}
+      <CatalogBar
+        categories={categories}
+        brands={brands}
+        cartCount={cartCount}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
 
       {/* Dynamic Page Content */}
       <main className="flex-1">
@@ -66,6 +72,24 @@ const StorefrontLayout: React.FC = () => {
 
       {/* Global Shopping Cart Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Floating Quick Cart Action Button (visible when cart has items) */}
+      {cartCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setIsCartOpen(true)}
+          className="fixed bottom-6 right-6 z-40 bg-[#191A15] hover:bg-kraft text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2.5 transition-all transform hover:scale-105 border border-white/20 animate-in fade-in slide-in-from-bottom-4 cursor-pointer"
+          aria-label="Корзина"
+        >
+          <div className="relative">
+            <ShoppingBag className="w-5 h-5 text-gold" />
+            <span className="absolute -top-2 -right-2.5 w-4 h-4 rounded-full bg-gold text-white text-[10px] font-bold flex items-center justify-center">
+              {cartCount}
+            </span>
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Корзина</span>
+        </button>
+      )}
     </div>
   );
 };

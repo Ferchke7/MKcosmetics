@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Tag, Sparkles, X } from 'lucide-react';
+import { Search, ChevronDown, Tag, Sparkles, X, ShoppingBag } from 'lucide-react';
 import { CatalogCategory, CatalogBrand, CatalogProduct } from '../../core/types/catalog';
 import { catalogApi } from '../../api/catalogApi';
 import { formatKrw } from '../ui/Price';
@@ -8,9 +8,11 @@ import { formatKrw } from '../ui/Price';
 interface CatalogBarProps {
   categories: CatalogCategory[];
   brands: CatalogBrand[];
+  cartCount?: number;
+  onOpenCart?: () => void;
 }
 
-export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) => {
+export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands, cartCount = 0, onOpenCart }) => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<'categories' | 'brands' | 'price' | null>(null);
 
@@ -319,6 +321,31 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               </div>
             )}
           </div>
+
+          {/* Cart Button in Sticky Catalog Bar */}
+          {onOpenCart && (
+            <button
+              type="button"
+              onClick={onOpenCart}
+              className="h-10 px-3.5 sm:px-4 rounded-card bg-[#191A15] hover:bg-kraft text-white text-xs font-semibold flex items-center gap-2 shrink-0 transition-all shadow-sm group"
+              title="Открыть корзину"
+            >
+              <div className="relative">
+                <ShoppingBag className="w-4 h-4 text-gold group-hover:text-white transition-colors" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2.5 w-4 h-4 rounded-full bg-gold text-white text-[10px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <span className="hidden sm:inline">Корзина</span>
+              {cartCount > 0 && (
+                <span className="hidden sm:inline text-gold font-mono font-bold">
+                  ({cartCount})
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
