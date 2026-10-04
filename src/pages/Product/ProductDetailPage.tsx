@@ -115,6 +115,7 @@ export const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     addToCart(product, quantity);
     setAddedSuccess(true);
+    setIsCartOpen(true);
     setTimeout(() => setAddedSuccess(false), 2000);
   };
 

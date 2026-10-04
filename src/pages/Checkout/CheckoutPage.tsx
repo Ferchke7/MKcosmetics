@@ -26,8 +26,8 @@ const DELIVERY_METHODS = [
     id: 'courier_kr',
     title: 'Курьерская доставка по Южной Корее (CJ Logistics / Post)',
     costKrw: 5000,
-    desc: 'Доставка до двери в течение 1–2 рабочих дней. Бесплатно при заказе от 100 000 ₩.',
-    freeThreshold: 100000,
+    desc: 'Доставка до двери в течение 1–2 рабочих дней. Стоимость 5 000 ₩.',
+    freeThreshold: 0,
   },
   {
     id: 'pickup_seoul',
@@ -87,11 +87,7 @@ export const CheckoutPage: React.FC = () => {
   const selectedDelivery = DELIVERY_METHODS.find((d) => d.id === deliveryId) || DELIVERY_METHODS[0];
   const selectedPayment = PAYMENT_METHODS.find((p) => p.id === paymentId) || PAYMENT_METHODS[0];
 
-  const deliveryCost =
-    selectedDelivery.freeThreshold > 0 && totalAmountKrw >= selectedDelivery.freeThreshold
-      ? 0
-      : selectedDelivery.costKrw;
-
+  const deliveryCost = selectedDelivery.costKrw;
   const finalTotal = totalAmountKrw + deliveryCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -360,41 +356,34 @@ export const CheckoutPage: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {DELIVERY_METHODS.map((m) => {
-                  const isFree = m.freeThreshold > 0 && totalAmountKrw >= m.freeThreshold;
-                  return (
-                    <label
-                      key={m.id}
-                      className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                        deliveryId === m.id
-                          ? 'border-gold bg-cream/60 shadow-xs'
-                          : 'border-line bg-paper hover:border-gold/40'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="checkout_delivery"
-                        value={m.id}
-                        checked={deliveryId === m.id}
-                        onChange={() => setDeliveryId(m.id)}
-                        className="mt-1 accent-gold"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between font-medium text-xs sm:text-sm text-ink">
-                          <span>{m.title}</span>
-                          <span className="font-mono font-bold text-gold">
-                            {m.costKrw === 0
-                              ? 'Бесплатно'
-                              : isFree
-                              ? '0 ₩ (Бесплатно от 100 тыс)'
-                              : formatKrw(m.costKrw)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-ink/60 mt-1 leading-relaxed">{m.desc}</p>
+                {DELIVERY_METHODS.map((m) => (
+                  <label
+                    key={m.id}
+                    className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
+                      deliveryId === m.id
+                        ? 'border-gold bg-cream/60 shadow-xs'
+                        : 'border-line bg-paper hover:border-gold/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="checkout_delivery"
+                      value={m.id}
+                      checked={deliveryId === m.id}
+                      onChange={() => setDeliveryId(m.id)}
+                      className="mt-1 accent-gold"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between font-medium text-xs sm:text-sm text-ink">
+                        <span>{m.title}</span>
+                        <span className="font-mono font-bold text-gold">
+                          {m.costKrw === 0 ? '0 ₩' : formatKrw(m.costKrw)}
+                        </span>
                       </div>
-                    </label>
-                  );
-                })}
+                      <p className="text-xs text-ink/60 mt-1 leading-relaxed">{m.desc}</p>
+                    </div>
+                  </label>
+                ))}
               </div>
 
               {/* Address Inputs */}
@@ -498,8 +487,8 @@ export const CheckoutPage: React.FC = () => {
                   <div key={item.product.id} className="flex gap-3 text-xs">
                     <div className="w-14 h-14 rounded-xl bg-cream border border-line overflow-hidden flex-shrink-0 flex items-center justify-center">
                       <img
-                        src={item.product.images?.[0] || '/placeholder.png'}
-                        alt={item.product.name}
+                        src={item.product.images?.[0] || (item.product as any).photos?.[0] || '/logo.png'}
+                        alt={item.product.name || (item.product as any).title || 'Товар'}
                         className="w-full h-full object-contain p-1"
                       />
                     </div>
@@ -507,7 +496,9 @@ export const CheckoutPage: React.FC = () => {
                       {item.product.brand && (
                         <p className="text-[10px] text-gold font-semibold uppercase">{item.product.brand}</p>
                       )}
-                      <p className="font-medium text-ink truncate">{item.product.name}</p>
+                      <p className="font-medium text-ink truncate">
+                        {item.product.name || (item.product as any).title || 'Товар'}
+                      </p>
                       <p className="text-ink/60 text-[11px] font-mono mt-0.5">
                         {item.quantity} × {formatKrw(item.product.priceKrw)}
                       </p>

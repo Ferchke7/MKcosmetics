@@ -50,12 +50,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const selectedDelivery = DELIVERY_OPTIONS.find((d) => d.id === deliveryId) || DELIVERY_OPTIONS[0];
-  const deliveryCost = totalAmountKrw >= 100000 && selectedDelivery.id === 'courier_kr' ? 0 : selectedDelivery.costKrw;
+  const deliveryCost = selectedDelivery.costKrw;
   const finalTotalKrw = totalAmountKrw + deliveryCost;
-
-  const freeDeliveryThreshold = 100000;
-  const progressPercent = Math.min(100, Math.round((totalAmountKrw / freeDeliveryThreshold) * 100));
-  const diffForFree = Math.max(0, freeDeliveryThreshold - totalAmountKrw);
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,26 +139,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Free Delivery Bar (only on cart and checkout) */}
-        {step !== 'success' && items.length > 0 && (
-          <div className="bg-cream/70 border-b border-line px-6 py-2.5">
-            <div className="flex items-center justify-between text-[11px] mb-1.5 font-medium">
-              <span className="flex items-center gap-1.5 text-ink/80">
-                <Truck className="w-3.5 h-3.5 text-gold" />
-                {diffForFree === 0
-                  ? 'Бесплатная доставка по Корее активирована!'
-                  : `До бесплатной доставки по Корее: ${formatKrw(diffForFree)}`}
-              </span>
-              <span className="font-mono text-gold font-bold">{progressPercent}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gold transition-all duration-300 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Drawer Body */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -197,8 +173,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       {/* Thumbnail */}
                       <div className="w-16 h-16 rounded-xl bg-cream border border-line/60 overflow-hidden flex-shrink-0 flex items-center justify-center">
                         <img
-                          src={item.product.images?.[0] || '/placeholder.png'}
-                          alt={item.product.name}
+                          src={item.product.images?.[0] || (item.product as any).photos?.[0] || '/logo.png'}
+                          alt={item.product.name || (item.product as any).title || 'Товар'}
                           className="w-full h-full object-contain p-1"
                         />
                       </div>
@@ -212,7 +188,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             </p>
                           )}
                           <h4 className="text-xs font-medium text-ink line-clamp-1 leading-snug">
-                            {item.product.name}
+                            {item.product.name || (item.product as any).title || 'Товар'}
                           </h4>
                           <p className="text-xs font-mono font-bold text-ink mt-0.5">
                             {formatKrw(item.product.priceKrw)}
@@ -326,11 +302,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         <div className="flex items-center justify-between font-medium text-ink">
                           <span>{opt.title}</span>
                           <span className="font-mono font-bold text-gold">
-                            {opt.costKrw === 0
-                              ? 'Бесплатно'
-                              : totalAmountKrw >= 100000 && opt.id === 'courier_kr'
-                              ? '0 ₩ (Хит)'
-                              : formatKrw(opt.costKrw)}
+                            {opt.costKrw === 0 ? '0 ₩' : formatKrw(opt.costKrw)}
                           </span>
                         </div>
                         <p className="text-[11px] text-ink/50 mt-0.5">{opt.desc}</p>

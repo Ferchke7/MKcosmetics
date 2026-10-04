@@ -5,6 +5,8 @@ import { catalogApi } from '../../api/catalogApi';
 import { ProductCard } from '../../components/product/ProductCard';
 import { FiltersSidebar } from '../../components/sections/FiltersSidebar';
 import { CatalogProduct, CatalogFilterParams } from '../../core/types/catalog';
+import { useCart } from '../../hooks/useCart';
+import { useWishlist } from '../../hooks/useWishlist';
 import {
   SlidersHorizontal,
   ChevronRight,
@@ -19,6 +21,8 @@ const PAGE_SIZE = 24;
 
 export const CatalogPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addToCart, items: cartItems, setIsOpen: setIsCartOpen } = useCart();
+  const { isFavorite, toggleWishlist } = useWishlist();
 
   // Mobile filters drawer state
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -319,7 +323,17 @@ export const CatalogPage: React.FC = () => {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isFavorite={isFavorite(product.id)}
+                      onToggleFavorite={toggleWishlist}
+                      onAddToCart={(p) => {
+                        addToCart(p, 1);
+                        setIsCartOpen(true);
+                      }}
+                      inCartCount={cartItems.find((i) => i.product.id === product.id)?.quantity || 0}
+                    />
                   ))}
                 </div>
 

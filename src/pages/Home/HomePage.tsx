@@ -14,8 +14,13 @@ export const HomePage: React.FC = () => {
   const [data, setData] = useState<HomeCatalogData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { addToCart, items: cartItems } = useCart();
+  const { addToCart, items: cartItems, setIsOpen: setIsCartOpen } = useCart();
   const { isFavorite, toggleWishlist } = useWishlist();
+
+  const handleAddToCart = (product: any) => {
+    addToCart(product);
+    setIsCartOpen(true);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -72,7 +77,7 @@ export const HomePage: React.FC = () => {
         products={hitsToDisplay}
         watermarkText="Hits"
         accentPosition="left"
-        onAddToCart={addToCart}
+        onAddToCart={handleAddToCart}
         isFavorite={isFavorite}
         onToggleFavorite={toggleWishlist}
         cartItemsCount={getInCartCount}
@@ -85,7 +90,7 @@ export const HomePage: React.FC = () => {
           brandSlug={firstBrand.slug}
           count={firstBrand.count}
           products={firstBrand.products}
-          onAddToCart={addToCart}
+          onAddToCart={handleAddToCart}
           isFavorite={isFavorite}
           onToggleFavorite={toggleWishlist}
           cartItemsCount={getInCartCount}
@@ -106,7 +111,7 @@ export const HomePage: React.FC = () => {
         products={setsToDisplay}
         watermarkText="Sets"
         accentPosition="right"
-        onAddToCart={addToCart}
+        onAddToCart={handleAddToCart}
         isFavorite={isFavorite}
         onToggleFavorite={toggleWishlist}
         cartItemsCount={getInCartCount}
@@ -119,7 +124,7 @@ export const HomePage: React.FC = () => {
           brandSlug={secondBrand.slug}
           count={secondBrand.count}
           products={secondBrand.products}
-          onAddToCart={addToCart}
+          onAddToCart={handleAddToCart}
           isFavorite={isFavorite}
           onToggleFavorite={toggleWishlist}
           cartItemsCount={getInCartCount}

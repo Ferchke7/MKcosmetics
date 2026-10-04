@@ -2,12 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useCart } from '../../hooks/useCart';
 import { catalogApi } from '../../api/catalogApi';
 import { ProductCard } from '../../components/product/ProductCard';
 import { Heart, ChevronRight, ArrowLeft, ShoppingBag } from 'lucide-react';
 
 export const WishlistPage: React.FC = () => {
-  const { favoriteIds, count } = useWishlist();
+  const { favoriteIds, count, toggleWishlist, isFavorite } = useWishlist();
+  const { addToCart, items: cartItems, setIsOpen: setIsCartOpen } = useCart();
 
   // Load products to display favorite items
   const { data: productsData, isLoading } = useQuery({
@@ -59,7 +61,17 @@ export const WishlistPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {favoriteProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                isFavorite={isFavorite(p.id)}
+                onToggleFavorite={toggleWishlist}
+                onAddToCart={(prod) => {
+                  addToCart(prod, 1);
+                  setIsCartOpen(true);
+                }}
+                inCartCount={cartItems.find((i) => i.product.id === p.id)?.quantity || 0}
+              />
             ))}
           </div>
         )}

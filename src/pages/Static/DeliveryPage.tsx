@@ -43,7 +43,7 @@ export const DeliveryPage: React.FC = () => {
 
             <div className="text-xs sm:text-sm text-ink/80 leading-relaxed space-y-2 font-sans">
               <p>• <strong>Сроки:</strong> 1–2 рабочих дня по всей территории Республики Корея.</p>
-              <p>• <strong>Стоимость:</strong> 5 000 ₩ (бесплатно при сумме заказа от 100 000 ₩).</p>
+              <p>• <strong>Стоимость:</strong> 5 000 ₩ по всей Корее.</p>
               <p>• <strong>Отправка:</strong> Ежедневно в день заказа или на следующее утро с понедельника по субботу.</p>
             </div>
           </div>
