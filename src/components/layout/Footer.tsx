@@ -51,12 +51,19 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12 border-b border-paper/10 text-xs">
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
-            <div>
-              <div className="font-serif text-xl font-bold tracking-wider text-paper uppercase">
-                MK KOREA
-              </div>
-              <div className="text-[10px] uppercase tracking-widest text-gold font-semibold">
-                COSMETIC • SEOUL
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="MK KOREA"
+                className="w-14 h-14 rounded-full object-contain bg-white p-0.5 border border-line/40 shadow-sm shrink-0"
+              />
+              <div>
+                <div className="font-serif text-lg font-bold tracking-wider text-paper uppercase">
+                  MK KOREA
+                </div>
+                <div className="text-[10px] uppercase tracking-widest text-gold font-semibold">
+                  COSMETIC • SEOUL
+                </div>
               </div>
             </div>
             <p className="text-muted leading-relaxed">

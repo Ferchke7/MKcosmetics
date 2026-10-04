@@ -112,14 +112,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Center: Brand Logo */}
-          <Link to="/" className="text-center group">
-            <div className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-[0.18em] text-ink group-hover:text-gold transition-colors uppercase">
-              MK KOREA
-            </div>
-            <div className="text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-muted font-semibold mt-0.5">
-              COSMETIC • SEOUL
-            </div>
+          {/* Center: Brand Logo Emblem */}
+          <Link to="/" className="flex items-center justify-center group py-1" title="MK KOREA COSMETIC">
+            <img
+              src="/logo.png"
+              alt="MK KOREA COSMETIC"
+              className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
+            />
           </Link>
 
           {/* Right: Contacts / Wishlist / Cart */}
@@ -190,9 +189,16 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative w-4/5 max-w-xs bg-paper h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-line mb-6">
-                <div>
-                  <div className="font-serif text-xl font-bold tracking-wider text-ink">MK KOREA</div>
-                  <div className="text-[9px] uppercase tracking-widest text-muted">Cosmetics Seoul</div>
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/logo.png"
+                    alt="MK KOREA"
+                    className="w-12 h-12 rounded-full object-contain border border-line shadow-sm"
+                  />
+                  <div>
+                    <div className="font-serif text-lg font-bold tracking-wider text-ink">MK KOREA</div>
+                    <div className="text-[9px] uppercase tracking-widest text-muted font-semibold">Cosmetic Seoul</div>
+                  </div>
                 </div>
                 <button
                   type="button"
