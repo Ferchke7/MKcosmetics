@@ -28,48 +28,64 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-paper border-b border-line text-ink">
-      {/* 1. Top Bar: Contacts / Socials / Guarantee */}
-      <div className="bg-cream-deep/60 border-b border-line/60 text-xs text-muted py-1.5 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-ink font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+      {/* 1. Top Bar: Prominent Social Networks with @Handles & Verification */}
+      <div className="bg-[#191A15] text-[#FAF7F2] border-b border-[#2B2C27] py-2 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5">
+          {/* Location & Authentic badge */}
+          <div className="flex items-center gap-2 sm:gap-3 text-xs text-[#FAF7F2]/80 flex-wrap justify-center md:justify-start">
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#FAF7F2]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Офис и склад в Сеуле (Южная Корея)</span>
             </span>
-            <span className="hidden sm:inline text-line">•</span>
-            <span className="hidden sm:inline">Прямые оптовые поставки оригинальной косметики</span>
+            <span className="hidden lg:inline text-[#FAF7F2]/30">•</span>
+            <span className="hidden lg:inline text-[#FAF7F2]/70">100% Оригинальная корейская косметика в ₩ KRW</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Social Network Channels with bold @handles */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
+            {/* Telegram Channel */}
             <a
               href={BRAND_CONFIG.telegramChannelUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-gold transition-colors flex items-center gap-1"
-              title="Telegram канал"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229ED9]/20 hover:bg-[#229ED9] text-[#FAF7F2] border border-[#229ED9]/40 hover:border-[#229ED9] text-xs transition-all shadow-sm group"
+              title="Наш Telegram-канал"
             >
-              <Send className="w-3 h-3 text-[#229ED9]" />
-              <span className="hidden md:inline">Telegram</span>
+              <Send className="w-3.5 h-3.5 text-[#64B5F6] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">Telegram:</span>
+              <span className="font-mono font-bold text-[#90CAF9] group-hover:text-white">
+                {BRAND_CONFIG.telegramChannel || '@mkcosmetkor'}
+              </span>
             </a>
-            <a
-              href={BRAND_CONFIG.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gold transition-colors flex items-center gap-1"
-              title="WhatsApp консультация"
-            >
-              <Phone className="w-3 h-3 text-[#25D366]" />
-              <span className="hidden md:inline">WhatsApp</span>
-            </a>
+
+            {/* Instagram */}
             <a
               href={BRAND_CONFIG.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-gold transition-colors flex items-center gap-1"
-              title="Instagram"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1306C]/20 hover:bg-[#E1306C] text-[#FAF7F2] border border-[#E1306C]/40 hover:border-[#E1306C] text-xs transition-all shadow-sm group"
+              title="Наш Instagram"
             >
-              <InstagramIcon className="w-3 h-3 text-[#E1306C]" />
-              <span className="hidden md:inline">Instagram</span>
+              <InstagramIcon className="w-3.5 h-3.5 text-[#FF8DA1] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">Insta:</span>
+              <span className="font-mono font-bold text-[#FFAB91] group-hover:text-white">
+                {BRAND_CONFIG.instagramHandle || '@muhabbat.kim.mk'}
+              </span>
+            </a>
+
+            {/* WhatsApp */}
+            <a
+              href={BRAND_CONFIG.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/20 hover:bg-[#25D366] text-[#FAF7F2] border border-[#25D366]/40 hover:border-[#25D366] text-xs transition-all shadow-sm group"
+              title="WhatsApp для заказов и консультаций"
+            >
+              <Phone className="w-3.5 h-3.5 text-[#81C784] group-hover:text-white transition-colors" />
+              <span className="text-[11px] font-normal text-[#FAF7F2]/70 group-hover:text-white">WA:</span>
+              <span className="font-mono font-bold text-[#A5D6A7] group-hover:text-white">
+                {BRAND_CONFIG.phoneDisplay || '+82 10 8390 5577'}
+              </span>
             </a>
           </div>
         </div>

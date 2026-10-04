@@ -62,33 +62,36 @@ export const Footer: React.FC = () => {
             <p className="text-muted leading-relaxed">
               Интернет-магазин и оптовый отдел люксовой и профессиональной корейской косметики со склада в Сеуле.
             </p>
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               <a
                 href={BRAND_CONFIG.telegramChannelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-paper/10 hover:bg-gold hover:text-ink text-paper flex items-center justify-center transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#229ED9] hover:text-white text-paper transition-all text-xs w-fit"
                 title="Telegram"
               >
-                <Send className="w-4 h-4" />
-              </a>
-              <a
-                href={BRAND_CONFIG.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-paper/10 hover:bg-gold hover:text-ink text-paper flex items-center justify-center transition-colors"
-                title="WhatsApp"
-              >
-                <Phone className="w-4 h-4" />
+                <Send className="w-3.5 h-3.5 text-[#229ED9]" />
+                <span className="font-mono font-medium">{BRAND_CONFIG.telegramChannel || '@mkcosmetkor'}</span>
               </a>
               <a
                 href={BRAND_CONFIG.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-paper/10 hover:bg-gold hover:text-ink text-paper flex items-center justify-center transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#E1306C] hover:text-white text-paper transition-all text-xs w-fit"
                 title="Instagram"
               >
-                <InstagramIcon className="w-4 h-4" />
+                <InstagramIcon className="w-3.5 h-3.5 text-[#E1306C]" />
+                <span className="font-mono font-medium">{BRAND_CONFIG.instagramHandle || '@muhabbat.kim.mk'}</span>
+              </a>
+              <a
+                href={BRAND_CONFIG.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#25D366] hover:text-white text-paper transition-all text-xs w-fit"
+                title="WhatsApp"
+              >
+                <Phone className="w-3.5 h-3.5 text-[#25D366]" />
+                <span className="font-mono font-medium">{BRAND_CONFIG.phoneDisplay || '+82 10 8390 5577'}</span>
               </a>
             </div>
           </div>

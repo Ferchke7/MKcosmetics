@@ -122,8 +122,9 @@ export const CatalogPage: React.FC = () => {
 
   // Determine page title
   const currentCategoryObj = categories.find((c) => c.slug === categoryParam);
+  const currentCategoryTitle = currentCategoryObj?.title || (currentCategoryObj as any)?.name || categoryParam;
   const pageTitle = currentCategoryObj
-    ? currentCategoryObj.name
+    ? currentCategoryTitle
     : brandParam
     ? `Косметика ${brandParam}`
     : isHitParam
@@ -154,7 +155,7 @@ export const CatalogPage: React.FC = () => {
             {categoryParam && (
               <>
                 <ChevronRight className="w-3.5 h-3.5 text-line" />
-                <span className="text-ink font-medium">{currentCategoryObj?.name || categoryParam}</span>
+                <span className="text-ink font-medium">{currentCategoryTitle}</span>
               </>
             )}
             {brandParam && (

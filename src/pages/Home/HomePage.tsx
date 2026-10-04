@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { catalogApi } from '../../api/catalogApi';
 import { HomeCatalogData } from '../../core/types/catalog';
 import { HeroSlider } from '../../components/sections/HeroSlider';
+import { FeatureBadgesBar } from '../../components/sections/FeatureBadgesBar';
 import { SpotlightRail } from '../../components/sections/SpotlightRail';
 import { BrandStage } from '../../components/sections/BrandStage';
 import { CategoryTiles } from '../../components/sections/CategoryTiles';
+import { StoryInNumbers } from '../../components/sections/StoryInNumbers';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
 
@@ -55,6 +57,9 @@ export const HomePage: React.FC = () => {
     <div>
       {/* 1. Hero Luxury Slider */}
       <HeroSlider />
+
+      {/* 1.5. Wellbeing X Feature Badges Bar */}
+      <FeatureBadgesBar />
 
       {/* 2. Spotlight: Hits / Хиты каталога */}
       <SpotlightRail
@@ -120,6 +125,9 @@ export const HomePage: React.FC = () => {
           cartItemsCount={getInCartCount}
         />
       )}
+
+      {/* 7. Wellbeing X: Our Story In Numbers */}
+      <StoryInNumbers />
     </div>
   );
 };

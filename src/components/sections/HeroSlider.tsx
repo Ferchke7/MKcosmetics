@@ -81,14 +81,23 @@ export const HeroSlider: React.FC = () => {
             {active.subtitle}
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-wrap items-center gap-3">
             <Link
               to={active.link}
-              className="inline-flex items-center gap-2.5 h-12 px-8 rounded-card bg-gold hover:bg-gold-hover text-white text-sm font-semibold tracking-wide transition-all shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2.5 h-12 px-8 rounded-full bg-[#191A15] hover:bg-kraft text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider transition-all shadow-md hover:shadow-lg"
             >
               <span>{active.buttonText}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
+
+            <a
+              href="https://t.me/mkcosmetkor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white/80 hover:bg-white border border-line text-ink text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
+            >
+              <span>Telegram: @mkcosmetkor</span>
+            </a>
           </div>
         </div>
 
