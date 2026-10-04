@@ -75,7 +75,11 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands, cart
 
   const handleSelectCategory = (slug: string) => {
     setActiveMenu(null);
-    navigate(`/catalog/${slug}`);
+    if (!slug || slug === 'all') {
+      navigate('/catalog');
+    } else {
+      navigate(`/catalog?categorySlug=${slug}`);
+    }
   };
 
   const handleSelectBrand = (brandName: string) => {

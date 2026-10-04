@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../../api/catalogApi';
 import { ProductCard } from '../../components/product/ProductCard';
@@ -20,15 +20,20 @@ import {
 const PAGE_SIZE = 24;
 
 export const CatalogPage: React.FC = () => {
+  const { categorySlug: routeCategorySlug } = useParams<{ categorySlug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { addToCart, items: cartItems, setIsOpen: setIsCartOpen } = useCart();
   const { isFavorite, toggleWishlist } = useWishlist();
 
   // Mobile filters drawer state
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Read state from URL search params
-  const categoryParam = searchParams.get('category') || undefined;
+  // Read state from URL route params or search params
+  const rawCategory = (routeCategorySlug && routeCategorySlug !== 'all')
+    ? routeCategorySlug
+    : searchParams.get('categorySlug') || searchParams.get('category') || undefined;
+  const categoryParam = rawCategory === 'all' ? undefined : rawCategory;
   const brandParam = searchParams.get('brand') || undefined;
   const queryParam = searchParams.get('q') || '';
   const sortParam = (searchParams.get('sort') as CatalogFilterParams['sort']) || 'popular';
@@ -84,6 +89,9 @@ export const CatalogPage: React.FC = () => {
   // Update URL helper
   const updateQuery = (updates: Record<string, string | null | undefined>) => {
     const next = new URLSearchParams(searchParams);
+    if (categoryParam && !('category' in updates) && !('categorySlug' in updates)) {
+      next.set('categorySlug', categoryParam);
+    }
     Object.entries(updates).forEach(([key, val]) => {
       if (val === null || val === undefined || val === '') {
         next.delete(key);
@@ -95,12 +103,13 @@ export const CatalogPage: React.FC = () => {
     if (!('page' in updates)) {
       next.delete('page');
     }
-    setSearchParams(next);
+    navigate(`/catalog?${next.toString()}`);
   };
 
   const handleFilterChange = (newFilters: CatalogFilterParams) => {
     updateQuery({
-      category: newFilters.categorySlug,
+      categorySlug: newFilters.categorySlug || null,
+      category: null,
       brand: newFilters.brand,
       minPrice: newFilters.minPrice ? String(newFilters.minPrice) : null,
       maxPrice: newFilters.maxPrice ? String(newFilters.maxPrice) : null,
@@ -115,13 +124,16 @@ export const CatalogPage: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     const next = new URLSearchParams(searchParams);
+    if (categoryParam && !next.has('categorySlug') && !next.has('category')) {
+      next.set('categorySlug', categoryParam);
+    }
     next.set('page', String(newPage));
-    setSearchParams(next);
+    navigate(`/catalog?${next.toString()}`);
     window.scrollTo({ top: 200, behavior: 'smooth' });
   };
 
   const handleResetAll = () => {
-    setSearchParams(new URLSearchParams());
+    navigate('/catalog');
   };
 
   // Determine page title
