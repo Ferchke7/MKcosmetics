@@ -19,7 +19,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   inCartCount = 0,
 }) => {
-  const photoUrl = product.photos?.[0]?.w300 || product.photos?.[0]?.w600 || product.photos?.[0]?.full || '/placeholder.png';
+  const photoUrl =
+    product.photos?.[0]?.w300 ||
+    product.photos?.[0]?.w600 ||
+    product.photos?.[0]?.full ||
+    product.images?.[0] ||
+    '/placeholder.png';
+  const displayTitle = product.title || product.name || 'Товар';
 
   return (
     <div className="group flex flex-col justify-between bg-paper rounded-card border border-line p-3 transition-all duration-300 hover:shadow-soft-lg hover:border-gold/30">
@@ -29,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <Link to={`/product/${product.slug}`} className="block w-full h-full">
             <img
               src={photoUrl}
-              alt={product.title}
+              alt={displayTitle}
               loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -84,7 +90,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Title */}
         <Link to={`/product/${product.slug}`} className="block">
           <h3 className="font-medium text-xs sm:text-sm text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
-            {product.title}
+            {displayTitle}
           </h3>
         </Link>
 

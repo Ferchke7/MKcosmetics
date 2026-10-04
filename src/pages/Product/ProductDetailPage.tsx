@@ -37,7 +37,7 @@ export const ProductDetailPage: React.FC = () => {
 
   // Fetch product by slug
   const {
-    data: product,
+    data: productData,
     isLoading,
     error,
   } = useQuery({
@@ -45,6 +45,8 @@ export const ProductDetailPage: React.FC = () => {
     queryFn: () => catalogApi.getProductBySlug(slug!),
     enabled: Boolean(slug),
   });
+
+  const product = productData?.product;
 
   // Fetch related products (same category)
   const { data: relatedData } = useQuery({
@@ -54,7 +56,7 @@ export const ProductDetailPage: React.FC = () => {
         categorySlug: product?.categorySlug,
         limit: 8,
       }),
-    enabled: Boolean(product?.categorySlug),
+    enabled: Boolean(product?.categorySlug && (!productData?.related || productData.related.length === 0)),
   });
 
   useEffect(() => {
@@ -129,7 +131,9 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const relatedProducts = (relatedData?.items || []).filter((p) => p.id !== product.id).slice(0, 4);
+  const relatedProducts = (productData?.related && productData.related.length > 0)
+    ? productData.related.filter((p) => p.id !== product.id).slice(0, 4)
+    : (relatedData?.items || []).filter((p) => p.id !== product.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-ink pb-24">

@@ -134,6 +134,7 @@ func NewRouter(
 			// Catalog Sync & Overrides (b-catalog)
 			admin.Route("/catalog", func(cat chi.Router) {
 				cat.Post("/sync", catalogHandler.AdminSync)
+				cat.Post("/import", catalogHandler.AdminImport)
 				cat.Get("/status", catalogHandler.AdminGetStatus)
 				cat.Get("/products", catalogHandler.AdminGetProducts)
 				cat.Put("/products/{id}", catalogHandler.AdminUpdateOverrides)

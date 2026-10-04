@@ -48,12 +48,37 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     staleTime: 10 * 1000,
   });
 
-  // Sync Mutation
+  const [syncProgress, setSyncProgress] = useState<string | null>(null);
+
+  // Direct Client-Side Sync Mutation (Bypasses server datacenter IP blocks completely!)
+  const directSyncMutation = useMutation({
+    mutationFn: () => catalogApi.adminDirectSync(token, (msg) => setSyncProgress(msg)),
+    onSuccess: (res: any) => {
+      setSyncProgress(null);
+      setFeedbackMsg({
+        type: 'success',
+        text: `Прямая синхронизация завершена успешно! Обработано ${res?.total || 0} товаров (Добавлено: ${res?.added || 0}, Обновлено: ${res?.updated || 0}).`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+    onError: (err: any) => {
+      setSyncProgress(null);
+      setFeedbackMsg({
+        type: 'error',
+        text: `Ошибка прямой синхронизации: ${err.message || 'Сбой соединения'}`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 6000);
+    },
+  });
+
+  // Server Sync Mutation
   const syncMutation = useMutation({
     mutationFn: () => catalogApi.adminSync(token),
     onSuccess: (res) => {
       const msg = res?.async
-        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме! Загружаем товары...'
+        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме на сервере! Загружаем товары...'
         : `Синхронизация завершена успешно! Обработано ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
 
       setFeedbackMsg({
@@ -77,7 +102,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     onError: (err: any) => {
       setFeedbackMsg({
         type: 'error',
-        text: `Ошибка синхронизации: ${err.message || 'Сбой соединения'}`,
+        text: `Ошибка серверной синхронизации: ${err.message || 'Сбой соединения'}`,
       });
       setTimeout(() => setFeedbackMsg(null), 5000);
     },
@@ -141,14 +166,27 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
             </p>
           </div>
 
-          <button
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            className="btn-gold px-6 py-3.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 flex-shrink-0"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-            {syncMutation.isPending ? 'Синхронизация...' : 'Синхронизировать сейчас'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => directSyncMutation.mutate()}
+              disabled={directSyncMutation.isPending || syncMutation.isPending}
+              className="btn-gold px-6 py-3.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 flex-shrink-0"
+              title="Загрузка актуальных данных напрямую из b-catalog без зависимости от IP-адреса хостинга"
+            >
+              <RefreshCw className={`w-4 h-4 ${directSyncMutation.isPending ? 'animate-spin' : ''}`} />
+              {directSyncMutation.isPending ? (syncProgress || 'Синхронизация...') : 'Синхронизировать онлайн'}
+            </button>
+
+            <button
+              onClick={() => syncMutation.mutate()}
+              disabled={syncMutation.isPending || directSyncMutation.isPending}
+              className="px-4 py-3.5 rounded-full border border-line text-xs uppercase tracking-wider font-medium text-ink/70 hover:bg-cream inline-flex items-center justify-center gap-2 disabled:opacity-50 flex-shrink-0 transition-colors"
+              title="Фоновая синхронизация силами сервера"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-gold" />
+              Серверный Sync
+            </button>
+          </div>
         </div>
 
         {/* Feedback Message */}

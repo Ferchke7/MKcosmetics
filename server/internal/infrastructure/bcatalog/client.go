@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"time"
 )
 
@@ -25,7 +27,15 @@ func NewClient(shopCode string) *Client {
 		KeepAlive: 30 * time.Second,
 	}
 
+	proxyFunc := http.ProxyFromEnvironment
+	if proxyEnv := os.Getenv("CATALOG_PROXY_URL"); proxyEnv != "" {
+		if parsed, err := url.Parse(proxyEnv); err == nil {
+			proxyFunc = http.ProxyURL(parsed)
+		}
+	}
+
 	tr := &http.Transport{
+		Proxy: proxyFunc,
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// Force IPv4 ("tcp4") to prevent hangs on Docker bridge networks and VPS with incomplete IPv6 routing
 			return dialer.DialContext(ctx, "tcp4", addr)

@@ -7,12 +7,15 @@ interface PriceProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const formatKrw = (val: number): string => {
-  return val.toLocaleString('ru-RU') + ' ₩';
+export const formatKrw = (val?: number | null): string => {
+  if (val === undefined || val === null || isNaN(val)) {
+    return '0 ₩';
+  }
+  return Math.round(val).toLocaleString('ru-RU') + ' ₩';
 };
 
 export const Price: React.FC<PriceProps> = ({
-  amount,
+  amount = 0,
   oldAmount,
   className = '',
   size = 'md',
@@ -24,7 +27,7 @@ export const Price: React.FC<PriceProps> = ({
     xl: 'text-xl font-bold font-serif',
   };
 
-  const hasDiscount = oldAmount && oldAmount > amount;
+  const hasDiscount = Boolean(oldAmount && oldAmount > (amount || 0));
 
   return (
     <div className={`inline-flex items-baseline gap-2 ${className}`}>

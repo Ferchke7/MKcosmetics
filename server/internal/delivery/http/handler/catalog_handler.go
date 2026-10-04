@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/bcatalog"
 	"mkcosmetics/server/internal/usecase"
 )
 
@@ -274,5 +275,37 @@ func (h *CatalogHandler) AdminUpdateOverrides(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
+	})
+}
+
+type importCatalogPayload struct {
+	Products []bcatalog.RawProduct `json:"products"`
+}
+
+func (h *CatalogHandler) AdminImport(w http.ResponseWriter, r *http.Request) {
+	// 50MB max body limit for whole catalog payload
+	r.Body = http.MaxBytesReader(w, r.Body, 50<<20)
+
+	var payload importCatalogPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, `{"error":"invalid json body: `+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+
+	if len(payload.Products) == 0 {
+		http.Error(w, `{"error":"no products provided"}`, http.StatusBadRequest)
+		return
+	}
+
+	res, err := h.catalogUC.IngestRawProducts(r.Context(), payload.Products)
+	if err != nil {
+		http.Error(w, `{"error":"failed to import products: `+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"result":  res,
 	})
 }

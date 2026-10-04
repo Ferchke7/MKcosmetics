@@ -213,4 +213,50 @@ export const catalogApi = {
     });
     await parseResponse<any>(res, 'Ошибка обновления параметров');
   },
+
+  async adminImportProducts(token: string, products: any[]): Promise<any> {
+    const res = await fetch(`${API_BASE}/admin/catalog/import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ products }),
+    });
+    return parseResponse<any>(res, 'Ошибка сохранения каталога в базе');
+  },
+
+  async adminDirectSync(
+    token: string,
+    onProgress?: (msg: string) => void
+  ): Promise<{ total: number; added: number; updated: number }> {
+    onProgress?.('Подключение к b-catalog напрямую из браузера...');
+    let allProducts: any[] = [];
+    let page = 1;
+    const pageSize = 100;
+
+    while (true) {
+      onProgress?.(`Загрузка страницы ${page} напрямую из b-catalog...`);
+      const url = `https://roznmkkoreacosmetic.b-catalog.ru/api/api/v1/shop/products?shop_code=roznmkkoreacosmetic&page=${page}&page_size=${pageSize}`;
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) {
+        throw new Error(`b-catalog вернул статус ${res.status}`);
+      }
+      const json = await res.json();
+      const results = json.results || [];
+      allProducts = allProducts.concat(results);
+
+      if (allProducts.length >= (json.total || 0) || results.length === 0) {
+        break;
+      }
+      page++;
+    }
+
+    onProgress?.(`Сохранение ${allProducts.length} товаров в базу данных...`);
+    const importRes = await catalogApi.adminImportProducts(token, allProducts);
+    return importRes.result || importRes;
+  },
 };
