@@ -1,81 +1,73 @@
 import { useState, useEffect } from 'react';
-import { CartItem, Product } from '../core/types/product';
-import { StorageService } from '../services/storage/storageService';
-import { buildWhatsAppUrl } from '../core/constants/brand';
+import { CartItem, CatalogProduct } from '../core/types/catalog';
 
-export function useCart(formatPrice: (amt: number) => string) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+const CART_STORAGE_KEY = 'mk_cart_krw_v2';
+
+export function useCart() {
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    setItems(StorageService.getCart());
-  }, []);
-
-  const saveAndSetItems = (newItems: CartItem[]) => {
-    setItems(newItems);
-    StorageService.saveCart(newItems);
-  };
-
-  const addToCart = (product: Product, quantity = 1) => {
-    const existingIndex = items.findIndex((item) => item.product.id === product.id);
-    let updated: CartItem[];
-    if (existingIndex > -1) {
-      updated = [...items];
-      updated[existingIndex].quantity += quantity;
-    } else {
-      updated = [...items, { product, quantity }];
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {
+      console.warn('Failed to persist cart:', e);
     }
-    saveAndSetItems(updated);
-    setIsDrawerOpen(true);
+  }, [items]);
+
+  const addToCart = (product: CatalogProduct, qty = 1) => {
+    setItems((prev) => {
+      const idx = prev.findIndex((i) => i.product.id === product.id);
+      if (idx > -1) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
+        return next;
+      }
+      return [...prev, { product, quantity: qty }];
+    });
   };
 
-  const removeFromCart = (productId: string) => {
-    const updated = items.filter((item) => item.product.id !== productId);
-    saveAndSetItems(updated);
-  };
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
+  const updateQuantity = (productId: number, qty: number) => {
+    if (qty <= 0) {
       removeFromCart(productId);
       return;
     }
-    const updated = items.map((item) =>
-      item.product.id === productId ? { ...item, quantity } : item
+    setItems((prev) =>
+      prev.map((i) => (i.product.id === productId ? { ...i, quantity: qty } : i))
     );
-    saveAndSetItems(updated);
+  };
+
+  const removeFromCart = (productId: number) => {
+    setItems((prev) => prev.filter((i) => i.product.id !== productId));
   };
 
   const clearCart = () => {
-    saveAndSetItems([]);
+    setItems([]);
   };
 
-  const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalKrw = items.reduce((sum, item) => sum + item.product.priceKrw * item.quantity, 0);
-
-  const generateWhatsAppOrderLink = (clientName?: string, address?: string): string => {
-    let text = `🌸 *Здравствуйте, Мухаббат! Хочу оформить заказ в MK KOREA COSMETIC:*\n\n`;
-    items.forEach((item, index) => {
-      text += `${index + 1}. *${item.product.name}*\n   Кол-во: ${item.quantity} шт. | ${formatPrice(item.product.priceKrw * item.quantity)}\n`;
-    });
-    text += `\n💰 *Итого:* ${formatPrice(totalKrw)}\n`;
-    if (clientName) text += `👤 *Имя:* ${clientName}\n`;
-    if (address) text += `📍 *Адрес / Страна доставки:* ${address}\n`;
-    text += `\nПожалуйста, подтвердите наличие и стоимость доставки ✨`;
-
-    return buildWhatsAppUrl(text);
-  };
+  const totalCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const totalAmountKrw = items.reduce(
+    (sum, i) => sum + (i.product.priceKrw || 0) * i.quantity,
+    0
+  );
 
   return {
     items,
     totalCount,
-    totalKrw,
-    formattedTotal: formatPrice(totalKrw),
-    isDrawerOpen,
-    setIsDrawerOpen,
+    totalAmountKrw,
+    isOpen,
+    setIsOpen,
     addToCart,
-    removeFromCart,
     updateQuantity,
+    removeFromCart,
     clearCart,
-    generateWhatsAppOrderLink,
   };
 }

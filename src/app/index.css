@@ -9,36 +9,59 @@
   }
 
   body {
-    background-color: #FAF8F5;
-    color: #1A1917;
+    background-color: #F8F5F0;
+    color: #1C1B19;
     overflow-x: hidden;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1, h2, h3, h4, .font-serif {
+    font-family: 'Cormorant Garamond', Georgia, serif;
   }
 }
 
-/* Custom subtle EvaCode gold scrollbar */
+/* Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F7F4EF;
+  background: #F1EBE1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B89254;
+  background: #A8834A;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9E7B42;
+  background: #7D5F31;
 }
 
-/* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Custom components layer */
+@layer components {
+  .btn-gold {
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 bg-gold text-white hover:bg-gold-hover shadow-sm rounded-card;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 border border-gold text-gold hover:bg-gold hover:text-white rounded-card;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-bold tracking-[0.2em] uppercase text-gold;
+  }
+
+  .watermark {
+    @apply font-serif text-[120px] font-bold leading-none select-none pointer-events-none opacity-[0.06] text-ink absolute;
+  }
 }

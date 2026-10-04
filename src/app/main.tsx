@@ -1,16 +1,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { LanguageProvider } from '../core/i18n/LanguageContext';
+import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../core/auth/AuthContext';
+import { LanguageProvider } from '../core/i18n/LanguageContext';
+import { App } from './App';
 import './index.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 60 * 1000,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>
 );

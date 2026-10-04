@@ -64,7 +64,7 @@ func (uc *OrderUseCase) CreateOrder(ctx context.Context, input CreateOrderInput)
 		input.Phone = "Не указан"
 	}
 	if input.Currency == "" {
-		input.Currency = "UZS"
+		input.Currency = "KRW"
 	}
 	if input.ChannelSource == "" {
 		input.ChannelSource = "web"

@@ -54,6 +54,7 @@ import { CustomerCRMView } from './CustomerCRMView';
 import { BeautyBlogView } from '../blog/BeautyBlogView';
 import { TelegramDummyImportModal } from './TelegramDummyImportModal';
 import { UnifiedDataGrid, Column, BulkAction } from './UnifiedDataGrid';
+import { CatalogSyncView } from './CatalogSyncView';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -784,8 +785,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   : 'text-neutral-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-amber-400' : ''}`} />
-              <span>Telegram Синхронизация</span>
+              <RefreshCw className="w-4 h-4" />
+              <span>Каталог b-catalog</span>
             </button>
 
             <button
@@ -968,48 +969,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB: INVENTORY VARIANTS */}
           {activeTab === 'variants' && <InventoryVariantsView token={token || ''} />}
 
-          {/* TAB: TELEGRAM SYNC */}
-          {activeTab === 'sync' && (
-            <div className="max-w-2xl space-y-6">
-              <div className="p-6 rounded-3xl bg-[#181614] border border-amber-500/20 shadow-xl space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-sky-500/20 text-sky-400">
-                    <Send className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Синхронизация с Telegram</h3>
-                    <p className="text-xs text-neutral-400">Канал @mkcosmetkor • Автоматический сбор каждые 3 мин.</p>
-                  </div>
-                </div>
-
-                {syncMessage && (
-                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
-                    {syncMessage}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <button
-                    onClick={() => handleTriggerSync(false)}
-                    disabled={isSyncing}
-                    className="p-4 rounded-2xl bg-[#221F1C] hover:bg-[#2C2824] border border-amber-500/20 text-left transition-all disabled:opacity-50"
-                  >
-                    <div className="font-bold text-white text-sm">Обычная синхронизация</div>
-                    <div className="text-xs text-neutral-400 mt-1">Проверяет последние новые посты</div>
-                  </button>
-
-                  <button
-                    onClick={() => handleTriggerSync(true)}
-                    disabled={isSyncing}
-                    className="p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black text-left font-bold transition-all disabled:opacity-50 shadow-lg"
-                  >
-                    <div className="text-sm">Глубокий Scrape (40+ страниц)</div>
-                    <div className="text-xs opacity-80 mt-1">Полная перезагрузка каталога</div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* TAB: B-CATALOG SYNC & OVERRIDES */}
+          {activeTab === 'sync' && <CatalogSyncView token={token || ''} />}
 
           {/* TAB: SETTINGS & PASSWORD */}
           {activeTab === 'settings' && (

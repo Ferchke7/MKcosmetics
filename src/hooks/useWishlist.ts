@@ -1,30 +1,37 @@
 import { useState, useEffect } from 'react';
-import { StorageService } from '../services/storage/storageService';
+
+const WISHLIST_KEY = 'mk_wishlist_ids';
 
 export function useWishlist() {
-  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem(WISHLIST_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
-    setWishlistIds(StorageService.getWishlist());
-  }, []);
-
-  const toggleWishlist = (productId: string) => {
-    let updated: string[];
-    if (wishlistIds.includes(productId)) {
-      updated = wishlistIds.filter((id) => id !== productId);
-    } else {
-      updated = [...wishlistIds, productId];
+    try {
+      localStorage.setItem(WISHLIST_KEY, JSON.stringify(favoriteIds));
+    } catch (e) {
+      console.warn('Failed to persist wishlist:', e);
     }
-    setWishlistIds(updated);
-    StorageService.saveWishlist(updated);
+  }, [favoriteIds]);
+
+  const toggleWishlist = (id: number) => {
+    setFavoriteIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
-  const isFavorite = (productId: string) => wishlistIds.includes(productId);
+  const isFavorite = (id: number) => favoriteIds.includes(id);
 
   return {
-    wishlistIds,
+    favoriteIds,
     toggleWishlist,
     isFavorite,
-    count: wishlistIds.length,
+    count: favoriteIds.length,
   };
 }
