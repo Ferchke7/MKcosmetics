@@ -28,19 +28,9 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-paper border-b border-line text-ink">
-      {/* 1. Top Bar: Social Networks & Key Status in Soft Warm Palette */}
+      {/* 1. Top Bar: Clean Social Channels Bar */}
       <div className="bg-[#F7F3EC] text-ink border-b border-line py-2 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5">
-          {/* Status badge: Clean & Minimal (without office/warehouse) */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs text-ink/75 flex-wrap justify-center md:justify-start">
-            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>100% Оригинальная корейская косметика</span>
-            </span>
-            <span className="hidden sm:inline text-line">•</span>
-            <span className="hidden sm:inline text-ink/60">Прямые поставки из Кореи в ₩ KRW</span>
-          </div>
-
+        <div className="max-w-7xl mx-auto flex items-center justify-center sm:justify-end">
           {/* Social Network Channels with soft, harmonious badges */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
             {/* Telegram Channel */}
