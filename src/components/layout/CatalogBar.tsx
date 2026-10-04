@@ -80,6 +80,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands, cart
     } else {
       navigate(`/catalog?categorySlug=${slug}`);
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectBrand = (brandName: string) => {

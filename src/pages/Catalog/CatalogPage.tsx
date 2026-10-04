@@ -86,6 +86,13 @@ export const CatalogPage: React.FC = () => {
   const totalItems = productsData?.total || 0;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
 
+  // Automatically scroll smoothly to top when category changes
+  useEffect(() => {
+    if (categoryParam || routeCategorySlug) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [categoryParam, routeCategorySlug]);
+
   // Update URL helper
   const updateQuery = (updates: Record<string, string | null | undefined>) => {
     const next = new URLSearchParams(searchParams);
@@ -104,6 +111,9 @@ export const CatalogPage: React.FC = () => {
       next.delete('page');
     }
     navigate(`/catalog?${next.toString()}`);
+    if ('categorySlug' in updates || 'category' in updates) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleFilterChange = (newFilters: CatalogFilterParams) => {

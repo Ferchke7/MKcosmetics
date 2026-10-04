@@ -31,6 +31,12 @@ import { AdminDashboard } from '../components/admin/AdminDashboard';
 const StorefrontLayout: React.FC = () => {
   const { totalCount: cartCount, isOpen: isCartOpen, setIsOpen: setIsCartOpen } = useCart();
   const { count: wishlistCount } = useWishlist();
+  const location = useLocation();
+
+  // Scroll to top whenever route or search query changes
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location.pathname, location.search]);
 
   // Load categories and brands for the sticky CatalogBar
   const { data: categories = [] } = useQuery({
