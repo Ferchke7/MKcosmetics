@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface Slide {
   id: number;
@@ -60,8 +60,6 @@ export const HeroSlider: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   const active = slides[current];
 
@@ -130,24 +128,6 @@ export const HeroSlider: React.FC = () => {
           <span>{active.badge}</span>
         </div>
 
-        {/* Navigation Arrows */}
-        <button
-          type="button"
-          onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-paper/70 backdrop-blur-sm text-ink hover:bg-paper hover:text-gold flex items-center justify-center transition-all shadow-sm border border-line"
-          aria-label="Назад"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        <button
-          type="button"
-          onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-paper/70 backdrop-blur-sm text-ink hover:bg-paper hover:text-gold flex items-center justify-center transition-all shadow-sm border border-line"
-          aria-label="Вперед"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
 
         {/* Slide Indicator Dots */}
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2">
