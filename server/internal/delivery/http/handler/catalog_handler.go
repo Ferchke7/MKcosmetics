@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"mkcosmetics/server/internal/domain/repository"
@@ -157,9 +159,11 @@ func (h *CatalogHandler) GetDeliveryOptions(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-// Admin handlers
 func (h *CatalogHandler) AdminSync(w http.ResponseWriter, r *http.Request) {
-	res, err := h.catalogUC.Sync(r.Context())
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	res, err := h.catalogUC.Sync(ctx)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)

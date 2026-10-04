@@ -3,12 +3,15 @@ export interface ContactInfo {
   phone: string;
   phoneDisplay: string;
   whatsappUrl: string;
+  telegram?: string;
   telegramChannel: string;
   telegramChannelUrl: string;
   telegramConsultant?: string;
   telegramConsultantUrl?: string;
+  instagram?: string;
   instagramHandle: string;
   instagramUrl: string;
+  address?: string;
 }
 
 export interface QuickOrderPayload {

@@ -68,12 +68,12 @@ export const ContactsPage: React.FC = () => {
             </p>
             <div className="pt-2">
               <a
-                href={`https://t.me/${BRAND_CONFIG.telegram.replace('@', '')}`}
+                href={BRAND_CONFIG.telegramChannelUrl || `https://t.me/${(BRAND_CONFIG.telegram || '').replace('@', '')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="font-mono text-base font-bold text-gold hover:underline inline-flex items-center gap-1.5"
               >
-                {BRAND_CONFIG.telegram}
+                {BRAND_CONFIG.telegramChannel || BRAND_CONFIG.telegram || '@mkcosmetkor'}
               </a>
             </div>
           </div>
@@ -89,12 +89,12 @@ export const ContactsPage: React.FC = () => {
             </p>
             <div className="pt-2">
               <a
-                href={`https://instagram.com/${BRAND_CONFIG.instagram.replace('@', '')}`}
+                href={BRAND_CONFIG.instagramUrl || `https://instagram.com/${(BRAND_CONFIG.instagram || '').replace('@', '')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="font-mono text-base font-bold text-ink hover:text-gold transition-colors"
               >
-                {BRAND_CONFIG.instagram}
+                {BRAND_CONFIG.instagramHandle || BRAND_CONFIG.instagram || '@muhabbat.kim.mk'}
               </a>
             </div>
           </div>

@@ -402,8 +402,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex justify-between text-ink/60">
                   <span>Telegram:</span>
-                  <a href={`https://t.me/${BRAND_CONFIG.telegram.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-ink font-semibold hover:text-gold">
-                    {BRAND_CONFIG.telegram}
+                  <a
+                    href={BRAND_CONFIG.telegramChannelUrl || `https://t.me/${(BRAND_CONFIG.telegram || '').replace('@', '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-ink font-semibold hover:text-gold"
+                  >
+                    {BRAND_CONFIG.telegramChannel || BRAND_CONFIG.telegram || '@mkcosmetkor'}
                   </a>
                 </div>
               </div>
