@@ -6,7 +6,7 @@ export const StoryInNumbers: React.FC = () => {
   const stats = [
     { value: '200+', label: 'Товаров в наличии', desc: 'Ежедневное обновление склада' },
     { value: '15+', label: 'Премиум брендов', desc: 'Sulwhasoo, OHUI, The History of Whoo' },
-    { value: '10,000+', label: 'Доставлено заказов', desc: 'Клиенты по всей Корее и СНГ' },
+    { value: '10,000+', label: 'Доставлено заказов', desc: 'Довольные клиенты по всему миру' },
     { value: '100%', label: 'Оригинал из Кореи', desc: 'Прямые контракты с производителями' },
   ];
 

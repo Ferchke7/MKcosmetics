@@ -74,14 +74,14 @@ export const DeliveryPage: React.FC = () => {
                 <PackageCheck className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-normal text-ink">Авиа-карго в Узбекистан (Ташкент) и СНГ</h3>
-                <p className="text-xs text-ink/50">Оптовые и розничные отправки напрямую самолетом</p>
+                <h3 className="font-serif text-xl font-normal text-ink">Международная доставка по всему миру</h3>
+                <p className="text-xs text-ink/50">Экспресс авиа-карго и отправка в СНГ, США, Европу, ОАЭ и страны Азии</p>
               </div>
             </div>
 
             <div className="text-xs sm:text-sm text-ink/80 leading-relaxed space-y-2 font-sans">
-              <p>• <strong>Сроки авиадоставки:</strong> 2–4 дня с момента вылета из Инчхона.</p>
-              <p>• <strong>Оплата доставки:</strong> Оплачивается по фактическому весу карго при получении в пункте выдачи.</p>
+              <p>• <strong>Сроки авиадоставки:</strong> 2–5 рабочих дней с момента вылета из Инчхона (в зависимости от страны назначения).</p>
+              <p>• <strong>Оплата доставки:</strong> Рассчитывается и оплачивается по фактическому весу карго при получении в пункте выдачи.</p>
               <p>• <strong>Упаковка:</strong> Профессиональная ударопрочная термоупаковка со стикерами осторожно/хрупко.</p>
             </div>
           </div>

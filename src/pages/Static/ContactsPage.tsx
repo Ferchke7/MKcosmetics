@@ -106,7 +106,7 @@ export const ContactsPage: React.FC = () => {
             </div>
             <h3 className="font-serif text-lg font-normal text-ink">Склад в Сеуле</h3>
             <p className="text-xs text-ink/60">
-              Республика Корея, Сеул. Доставка по Корее и авиа-карго
+              Республика Корея, Сеул. Курьер по Корее и доставка по всему миру
             </p>
             <div className="pt-2">
               <p className="text-xs font-medium text-ink leading-relaxed">
