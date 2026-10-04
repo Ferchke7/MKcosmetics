@@ -10,6 +10,8 @@ interface Slide {
   buttonText: string;
   link: string;
   bgGradient: string;
+  image: string;
+  badge: string;
 }
 
 const slides: Slide[] = [
@@ -21,6 +23,8 @@ const slides: Slide[] = [
     buttonText: 'В каталог',
     link: '/catalog',
     bgGradient: 'from-[#FAF8F5] via-[#F4ECE1] to-[#EBE2D3]',
+    image: '/images/hero/hero-slide-1.jpg',
+    badge: 'Премиум уход • Сеул',
   },
   {
     id: 2,
@@ -30,6 +34,8 @@ const slides: Slide[] = [
     buttonText: 'Смотреть бренды',
     link: '/catalog',
     bgGradient: 'from-[#F7F4EF] via-[#EFE9DF] to-[#E3DACB]',
+    image: '/images/hero/hero-slide-2.jpg',
+    badge: '100% Оригинал • Прямой рейс',
   },
   {
     id: 3,
@@ -39,6 +45,8 @@ const slides: Slide[] = [
     buttonText: 'Смотреть наборы',
     link: '/catalog?categorySlug=nabory-588136',
     bgGradient: 'from-[#FAF5F0] via-[#F0E4D8] to-[#E8D6C6]',
+    image: '/images/hero/hero-slide-3.jpg',
+    badge: 'Выгода до 40% • Готовые сеты',
   },
 ];
 
@@ -60,24 +68,38 @@ export const HeroSlider: React.FC = () => {
   return (
     <div className="relative w-full overflow-hidden bg-cream-deep border-b border-line select-none">
       <div
-        className={`w-full min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] bg-gradient-to-r ${active.bgGradient} flex items-center transition-all duration-700 ease-out py-12 px-6 sm:px-12 lg:px-20 relative`}
+        className={`w-full min-h-[420px] sm:min-h-[480px] lg:min-h-[540px] bg-gradient-to-r ${active.bgGradient} flex items-center transition-colors duration-700 ease-out py-12 px-6 sm:px-12 lg:px-20 relative overflow-hidden`}
       >
+        {/* Dynamic AI Skincare Photo with Seamless Gradient Blend */}
+        <div className="absolute right-0 top-0 bottom-0 w-full sm:w-2/3 lg:w-3/5 overflow-hidden pointer-events-none">
+          <img
+            key={active.image}
+            src={active.image}
+            alt={active.title}
+            className="w-full h-full object-cover object-[center_right] animate-in fade-in zoom-in-105 duration-1000 transform transition-transform"
+          />
+          {/* Subtle warm luxury gradients to smoothly blend into left content & edges */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-[#FAF8F5]/80 sm:via-[#FAF8F5]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5]/40 via-transparent to-[#FAF8F5]/30" />
+        </div>
+
         {/* Subtle Luxury Pattern & Watermark */}
-        <div className="watermark right-10 top-1/2 -translate-y-1/2 hidden md:block">
+        <div className="watermark right-12 top-1/2 -translate-y-1/2 hidden xl:block opacity-20 pointer-events-none text-white">
           Seoul
         </div>
 
-        <div className="max-w-2xl z-10 space-y-4 sm:space-y-6 animate-in fade-in duration-500 key={active.id}">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-paper/80 backdrop-blur-sm border border-line text-xs font-bold text-gold uppercase tracking-[0.16em]">
+        {/* Left Content */}
+        <div className="max-w-xl sm:max-w-2xl z-10 space-y-4 sm:space-y-6 relative">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-paper/90 backdrop-blur-sm border border-line text-xs font-bold text-gold uppercase tracking-[0.16em] shadow-xs">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{active.eyebrow}</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-ink font-bold leading-[1.1] tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-ink font-bold leading-[1.1] tracking-tight drop-shadow-xs">
             {active.title}
           </h1>
 
-          <p className="text-sm sm:text-base text-ink/80 leading-relaxed max-w-xl font-normal">
+          <p className="text-sm sm:text-base text-ink/80 leading-relaxed max-w-lg font-normal drop-shadow-xs">
             {active.subtitle}
           </p>
 
@@ -93,12 +115,19 @@ export const HeroSlider: React.FC = () => {
             <a
               href="https://t.me/mkcosmetkor"
               target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white/80 hover:bg-white border border-line text-ink text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white/90 hover:bg-white border border-line text-ink text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
             >
               <span>Telegram: @mkcosmetkor</span>
             </a>
           </div>
+        </div>
+
+        {/* Floating Luxury Pill Badge on bottom-right of banner */}
+        <div className="hidden lg:flex items-center gap-2.5 absolute right-14 bottom-10 z-10 bg-paper/90 backdrop-blur-md px-4 py-2 rounded-full border border-line shadow-md text-xs font-semibold text-ink animate-in fade-in duration-500">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-gold">✦</span>
+          <span>{active.badge}</span>
         </div>
 
         {/* Navigation Arrows */}
