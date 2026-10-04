@@ -7,7 +7,7 @@ export const FeatureBadgesBar: React.FC = () => {
     {
       icon: <Truck className="w-5 h-5 text-kraft" />,
       title: 'Доставка по всему миру',
-      desc: 'Курьер по Корее (5 000 ₩), авиа-карго и отправка в любую точку мира',
+      desc: 'Курьер по Корее, авиа-карго и экспресс-отправка в любую точку мира',
     },
     {
       icon: <Warehouse className="w-5 h-5 text-kraft" />,

@@ -29,8 +29,8 @@ const DELIVERY_METHODS = [
   {
     id: 'courier_kr',
     title: 'Курьерская доставка по Южной Корее (CJ Logistics / Post)',
-    costKrw: 5000,
-    desc: 'Доставка до двери в течение 1–2 рабочих дней. Стоимость 5 000 ₩.',
+    costKrw: 0,
+    desc: 'Доставка до двери в течение 1–2 рабочих дней по всей территории Кореи.',
     freeThreshold: 0,
   },
   {

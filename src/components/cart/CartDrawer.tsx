@@ -32,7 +32,7 @@ interface CartDrawerProps {
 }
 
 const DELIVERY_OPTIONS = [
-  { id: 'courier_kr', title: 'Курьерская доставка по Южной Корее', costKrw: 5000, desc: '1–2 рабочих дня по Корее' },
+  { id: 'courier_kr', title: 'Курьерская доставка по Южной Корее', costKrw: 0, desc: '1–2 рабочих дня по Корее' },
   { id: 'pickup_seoul', title: 'Самовывоз со склада в Сеуле', costKrw: 0, desc: 'Бесплатно, согласовать время' },
   { id: 'cargo_world', title: 'Доставка по всему миру (СНГ, Европа, США, ОАЭ)', costKrw: 0, desc: 'Авиа-карго и экспресс-доставка. Оплата доставки при получении' },
 ];

@@ -369,7 +369,7 @@ export const ProductDetailPage: React.FC = () => {
                   <div>
                     <h5 className="text-xs font-bold text-ink">Быстрая доставка</h5>
                     <p className="text-[11px] text-ink/60 mt-0.5 leading-snug">
-                      Курьер по Корее (5 000 ₩)
+                      Курьер по Корее и авиа по миру
                     </p>
                   </div>
                 </div>
