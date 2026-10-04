@@ -19,7 +19,11 @@ import {
   Loader2,
   Copy,
   Check,
+  Send,
+  MessageCircle,
+  Camera,
 } from 'lucide-react';
+import { buildWhatsAppUrl } from '../../core/constants/brand';
 
 const DELIVERY_METHODS = [
   {
@@ -270,6 +274,55 @@ export const CheckoutPage: React.FC = () => {
           <h1 className="font-serif text-3xl sm:text-4xl font-normal text-ink">
             Оформление заказа
           </h1>
+        </div>
+
+        {/* Temporary messenger order banner */}
+        <div className="mb-8 p-5 sm:p-6 rounded-3xl bg-[#FFF8EE] border border-[#F3DFC0] shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-kraft/10 text-kraft flex items-center justify-center shrink-0">
+                <Camera className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg text-ink font-semibold">
+                  Оформление через сайт временно недоступно
+                </h3>
+                <p className="text-xs text-ink/75 mt-0.5 max-w-xl leading-relaxed">
+                  Вы можете отправить фотографии или скриншот выбранных товаров прямо нам в <strong>Telegram</strong> или <strong>WhatsApp</strong>. Мы мгновенно рассчитаем и подтвердим заказ!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <a
+                href={`https://t.me/${(BRAND_CONFIG.telegramConsultant || BRAND_CONFIG.telegram || 'mkcosmetkor').replace('@', '')}?text=${encodeURIComponent(
+                  `Здравствуйте! Хочу сделать заказ в MK Cosmetics:\n${items
+                    .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
+                    .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото товаров)`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-5 rounded-full bg-[#229ED9] hover:bg-[#1E8CC2] text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>В Telegram</span>
+              </a>
+
+              <a
+                href={buildWhatsAppUrl(
+                  `Здравствуйте! Хочу сделать заказ в MK Cosmetics:\n${items
+                    .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
+                    .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото товаров)`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-5 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>В WhatsApp</span>
+              </a>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

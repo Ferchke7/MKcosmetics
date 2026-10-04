@@ -19,7 +19,12 @@ import {
   MapPin,
   Loader2,
   Copy,
+  Send,
+  MessageCircle,
+  Camera,
+  AlertCircle,
 } from 'lucide-react';
+import { buildWhatsAppUrl } from '../../core/constants/brand';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -420,23 +425,52 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
             </div>
 
             {step === 'cart' ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStep('checkout')}
-                  className="btn-gold flex-1 py-3.5 rounded-full text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 shadow-sm"
-                >
-                  Оформить заказ <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    onClose();
-                    navigate('/checkout');
-                  }}
-                  className="px-4 py-3.5 rounded-full border border-line text-xs font-semibold hover:border-gold hover:text-gold transition-colors"
-                  title="Полная страница оформления"
-                >
-                  На весь экран
-                </button>
+              <div className="space-y-3">
+                {/* Temporary notice: online checkout unavailable */}
+                <div className="p-3.5 rounded-2xl bg-[#FFF8EE] border border-[#F3DFC0] text-xs space-y-2">
+                  <div className="flex items-start gap-2 text-ink">
+                    <Camera className="w-4 h-4 text-kraft shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-ink">
+                        Оформление через сайт временно недоступно
+                      </p>
+                      <p className="text-[11px] text-ink/70 mt-0.5 leading-relaxed">
+                        Пожалуйста, сделайте скриншот или отправьте список товаров/фотографии нам напрямую в Telegram или WhatsApp для быстрого заказа!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Direct Action Buttons: Telegram & WhatsApp */}
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={`https://t.me/${(BRAND_CONFIG.telegramConsultant || BRAND_CONFIG.telegram || 'mkcosmetkor').replace('@', '')}?text=${encodeURIComponent(
+                      `Здравствуйте! Хочу оформить заказ в MK Cosmetics:\n${items
+                        .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
+                        .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото/скриншот товаров)`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-3 px-3 rounded-full bg-[#229ED9] hover:bg-[#1E8CC2] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
+                  >
+                    <Send className="w-3.5 h-3.5 shrink-0" />
+                    <span>В Telegram</span>
+                  </a>
+
+                  <a
+                    href={buildWhatsAppUrl(
+                      `Здравствуйте! Хочу оформить заказ в MK Cosmetics:\n${items
+                        .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
+                        .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото/скриншот товаров)`
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-3 px-3 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>В WhatsApp</span>
+                  </a>
+                </div>
               </div>
             ) : (
               <div className="flex gap-2">
