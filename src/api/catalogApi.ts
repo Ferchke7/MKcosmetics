@@ -9,11 +9,64 @@ import {
 
 const API_BASE = '/api';
 
+export function normalizeProduct(p: any): CatalogProduct {
+  if (!p) return p;
+  const title = p.title || p.name || 'Товар';
+  const categoryTitle = p.categoryTitle || p.categoryName || '';
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  let images = Array.isArray(p.images) ? p.images : [];
+  if (images.length === 0 && photos.length > 0) {
+    images = photos.map((ph: any) => ph.full || ph.w600 || ph.w300 || '').filter(Boolean);
+  }
+
+  return {
+    ...p,
+    title,
+    name: title,
+    categoryTitle,
+    categoryName: categoryTitle,
+    photos,
+    images,
+    priceKrw: p.priceKrw ?? p.priceKRW ?? p.price ?? 0,
+    oldPriceKrw: p.oldPriceKrw ?? p.oldPriceKRW ?? p.oldPrice ?? 0,
+  };
+}
+
+async function parseResponse<T = any>(res: Response, defaultError: string): Promise<T> {
+  const text = await res.text();
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (!res.ok) {
+      throw new Error(`Сервер вернул статус HTTP ${res.status}: ${res.statusText || defaultError}`);
+    }
+    throw new Error('Некорректный формат ответа сервера');
+  }
+
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || defaultError);
+  }
+  return data;
+}
+
 export const catalogApi = {
   async getHome(): Promise<HomeCatalogData> {
-    const res = await fetch(`${API_BASE}/catalog/home`);
-    if (!res.ok) throw new Error('Ошибка загрузки данных главной страницы');
-    return res.json();
+    const res = await fetch(`${API_BASE}/catalog/home`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await parseResponse<any>(res, 'Ошибка загрузки данных витрины');
+
+    return {
+      hits: (data.hits || []).map(normalizeProduct),
+      sets: (data.sets || []).map(normalizeProduct),
+      newArrivals: (data.newArrivals || []).map(normalizeProduct),
+      categories: data.categories || [],
+      brandSpotlights: (data.brandSpotlights || []).map((b: any) => ({
+        ...b,
+        products: (b.products || []).map(normalizeProduct),
+      })),
+    };
   },
 
   async getProducts(params: CatalogFilterParams = {}): Promise<{
@@ -40,10 +93,13 @@ export const catalogApi = {
     qs.set('page', String(p));
     qs.set('pageSize', String(size));
 
-    const res = await fetch(`${API_BASE}/catalog/products?${qs.toString()}`);
-    if (!res.ok) throw new Error('Ошибка загрузки каталога товаров');
-    const data = await res.json();
-    const list = data.products || data.items || [];
+    const res = await fetch(`${API_BASE}/catalog/products?${qs.toString()}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await parseResponse<any>(res, 'Ошибка загрузки каталога товаров');
+    const rawList = data.products || data.items || [];
+    const list = rawList.map(normalizeProduct);
+
     return {
       products: list,
       items: list,
@@ -57,51 +113,65 @@ export const catalogApi = {
     product: CatalogProduct;
     related: CatalogProduct[];
   }> {
-    const res = await fetch(`${API_BASE}/catalog/products/${encodeURIComponent(slug)}`);
-    if (!res.ok) throw new Error('Товар не найден');
-    return res.json();
+    const res = await fetch(`${API_BASE}/catalog/products/${encodeURIComponent(slug)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await parseResponse<any>(res, 'Товар не найден');
+    return {
+      product: normalizeProduct(data.product),
+      related: (data.related || []).map(normalizeProduct),
+    };
   },
 
   async getCategories(): Promise<CatalogCategory[]> {
-    const res = await fetch(`${API_BASE}/catalog/categories`);
-    if (!res.ok) throw new Error('Ошибка загрузки категорий');
-    const data = await res.json();
+    const res = await fetch(`${API_BASE}/catalog/categories`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await parseResponse<any>(res, 'Ошибка загрузки категорий');
     return data.categories || [];
   },
 
   async getBrands(): Promise<CatalogBrand[]> {
-    const res = await fetch(`${API_BASE}/catalog/brands`);
-    if (!res.ok) throw new Error('Ошибка загрузки брендов');
-    const data = await res.json();
+    const res = await fetch(`${API_BASE}/catalog/brands`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await parseResponse<any>(res, 'Ошибка загрузки брендов');
     return data.brands || [];
   },
 
   async getDeliveryOptions(): Promise<CatalogDeliveryOption[]> {
-    const res = await fetch(`${API_BASE}/catalog/delivery`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.deliveries || [];
+    try {
+      const res = await fetch(`${API_BASE}/catalog/delivery`, {
+        headers: { Accept: 'application/json' },
+      });
+      const data = await parseResponse<any>(res, 'Ошибка доставки');
+      return data.deliveries || [];
+    } catch {
+      return [];
+    }
   },
 
   // Admin Catalog API
   async adminSync(token: string): Promise<any> {
     const res = await fetch(`${API_BASE}/admin/catalog/sync`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     });
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || 'Ошибка синхронизации');
-    }
-    return data.result;
+    const data = await parseResponse<any>(res, 'Ошибка синхронизации');
+    return data.result || data;
   },
 
   async adminGetStatus(token: string): Promise<any> {
     const res = await fetch(`${API_BASE}/admin/catalog/status`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (!res.ok) throw new Error('Ошибка получения статуса каталога');
-    return res.json();
+    return parseResponse<any>(res, 'Ошибка получения статуса каталога');
   },
 
   async adminGetProducts(token: string, q = '', page = 1, pageSize = 50): Promise<{
@@ -110,10 +180,16 @@ export const catalogApi = {
   }> {
     const qs = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) });
     const res = await fetch(`${API_BASE}/admin/catalog/products?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (!res.ok) throw new Error('Ошибка загрузки товаров админки');
-    return res.json();
+    const data = await parseResponse<any>(res, 'Ошибка загрузки товаров админки');
+    return {
+      products: (data.products || []).map(normalizeProduct),
+      total: data.total ?? 0,
+    };
   },
 
   async adminUpdateOverrides(
@@ -130,10 +206,11 @@ export const catalogApi = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(overrides),
     });
-    if (!res.ok) throw new Error('Ошибка обновления параметров');
+    await parseResponse<any>(res, 'Ошибка обновления параметров');
   },
 };

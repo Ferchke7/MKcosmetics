@@ -19,11 +19,13 @@ export interface CatalogProduct {
   sourceId: number;
   slug: string;
   title: string;
+  name?: string;
   brand: string;
   description: string;
   excerpt: string;
   categoryId: number;
   categoryTitle: string;
+  categoryName?: string;
   categorySlug: string;
   priceKrw: number;
   oldPriceKrw: number;
@@ -32,6 +34,8 @@ export interface CatalogProduct {
   inStock: boolean;
   archived: boolean;
   photos: CatalogPhoto[];
+  images?: string[];
+  code?: string;
   isHit: boolean;
   isHidden: boolean;
   brandOverride?: string;

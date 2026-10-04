@@ -208,6 +208,16 @@ func scanProduct(scanner interface {
 	}
 
 	_ = json.Unmarshal([]byte(photosJSON), &p.Photos)
+	p.Name = p.Title
+	p.CategoryName = p.CategoryTitle
+	for _, ph := range p.Photos {
+		if ph.Full != "" {
+			p.Images = append(p.Images, ph.Full)
+		} else if ph.W600 != "" {
+			p.Images = append(p.Images, ph.W600)
+		}
+	}
+
 	p.SyncedAt, _ = time.Parse(time.RFC3339, syncedAtStr)
 	p.CreatedAt, _ = time.Parse(time.RFC3339, createdStr)
 	p.UpdatedAt, _ = time.Parse(time.RFC3339, updStr)

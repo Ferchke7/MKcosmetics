@@ -52,13 +52,27 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const syncMutation = useMutation({
     mutationFn: () => catalogApi.adminSync(token),
     onSuccess: (res) => {
+      const msg = res?.async
+        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме! Загружаем товары...'
+        : `Синхронизация завершена успешно! Обработано ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
+
       setFeedbackMsg({
         type: 'success',
-        text: `Синхронизация завершена успешно! Обработано ${res?.totalProcessed || 0} товаров (Добавлено: ${res?.created || 0}, Обновлено: ${res?.updated || 0}).`,
+        text: msg,
       });
-      queryClient.invalidateQueries({ queryKey: ['catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
-      setTimeout(() => setFeedbackMsg(null), 5000);
+
+      // Poll twice to pick up newly synced products
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['catalog'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      }, 2500);
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['catalog'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      }, 6000);
+
+      setTimeout(() => setFeedbackMsg(null), 8000);
     },
     onError: (err: any) => {
       setFeedbackMsg({

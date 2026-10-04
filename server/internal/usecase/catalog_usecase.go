@@ -103,12 +103,15 @@ func (uc *CatalogUseCase) Sync(ctx context.Context) (*entity.CatalogSyncResult, 
 
 func (uc *CatalogUseCase) StartBackgroundWorker(ctx context.Context, interval time.Duration) {
 	go func() {
-		// Initial sync if database is empty
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		total, _, _, _, _, err := uc.catalogRepo.GetCatalogStats(ctx)
 		if err == nil && total == 0 {
-			log.Printf("[CatalogSync] База данных каталога пуста. Запуск первичной синхронизации...")
-			_, _ = uc.Sync(ctx)
+			log.Printf("[CatalogSync] 📦 База данных каталога пуста. Запуск первичной синхронизации в фоне...")
+			if res, syncErr := uc.Sync(ctx); syncErr != nil {
+				log.Printf("[CatalogSync] ❌ Ошибка первичной синхронизации: %v", syncErr)
+			} else {
+				log.Printf("[CatalogSync] ✅ Первичная синхронизация завершена: %d товаров успешно загружено!", res.Total)
+			}
 		}
 
 		ticker := time.NewTicker(interval)

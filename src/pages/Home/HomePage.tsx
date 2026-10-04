@@ -48,6 +48,9 @@ export const HomePage: React.FC = () => {
   const firstBrand = data.brandSpotlights?.[0];
   const secondBrand = data.brandSpotlights?.[1];
 
+  const hitsToDisplay = (data.hits && data.hits.length > 0) ? data.hits : (data.newArrivals || []);
+  const setsToDisplay = (data.sets && data.sets.length > 0) ? data.sets : (data.newArrivals && data.newArrivals.length > 4 ? data.newArrivals.slice(4) : data.newArrivals || []);
+
   return (
     <div>
       {/* 1. Hero Luxury Slider */}
@@ -61,7 +64,7 @@ export const HomePage: React.FC = () => {
         ritualText="Спрос · Доверие · Оригинал"
         catalogLink="/catalog"
         catalogLinkText="Все хиты"
-        products={data.hits}
+        products={hitsToDisplay}
         watermarkText="Hits"
         accentPosition="left"
         onAddToCart={addToCart}
@@ -95,7 +98,7 @@ export const HomePage: React.FC = () => {
         ritualText="Комплект · Выгода · Уход"
         catalogLink="/catalog?categorySlug=nabory-588136"
         catalogLinkText="Все наборы"
-        products={data.sets}
+        products={setsToDisplay}
         watermarkText="Sets"
         accentPosition="right"
         onAddToCart={addToCart}

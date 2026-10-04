@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -160,6 +161,27 @@ func (h *CatalogHandler) GetDeliveryOptions(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *CatalogHandler) AdminSync(w http.ResponseWriter, r *http.Request) {
+	wait := r.URL.Query().Get("wait") == "true"
+	if !wait {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+			if res, err := h.catalogUC.Sync(ctx); err != nil {
+				log.Printf("[CatalogSync] ❌ Background sync error: %v", err)
+			} else {
+				log.Printf("[CatalogSync] ✅ Background sync complete: %d products", res.Total)
+			}
+		}()
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"async":   true,
+			"message": "Синхронизация с b-catalog запущена в фоновом режиме. Товары загружаются...",
+		})
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 

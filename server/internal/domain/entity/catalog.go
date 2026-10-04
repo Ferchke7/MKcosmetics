@@ -23,11 +23,13 @@ type CatalogProduct struct {
 	SourceID        int64          `json:"sourceId"`
 	Slug            string         `json:"slug"`
 	Title           string         `json:"title"`
+	Name            string         `json:"name"`
 	Brand           string         `json:"brand"`
 	Description     string         `json:"description"`
 	Excerpt         string         `json:"excerpt"`
 	CategoryID      int64          `json:"categoryId"`
 	CategoryTitle   string         `json:"categoryTitle"`
+	CategoryName    string         `json:"categoryName"`
 	CategorySlug    string         `json:"categorySlug"`
 	PriceKRW        int64          `json:"priceKrw"`
 	OldPriceKRW     int64          `json:"oldPriceKrw"`
@@ -36,6 +38,8 @@ type CatalogProduct struct {
 	InStock         bool           `json:"inStock"`
 	Archived        bool           `json:"archived"`
 	Photos          []CatalogPhoto `json:"photos"`
+	Images          []string       `json:"images"`
+	Code            string         `json:"code,omitempty"`
 	// Overrides (manual in admin)
 	IsHit           bool           `json:"isHit"`
 	IsHidden        bool           `json:"isHidden"`
