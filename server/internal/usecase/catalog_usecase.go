@@ -26,26 +26,16 @@ func NewCatalogUseCase(bcatClient *bcatalog.Client, catalogRepo repository.Catal
 	}
 }
 
-func (uc *CatalogUseCase) Sync(ctx context.Context) (*entity.CatalogSyncResult, error) {
-	if !uc.mu.TryLock() {
-		return nil, fmt.Errorf("синхронизация каталога уже выполняется")
-	}
-	defer uc.mu.Unlock()
-
+func (uc *CatalogUseCase) IngestRawProducts(ctx context.Context, rawProducts []bcatalog.RawProduct) (*entity.CatalogSyncResult, error) {
 	start := time.Now()
 	res := entity.CatalogSyncResult{
-		At: start,
+		At:    start,
+		Total: len(rawProducts),
 	}
 
-	rawProducts, err := uc.bcatClient.FetchAllProducts(ctx)
-	if err != nil {
-		res.Error = err.Error()
-		res.DurationMs = time.Since(start).Milliseconds()
-		_ = uc.catalogRepo.LogSync(ctx, res)
-		return &res, fmt.Errorf("ошибка получения товаров из Бизнес.Каталог: %w", err)
+	if len(rawProducts) == 0 {
+		return &res, nil
 	}
-
-	res.Total = len(rawProducts)
 
 	// Collect unique categories & map products
 	catMap := make(map[int64]entity.CatalogCategory)
@@ -95,23 +85,71 @@ func (uc *CatalogUseCase) Sync(ctx context.Context) (*entity.CatalogSyncResult, 
 	uc.lastSync = time.Now()
 
 	_ = uc.catalogRepo.LogSync(ctx, res)
-	log.Printf("[CatalogSync] Успешно: %d товаров (добавлено: %d, обновлено: %d, в архиве: %d) за %d мс",
+	log.Printf("[CatalogSync] Успешно обработано: %d товаров (добавлено: %d, обновлено: %d, в архиве: %d) за %d мс",
 		res.Total, res.Added, res.Updated, res.Archived, res.DurationMs)
 
 	return &res, nil
 }
 
+func (uc *CatalogUseCase) Sync(ctx context.Context) (*entity.CatalogSyncResult, error) {
+	if !uc.mu.TryLock() {
+		return nil, fmt.Errorf("синхронизация каталога уже выполняется")
+	}
+	defer uc.mu.Unlock()
+
+	start := time.Now()
+	res := entity.CatalogSyncResult{
+		At: start,
+	}
+
+	rawProducts, err := uc.bcatClient.FetchAllProducts(ctx)
+	if err != nil {
+		log.Printf("[CatalogSync] ⚠️ Ошибка запроса к b-catalog: %v", err)
+
+		// Check if DB is empty; if so, populate from embedded snapshot so site is never blank!
+		total, _, _, _, _, statsErr := uc.catalogRepo.GetCatalogStats(ctx)
+		if statsErr == nil && total == 0 {
+			log.Printf("[CatalogSync] 📦 База пуста, загружаем встроенный снимок товаров...")
+			seed := bcatalog.GetEmbeddedSeedProducts()
+			if len(seed) > 0 {
+				seedRes, ingestErr := uc.IngestRawProducts(ctx, seed)
+				if ingestErr == nil {
+					log.Printf("[CatalogSync] ✅ Встроенный снимок загружен: %d товаров", seedRes.Total)
+					return seedRes, nil
+				}
+			}
+		}
+
+		res.Error = err.Error()
+		res.DurationMs = time.Since(start).Milliseconds()
+		_ = uc.catalogRepo.LogSync(ctx, res)
+		return &res, fmt.Errorf("ошибка получения товаров из Бизнес.Каталог: %w", err)
+	}
+
+	return uc.IngestRawProducts(ctx, rawProducts)
+}
+
 func (uc *CatalogUseCase) StartBackgroundWorker(ctx context.Context, interval time.Duration) {
 	go func() {
-		time.Sleep(1 * time.Second)
+		// Immediately check if DB has products; if 0, load embedded seed right away (15ms)
 		total, _, _, _, _, err := uc.catalogRepo.GetCatalogStats(ctx)
 		if err == nil && total == 0 {
-			log.Printf("[CatalogSync] 📦 База данных каталога пуста. Запуск первичной синхронизации в фоне...")
-			if res, syncErr := uc.Sync(ctx); syncErr != nil {
-				log.Printf("[CatalogSync] ❌ Ошибка первичной синхронизации: %v", syncErr)
-			} else {
-				log.Printf("[CatalogSync] ✅ Первичная синхронизация завершена: %d товаров успешно загружено!", res.Total)
+			log.Printf("[CatalogSync] 📦 Инициализация: каталог пуст. Загрузка встроенного снимка 207 товаров...")
+			seed := bcatalog.GetEmbeddedSeedProducts()
+			if len(seed) > 0 {
+				if seedRes, ingestErr := uc.IngestRawProducts(ctx, seed); ingestErr != nil {
+					log.Printf("[CatalogSync] ❌ Ошибка загрузки встроенного снимка: %v", ingestErr)
+				} else {
+					log.Printf("[CatalogSync] ✅ Встроенный каталог загружен мгновенно: %d товаров!", seedRes.Total)
+				}
 			}
+		}
+
+		// Also trigger background live sync attempt
+		time.Sleep(2 * time.Second)
+		log.Printf("[CatalogSync] Запуск фоновой онлайн-синхронизации с b-catalog.ru...")
+		if _, syncErr := uc.Sync(ctx); syncErr != nil {
+			log.Printf("[CatalogSync] ℹ️ Онлайн-синхронизация вернула: %v (каталог работает из БД)", syncErr)
 		}
 
 		ticker := time.NewTicker(interval)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 )
@@ -19,7 +20,16 @@ func NewClient(shopCode string) *Client {
 		shopCode = "roznmkkoreacosmetic"
 	}
 
+	dialer := &net.Dialer{
+		Timeout:   15 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
 	tr := &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			// Force IPv4 ("tcp4") to prevent hangs on Docker bridge networks and VPS with incomplete IPv6 routing
+			return dialer.DialContext(ctx, "tcp4", addr)
+		},
 		TLSHandshakeTimeout:   15 * time.Second,
 		ResponseHeaderTimeout: 35 * time.Second,
 		IdleConnTimeout:       90 * time.Second,
