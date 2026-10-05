@@ -111,14 +111,14 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               <button
                 type="button"
                 onClick={() => setActiveMenu(activeMenu === 'categories' ? null : 'categories')}
-                className={`h-10 px-3.5 rounded-card text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`h-10 sm:h-11 px-3.5 sm:px-4 rounded-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
                   activeMenu === 'categories'
                     ? 'bg-gold text-white'
                     : 'bg-cream-soft hover:bg-cream-deep text-ink border border-line'
                 }`}
               >
                 <span>Категории</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeMenu === 'categories' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${activeMenu === 'categories' ? 'rotate-180' : ''}`} />
               </button>
 
               {activeMenu === 'categories' && (
@@ -149,10 +149,10 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-medium text-ink group-hover:text-gold transition-colors truncate">
+                          <div className="text-xs sm:text-sm font-medium text-ink group-hover:text-gold transition-colors truncate">
                             {c.title}
                           </div>
-                          <div className="text-[10px] text-muted">{c.count} шт.</div>
+                          <div className="text-[10px] sm:text-xs text-muted">{c.count} шт.</div>
                         </div>
                       </button>
                     ))}
@@ -166,14 +166,14 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               <button
                 type="button"
                 onClick={() => setActiveMenu(activeMenu === 'brands' ? null : 'brands')}
-                className={`h-10 px-3.5 rounded-card text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`h-10 sm:h-11 px-3.5 sm:px-4 rounded-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
                   activeMenu === 'brands'
                     ? 'bg-gold text-white'
                     : 'bg-cream-soft hover:bg-cream-deep text-ink border border-line'
                 }`}
               >
                 <span>Бренды</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeMenu === 'brands' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${activeMenu === 'brands' ? 'rotate-180' : ''}`} />
               </button>
 
               {activeMenu === 'brands' && (
@@ -184,7 +184,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                       value={brandSearch}
                       onChange={(e) => setBrandSearch(e.target.value)}
                       placeholder="Поиск по бренду..."
-                      className="w-full h-8 px-3 text-xs bg-cream-soft rounded-lg border border-line focus:outline-none focus:border-gold"
+                      className="w-full h-9 px-3 text-xs sm:text-sm bg-cream-soft rounded-lg border border-line focus:outline-none focus:border-gold"
                     />
                   </div>
                   <div className="space-y-1">
@@ -193,10 +193,10 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                         key={b.slug}
                         type="button"
                         onClick={() => handleSelectBrand(b.name)}
-                        className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-cream-soft transition-colors group"
+                        className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs sm:text-sm hover:bg-cream-soft transition-colors group"
                       >
                         <span className="font-medium text-ink group-hover:text-gold transition-colors">{b.name}</span>
-                        <span className="text-[11px] text-muted">{b.count}</span>
+                        <span className="text-[11px] sm:text-xs text-muted">{b.count}</span>
                       </button>
                     ))}
                     {filteredBrands.length === 0 && (
@@ -212,14 +212,14 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               <button
                 type="button"
                 onClick={() => setActiveMenu(activeMenu === 'price' ? null : 'price')}
-                className={`h-10 px-3.5 rounded-card text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`h-10 sm:h-11 px-3.5 sm:px-4 rounded-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
                   activeMenu === 'price'
                     ? 'bg-gold text-white'
                     : 'bg-cream-soft hover:bg-cream-deep text-ink border border-line'
                 }`}
               >
                 <span>Цена</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeMenu === 'price' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${activeMenu === 'price' ? 'rotate-180' : ''}`} />
               </button>
 
               {activeMenu === 'price' && (
@@ -257,14 +257,14 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
           {/* Right: Search Input with Live Suggestions */}
           <div className="relative flex-1">
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="Поиск косметики по названию, бренду..."
-                className="w-full h-10 pl-10 pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
+                className="w-full h-10 sm:h-11 pl-10 sm:pl-11 pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm md:text-base text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
               />
               {searchQuery && (
                 <button

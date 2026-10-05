@@ -78,25 +78,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Brand & Category */}
-        <div className="flex items-center justify-between text-[11px] text-muted mb-1">
+        <div className="flex items-center justify-between text-xs sm:text-sm text-muted mb-1.5">
           <span className="font-semibold uppercase tracking-wider text-gold truncate max-w-[70%]">
             {product.brand}
           </span>
           {product.stock > 0 && product.stock <= 3 && (
-            <span className="text-sale text-[10px] font-bold">Осталось {product.stock} шт.</span>
+            <span className="text-sale text-[11px] sm:text-xs font-bold">Осталось {product.stock} шт.</span>
           )}
         </div>
 
         {/* Title */}
         <Link to={`/product/${product.slug}`} className="block">
-          <h3 className="font-medium text-xs sm:text-sm text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
+          <h3 className="font-medium text-xs sm:text-sm md:text-base text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
             {displayTitle}
           </h3>
         </Link>
 
         {/* Excerpt */}
         {product.excerpt && (
-          <p className="text-[11px] text-muted line-clamp-2 mt-1 leading-relaxed">
+          <p className="text-xs text-muted line-clamp-2 mt-1 leading-relaxed">
             {product.excerpt}
           </p>
         )}

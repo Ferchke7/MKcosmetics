@@ -29,21 +29,21 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-paper border-b border-line text-ink">
       {/* 1. Top Bar: Clean Social Channels Bar */}
-      <div className="bg-[#F7F3EC] text-ink border-b border-line py-2 px-4 sm:px-6 lg:px-8">
+      <div className="bg-[#F7F3EC] text-ink border-b border-line py-1.5 sm:py-2 px-3 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-center sm:justify-end">
           {/* Social Network Channels with soft, harmonious badges */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-nowrap sm:flex-wrap justify-center w-full sm:w-auto">
             {/* Telegram Channel */}
             <a
               href={BRAND_CONFIG.telegramChannelUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229ED9]/10 hover:bg-[#229ED9] text-[#1E77A8] hover:text-white border border-[#229ED9]/25 hover:border-[#229ED9] text-xs transition-all shadow-xs group"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#229ED9]/10 hover:bg-[#229ED9] text-[#1E77A8] hover:text-white border border-[#229ED9]/25 hover:border-[#229ED9] text-[11px] sm:text-xs md:text-sm transition-all shadow-xs group shrink-0"
               title="Наш Telegram-канал"
             >
-              <Send className="w-3.5 h-3.5 text-[#229ED9] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">Telegram:</span>
-              <span className="font-mono font-bold text-[#1E77A8] group-hover:text-white">
+              <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-[#229ED9] group-hover:text-white transition-colors shrink-0" />
+              <span className="hidden xs:inline text-[10px] sm:text-[11px] md:text-xs font-normal text-ink/60 group-hover:text-white">TG:</span>
+              <span className="font-mono font-bold text-[#1E77A8] group-hover:text-white text-[11px] sm:text-xs md:text-sm">
                 {BRAND_CONFIG.telegramChannel || '@mkcosmetkor'}
               </span>
             </a>
@@ -53,12 +53,12 @@ export const Header: React.FC<HeaderProps> = ({
               href={BRAND_CONFIG.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1306C]/10 hover:bg-[#E1306C] text-[#C1275B] hover:text-white border border-[#E1306C]/25 hover:border-[#E1306C] text-xs transition-all shadow-xs group"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#E1306C]/10 hover:bg-[#E1306C] text-[#C1275B] hover:text-white border border-[#E1306C]/25 hover:border-[#E1306C] text-[11px] sm:text-xs md:text-sm transition-all shadow-xs group shrink-0"
               title="Наш Instagram"
             >
-              <InstagramIcon className="w-3.5 h-3.5 text-[#E1306C] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">Insta:</span>
-              <span className="font-mono font-bold text-[#C1275B] group-hover:text-white">
+              <InstagramIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-[#E1306C] group-hover:text-white transition-colors shrink-0" />
+              <span className="hidden xs:inline text-[10px] sm:text-[11px] md:text-xs font-normal text-ink/60 group-hover:text-white">Insta:</span>
+              <span className="font-mono font-bold text-[#C1275B] group-hover:text-white text-[11px] sm:text-xs md:text-sm">
                 {BRAND_CONFIG.instagramHandle || '@muhabbat.kim.mk'}
               </span>
             </a>
@@ -68,12 +68,12 @@ export const Header: React.FC<HeaderProps> = ({
               href={BRAND_CONFIG.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#1E824C] hover:text-white border border-[#25D366]/25 hover:border-[#25D366] text-xs transition-all shadow-xs group"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#1E824C] hover:text-white border border-[#25D366]/25 hover:border-[#25D366] text-xs md:text-sm transition-all shadow-xs group shrink-0"
               title="WhatsApp для заказов и консультаций"
             >
-              <Phone className="w-3.5 h-3.5 text-[#25D366] group-hover:text-white transition-colors" />
-              <span className="text-[11px] font-normal text-ink/60 group-hover:text-white">WA:</span>
-              <span className="font-mono font-bold text-[#1E824C] group-hover:text-white">
+              <Phone className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#25D366] group-hover:text-white transition-colors shrink-0" />
+              <span className="text-[11px] md:text-xs font-normal text-ink/60 group-hover:text-white">WA:</span>
+              <span className="font-mono font-bold text-[#1E824C] group-hover:text-white text-xs md:text-sm">
                 {BRAND_CONFIG.phoneDisplay || '+82 10 8390 5577'}
               </span>
             </a>
@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Menu className="w-5 h-5" />
             </button>
 
-            <nav className="hidden lg:flex items-center gap-7 text-xs uppercase tracking-[0.14em] font-semibold text-ink">
+            <nav className="hidden lg:flex items-center gap-8 text-sm uppercase tracking-[0.12em] font-bold text-ink">
               <NavLink
                 to="/"
                 className={({ isActive }) =>
@@ -134,13 +134,13 @@ export const Header: React.FC<HeaderProps> = ({
             <img
               src="/logo.png"
               alt="MK KOREA COSMETIC"
-              className="h-16 w-16 sm:h-20 sm:w-20 md:h-22 md:w-22 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
+              className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
             />
           </Link>
 
           {/* Right: Company Info & Wishlist */}
           <div className="flex items-center gap-5 sm:gap-7">
-            <nav className="hidden lg:flex items-center gap-7 text-xs uppercase tracking-[0.14em] font-semibold text-ink">
+            <nav className="hidden lg:flex items-center gap-8 text-sm uppercase tracking-[0.12em] font-bold text-ink">
               <NavLink
                 to="/about"
                 className={({ isActive }) =>

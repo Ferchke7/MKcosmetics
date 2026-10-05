@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Main 4 Footer Columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12 border-b border-paper/10 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12 border-b border-paper/10 text-xs sm:text-sm">
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -58,10 +58,10 @@ export const Footer: React.FC = () => {
                 className="w-14 h-14 rounded-full object-contain bg-white p-0.5 border border-line/40 shadow-sm shrink-0"
               />
               <div>
-                <div className="font-serif text-lg font-bold tracking-wider text-paper uppercase">
+                <div className="font-serif text-lg sm:text-xl font-bold tracking-wider text-paper uppercase">
                   MK KOREA
                 </div>
-                <div className="text-[10px] uppercase tracking-widest text-gold font-semibold">
+                <div className="text-[11px] sm:text-xs uppercase tracking-widest text-gold font-semibold">
                   COSMETIC • SEOUL
                 </div>
               </div>
@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.telegramChannelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#229ED9] hover:text-white text-paper transition-all text-xs w-fit"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#229ED9] hover:text-white text-paper transition-all text-xs sm:text-sm w-fit"
                 title="Telegram"
               >
                 <Send className="w-3.5 h-3.5 text-[#229ED9]" />
@@ -84,7 +84,7 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#E1306C] hover:text-white text-paper transition-all text-xs w-fit"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#E1306C] hover:text-white text-paper transition-all text-xs sm:text-sm w-fit"
                 title="Instagram"
               >
                 <InstagramIcon className="w-3.5 h-3.5 text-[#E1306C]" />
@@ -94,7 +94,7 @@ export const Footer: React.FC = () => {
                 href={BRAND_CONFIG.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#25D366] hover:text-white text-paper transition-all text-xs w-fit"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper/10 hover:bg-[#25D366] hover:text-white text-paper transition-all text-xs sm:text-sm w-fit"
                 title="WhatsApp"
               >
                 <Phone className="w-3.5 h-3.5 text-[#25D366]" />
@@ -105,7 +105,7 @@ export const Footer: React.FC = () => {
 
           {/* Col 2: Catalog Links */}
           <div className="space-y-3">
-            <h5 className="font-serif text-sm font-bold text-paper uppercase tracking-wider">Каталог</h5>
+            <h5 className="font-serif text-sm sm:text-base font-bold text-paper uppercase tracking-wider">Каталог</h5>
             <ul className="space-y-2 text-muted">
               <li><Link to="/catalog" className="hover:text-gold transition-colors">Все товары</Link></li>
               <li><Link to="/catalog?categorySlug=krema-588144" className="hover:text-gold transition-colors">Крема для лица</Link></li>
@@ -118,7 +118,7 @@ export const Footer: React.FC = () => {
 
           {/* Col 3: Customer Service */}
           <div className="space-y-3">
-            <h5 className="font-serif text-sm font-bold text-paper uppercase tracking-wider">Покупателям</h5>
+            <h5 className="font-serif text-sm sm:text-base font-bold text-paper uppercase tracking-wider">Покупателям</h5>
             <ul className="space-y-2 text-muted">
               <li><Link to="/delivery" className="hover:text-gold transition-colors">Условия доставки и оплаты</Link></li>
               <li><Link to="/about" className="hover:text-gold transition-colors">О компании</Link></li>
@@ -129,7 +129,7 @@ export const Footer: React.FC = () => {
 
           {/* Col 4: Contacts & Address */}
           <div id="footer-contacts" className="space-y-3">
-            <h5 className="font-serif text-sm font-bold text-paper uppercase tracking-wider">Контакты в Корее</h5>
+            <h5 className="font-serif text-sm sm:text-base font-bold text-paper uppercase tracking-wider">Контакты в Корее</h5>
             <div className="space-y-2 text-muted">
               <p>
                 <span className="text-paper block font-semibold">Телефон / WhatsApp:</span>
@@ -149,7 +149,7 @@ export const Footer: React.FC = () => {
                   {BRAND_CONFIG.instagramHandle}
                 </a>
               </p>
-              <p className="text-[11px] text-muted/80 pt-1">
+              <p className="text-xs text-muted/80 pt-1">
                 Склад: Сеул, Южная Корея (Seoul, Republic of Korea)
               </p>
             </div>
@@ -157,7 +157,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Copyright */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-muted">
           <p>© {new Date().getFullYear()} MK KOREA COSMETIC. Все права защищены.</p>
           <p className="text-muted/60">
             Оригинальная косметика напрямую из Южной Кореи

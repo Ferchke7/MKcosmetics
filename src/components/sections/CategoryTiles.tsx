@@ -47,10 +47,10 @@ export const CategoryTiles: React.FC<CategoryTilesProps> = ({ categories }) => {
                   <Grid className="w-6 h-6 text-muted group-hover:text-gold transition-colors" />
                 )}
               </div>
-              <h3 className="font-semibold text-xs sm:text-sm text-ink group-hover:text-gold transition-colors line-clamp-1">
+              <h3 className="font-semibold text-sm sm:text-base text-ink group-hover:text-gold transition-colors line-clamp-1">
                 {c.title}
               </h3>
-              <span className="text-[11px] text-muted mt-0.5">{c.count} товаров</span>
+              <span className="text-xs text-muted mt-1">{c.count} товаров</span>
             </Link>
           ))}
         </div>

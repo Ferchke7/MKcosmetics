@@ -93,28 +93,28 @@ export const HeroSlider: React.FC = () => {
             <span>{active.eyebrow}</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-ink font-bold leading-[1.1] tracking-tight drop-shadow-xs">
+          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl xl:text-7xl text-ink font-bold leading-[1.1] tracking-tight drop-shadow-xs">
             {active.title}
           </h1>
 
-          <p className="text-sm sm:text-base text-ink/80 leading-relaxed max-w-lg font-normal drop-shadow-xs">
+          <p className="text-sm sm:text-base lg:text-lg text-ink/80 leading-relaxed max-w-xl font-normal drop-shadow-xs">
             {active.subtitle}
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3">
+          <div className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4">
             <Link
               to={active.link}
-              className="inline-flex items-center gap-2.5 h-12 px-8 rounded-full bg-[#191A15] hover:bg-kraft text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider transition-all shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2.5 h-12 sm:h-13 px-8 rounded-full bg-[#191A15] hover:bg-kraft text-[#FAF7F2] text-xs sm:text-sm font-semibold uppercase tracking-wider transition-all shadow-md hover:shadow-lg"
             >
               <span>{active.buttonText}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
 
             <a
               href="https://t.me/mkcosmetkor"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white/90 hover:bg-white border border-line text-ink text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
+              className="inline-flex items-center gap-2 h-12 sm:h-13 px-6 rounded-full bg-white/90 hover:bg-white border border-line text-ink text-xs sm:text-sm font-semibold uppercase tracking-wider transition-all shadow-sm"
             >
               <span>Telegram: @mkcosmetkor</span>
             </a>

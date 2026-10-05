@@ -37,10 +37,10 @@ export const FeatureBadgesBar: React.FC = () => {
                 {f.icon}
               </div>
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-ink">
+                <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-ink">
                   {f.title}
                 </h4>
-                <p className="text-xs text-muted mt-0.5 leading-snug">
+                <p className="text-xs sm:text-sm text-muted mt-0.5 leading-snug">
                   {f.desc}
                 </p>
               </div>
