@@ -30,12 +30,14 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [favoriteIds]);
 
   const toggleWishlist = (id: number) => {
+    const numId = Number(id);
+    if (!numId) return;
     setFavoriteIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(numId) ? prev.filter((item) => item !== numId) : [...prev, numId]
     );
   };
 
-  const isFavorite = (id: number) => favoriteIds.includes(id);
+  const isFavorite = (id: number) => favoriteIds.includes(Number(id));
 
   return (
     <WishlistContext.Provider

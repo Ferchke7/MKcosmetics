@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
             </nav>
 
             <Link
-              to="/catalog?favorite=true"
+              to="/wishlist"
               className="relative p-2 rounded-card text-ink hover:text-gold transition-colors"
               title="Избранное"
             >
@@ -222,6 +222,27 @@ export const Header: React.FC<HeaderProps> = ({
                     </NavLink>
                   </li>
                 ))}
+                <li>
+                  <NavLink
+                    to="/wishlist"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between py-2 px-3 rounded-card transition-colors ${
+                        isActive ? 'bg-gold/10 text-gold font-bold' : 'text-ink hover:bg-cream-soft'
+                      }`
+                    }
+                  >
+                    <span className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-sale" />
+                      <span>Избранное</span>
+                    </span>
+                    {wishlistCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-sale text-white text-xs font-bold font-mono">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </NavLink>
+                </li>
                 {onOpenCart && (
                   <li>
                     <button

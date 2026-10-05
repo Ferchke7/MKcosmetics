@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Heart } from 'lucide-react';
 import { CatalogProduct } from '../../core/types/catalog';
 import { ProductCard } from '../product/ProductCard';
 import { Price } from '../ui/Price';
@@ -85,7 +85,7 @@ export const SpotlightRail: React.FC<SpotlightRailProps> = ({
             <div className="watermark -right-4 -bottom-4">{watermarkText}</div>
 
             <div className="relative z-10">
-              <div className="aspect-square w-full rounded-xl overflow-hidden bg-cream-soft mb-4">
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-cream-soft mb-4">
                 <Link to={`/product/${featured.slug}`}>
                   <img
                     src={featuredPhoto}
@@ -93,6 +93,21 @@ export const SpotlightRail: React.FC<SpotlightRailProps> = ({
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                 </Link>
+
+                {onToggleFavorite && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleFavorite(featured.id)}
+                    className={`absolute top-2.5 right-2.5 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 ${
+                      isFavorite && isFavorite(featured.id)
+                        ? 'bg-sale text-white shadow-sm'
+                        : 'bg-white/80 backdrop-blur-sm text-ink hover:text-sale hover:bg-white'
+                    }`}
+                    title={isFavorite && isFavorite(featured.id) ? 'Удалить из избранного' : 'В избранное'}
+                  >
+                    <Heart className={`w-4 h-4 ${isFavorite && isFavorite(featured.id) ? 'fill-current' : ''}`} />
+                  </button>
+                )}
               </div>
 
               <div className="text-[11px] font-bold uppercase tracking-wider text-gold mb-1">

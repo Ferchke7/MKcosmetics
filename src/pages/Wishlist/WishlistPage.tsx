@@ -14,12 +14,14 @@ export const WishlistPage: React.FC = () => {
   // Load products to display favorite items
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['catalog', 'all_for_wishlist'],
-    queryFn: () => catalogApi.getProducts({ limit: 300 }),
+    queryFn: () => catalogApi.getProducts({ pageSize: 500 }),
     staleTime: 5 * 60 * 1000,
   });
 
   const allProducts = productsData?.items || [];
-  const favoriteProducts = allProducts.filter((p) => favoriteIds.includes(p.id));
+  const favoriteProducts = allProducts.filter((p) =>
+    favoriteIds.some((favId) => String(favId) === String(p.id))
+  );
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-ink pb-24">

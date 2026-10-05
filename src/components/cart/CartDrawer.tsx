@@ -23,6 +23,8 @@ import {
   MessageCircle,
   Camera,
   AlertCircle,
+  Eye,
+  ExternalLink,
 } from 'lucide-react';
 import { buildWhatsAppUrl } from '../../core/constants/brand';
 
@@ -47,6 +49,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const [deliveryId, setDeliveryId] = useState(DELIVERY_OPTIONS[0].id);
   const [address, setAddress] = useState('');
   const [comment, setComment] = useState('');
+
+  const [previewProduct, setPreviewProduct] = useState<any | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -175,26 +179,50 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                       key={item.product.id}
                       className="flex gap-3 p-3 bg-paper rounded-2xl border border-line shadow-xs group"
                     >
-                      {/* Thumbnail */}
-                      <div className="w-16 h-16 rounded-xl bg-cream border border-line/60 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {/* Thumbnail: Click to view full */}
+                      <button
+                        type="button"
+                        onClick={() => setPreviewProduct(item.product)}
+                        className="w-16 h-16 rounded-xl bg-cream border border-line/60 overflow-hidden flex-shrink-0 flex items-center justify-center relative cursor-pointer hover:border-gold transition-colors group/thumb"
+                        title="Посмотреть товар целиком"
+                      >
                         <img
                           src={item.product.images?.[0] || (item.product as any).photos?.[0] || '/logo.png'}
                           alt={item.product.name || (item.product as any).title || 'Товар'}
-                          className="w-full h-full object-contain p-1"
+                          className="w-full h-full object-contain p-1 group-hover/thumb:scale-105 transition-transform"
                         />
-                      </div>
+                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                          <Eye className="w-4 h-4 text-white drop-shadow" />
+                        </div>
+                      </button>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
-                          {item.product.brand && (
-                            <p className="text-[10px] font-semibold tracking-wider text-gold uppercase">
-                              {item.product.brand}
-                            </p>
-                          )}
-                          <h4 className="text-xs font-medium text-ink line-clamp-1 leading-snug">
+                          <div className="flex items-center justify-between gap-1">
+                            {item.product.brand ? (
+                              <p className="text-[10px] font-semibold tracking-wider text-gold uppercase truncate">
+                                {item.product.brand}
+                              </p>
+                            ) : <span />}
+                            <button
+                              type="button"
+                              onClick={() => setPreviewProduct(item.product)}
+                              className="text-[10px] text-ink/40 hover:text-gold flex items-center gap-0.5"
+                              title="Подробнее о товаре"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Детали</span>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewProduct(item.product)}
+                            className="text-left text-xs font-medium text-ink hover:text-gold transition-colors line-clamp-1 leading-snug cursor-pointer"
+                            title="Нажмите, чтобы посмотреть товар целиком"
+                          >
                             {item.product.name || (item.product as any).title || 'Товар'}
-                          </h4>
+                          </button>
                           <p className="text-xs font-mono font-bold text-ink mt-0.5">
                             {formatKrw(item.product.priceKrw)}
                           </p>
@@ -426,49 +454,41 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
             {step === 'cart' ? (
               <div className="space-y-3">
-                {/* Temporary notice: online checkout unavailable */}
+                {/* Advice banner: photograph each product and send via Telegram/WhatsApp */}
                 <div className="p-3.5 rounded-2xl bg-[#FFF8EE] border border-[#F3DFC0] text-xs space-y-2">
-                  <div className="flex items-start gap-2 text-ink">
-                    <Camera className="w-4 h-4 text-kraft shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 text-ink">
+                    <Camera className="w-5 h-5 text-kraft shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-ink">
-                        Оформление через сайт временно недоступно
+                      <p className="font-semibold text-ink text-xs">
+                        Как оформить заказ:
                       </p>
-                      <p className="text-[11px] text-ink/70 mt-0.5 leading-relaxed">
-                        Пожалуйста, сделайте скриншот или отправьте список товаров/фотографии нам напрямую в Telegram или WhatsApp для быстрого заказа!
+                      <p className="text-[11px] text-ink/75 mt-0.5 leading-relaxed">
+                        Список составлять не нужно! Просто откройте каждый выбранный товар, <strong>сделайте фото или скриншот</strong> и отправьте нам в Telegram или WhatsApp. Менеджер сразу примет заказ и рассчитает доставку.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Direct Action Buttons: Telegram & WhatsApp */}
+                {/* Direct Action Buttons: Telegram & WhatsApp (Clean link without text lists) */}
                 <div className="grid grid-cols-2 gap-2">
                   <a
-                    href={`https://t.me/${(BRAND_CONFIG.telegramConsultant || BRAND_CONFIG.telegram || 'mkcosmetkor').replace('@', '')}?text=${encodeURIComponent(
-                      `Здравствуйте! Хочу оформить заказ в MK Cosmetics:\n${items
-                        .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
-                        .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото/скриншот товаров)`
-                    )}`}
+                    href={BRAND_CONFIG.telegramConsultantUrl || BRAND_CONFIG.telegramChannelUrl || 'https://t.me/mkcosmetkor'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-3 px-3 rounded-full bg-[#229ED9] hover:bg-[#1E8CC2] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
                   >
                     <Send className="w-3.5 h-3.5 shrink-0" />
-                    <span>В Telegram</span>
+                    <span>Отправить в Telegram</span>
                   </a>
 
                   <a
-                    href={buildWhatsAppUrl(
-                      `Здравствуйте! Хочу оформить заказ в MK Cosmetics:\n${items
-                        .map((i, idx) => `${idx + 1}. ${i.product.name} (${i.quantity} шт.) — ${formatKrw(i.product.priceKrw * i.quantity)}`)
-                        .join('\n')}\n\nИтого: ${formatKrw(totalAmountKrw)}\n\n(Прикрепляю фото/скриншот товаров)`
-                    )}
+                    href={buildWhatsAppUrl('Здравствуйте! Хочу оформить заказ в MK Cosmetics. Сейчас отправлю фото выбранных товаров.')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-3 px-3 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
                   >
                     <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>В WhatsApp</span>
+                    <span>Отправить в WhatsApp</span>
                   </a>
                 </div>
               </div>
@@ -500,6 +520,113 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
+
+      {/* Full Product Modal Preview (view whole item with all photos, description, and price) */}
+      {previewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="fixed inset-0"
+            onClick={() => setPreviewProduct(null)}
+          />
+          <div className="relative w-full max-w-lg max-h-[90vh] bg-paper rounded-3xl border border-line shadow-2xl p-6 overflow-y-auto z-10 space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 pb-3 border-b border-line">
+              <div>
+                {previewProduct.brand && (
+                  <span className="text-[11px] font-bold text-gold uppercase tracking-wider">
+                    {previewProduct.brand}
+                  </span>
+                )}
+                <h3 className="font-serif text-xl sm:text-2xl font-normal text-ink leading-snug">
+                  {previewProduct.name || previewProduct.title || 'Товар'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewProduct(null)}
+                className="w-8 h-8 rounded-full border border-line flex items-center justify-center text-ink/60 hover:text-ink hover:bg-cream transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Photos carousel / main photo */}
+            <div className="space-y-3">
+              <div className="w-full aspect-square rounded-2xl bg-cream border border-line overflow-hidden flex items-center justify-center p-2">
+                <img
+                  src={previewProduct.images?.[0] || (previewProduct as any).photos?.[0]?.full || (previewProduct as any).photos?.[0] || '/logo.png'}
+                  alt={previewProduct.name || previewProduct.title}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Multiple photos if available */}
+              {previewProduct.images && previewProduct.images.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {previewProduct.images.map((imgUrl: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="w-16 h-16 rounded-xl bg-cream border border-line shrink-0 p-1 flex items-center justify-center overflow-hidden"
+                    >
+                      <img src={imgUrl} alt="" className="w-full h-full object-contain" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Price & Stock */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-cream/70 border border-line">
+              <div>
+                <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Цена</span>
+                <span className="font-mono text-lg font-bold text-ink">
+                  {formatKrw(previewProduct.priceKrw)}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Наличие</span>
+                <span className="text-xs font-semibold text-emerald-600">
+                  В наличии (Южная Корея)
+                </span>
+              </div>
+            </div>
+
+            {/* Description */}
+            {previewProduct.description && (
+              <div className="space-y-1.5 pt-2 border-t border-line">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider">Описание товара:</h4>
+                <div
+                  className="text-xs text-ink/80 leading-relaxed max-h-48 overflow-y-auto pr-1"
+                  dangerouslySetInnerHTML={{ __html: previewProduct.description }}
+                />
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <Link
+                to={`/product/${previewProduct.slug}`}
+                onClick={() => {
+                  setPreviewProduct(null);
+                  onClose();
+                }}
+                className="flex-1 py-3 px-4 rounded-full border border-line hover:border-gold text-ink text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>Открыть страницу товара</span>
+                <ExternalLink className="w-3.5 h-3.5 text-gold" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setPreviewProduct(null)}
+                className="btn-gold py-3 px-6 rounded-full text-xs font-semibold text-center"
+              >
+                Вернуться в корзину
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
