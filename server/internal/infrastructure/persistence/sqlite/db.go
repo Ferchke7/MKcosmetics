@@ -93,6 +93,11 @@ func (db *DB) migrate() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		ip TEXT NOT NULL,
 		country_code TEXT NOT NULL,
+		country_name TEXT NOT NULL DEFAULT '',
+		city TEXT NOT NULL DEFAULT '',
+		flag TEXT NOT NULL DEFAULT '',
+		user_agent TEXT NOT NULL DEFAULT '',
+		path TEXT NOT NULL DEFAULT '',
 		visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
 
@@ -268,6 +273,11 @@ func (db *DB) migrate() error {
 		"ALTER TABLE customers ADD COLUMN segment TEXT NOT NULL DEFAULT 'new';",
 		"ALTER TABLE customers ADD COLUMN notes TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE articles ADD COLUMN source_telegram_url TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE visitor_logs ADD COLUMN country_name TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE visitor_logs ADD COLUMN city TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE visitor_logs ADD COLUMN flag TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE visitor_logs ADD COLUMN user_agent TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE visitor_logs ADD COLUMN path TEXT NOT NULL DEFAULT '';",
 	}
 	for _, query := range alterCols {
 		_, _ = db.Exec(query) // Ignore error if column already exists

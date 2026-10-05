@@ -56,7 +56,7 @@ func (uc *AdminUseCase) GetDashboardStats(ctx context.Context) (*DashboardStats,
 	prodCount, _ := uc.productRepo.Count(ctx)
 	visitorStats, _ := uc.visitorRepo.GetStats(ctx)
 	channelInfo, _ := uc.channelRepo.Get(ctx)
-	logs, _ := uc.visitorRepo.GetRecentLogs(ctx, 20)
+	logs, _ := uc.visitorRepo.GetRecentLogs(ctx, 100)
 	orderCount, _ := uc.orderRepo.Count(ctx)
 	orderCounts, _ := uc.orderRepo.CountByStatus(ctx)
 

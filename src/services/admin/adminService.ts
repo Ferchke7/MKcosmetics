@@ -193,6 +193,18 @@ export interface DeepAnalyticsData {
   }>;
 }
 
+export interface AdminVisitorLog {
+  id: number;
+  ip: string;
+  countryCode: string;
+  countryName: string;
+  city: string;
+  flag: string;
+  userAgent: string;
+  path: string;
+  visitedAt: string;
+}
+
 export interface AdminStats {
   totalProducts: number;
   totalVisits: number;
@@ -213,12 +225,7 @@ export interface AdminStats {
     description: string;
     updatedAt: string;
   };
-  recentLogs: Array<{
-    id: number;
-    ip: string;
-    countryCode: string;
-    visitedAt: string;
-  }>;
+  recentLogs: AdminVisitorLog[];
 }
 
 const API_BASE = '/api';
@@ -282,10 +289,23 @@ export const adminService = {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    if (!res.ok || !data.success) {
+    if (!res.ok) {
       throw new Error(data.error || 'Ошибка загрузки статистики');
     }
-    return data.data;
+    // Handles both { data: ... } and direct object
+    return data.data || data;
+  },
+
+  // Real Visitor Logs
+  async getVisitorLogs(token: string, limit: number = 100): Promise<AdminVisitorLog[]> {
+    const res = await fetch(`${API_BASE}/admin/visitors?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Ошибка загрузки логов посетителей');
+    }
+    return data.logs || (Array.isArray(data) ? data : []);
   },
 
   // File Upload (Payment Receipts / Product Images)

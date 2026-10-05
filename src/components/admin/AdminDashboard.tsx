@@ -55,6 +55,7 @@ import { BeautyBlogView } from '../blog/BeautyBlogView';
 import { TelegramDummyImportModal } from './TelegramDummyImportModal';
 import { UnifiedDataGrid, Column, BulkAction } from './UnifiedDataGrid';
 import { CatalogSyncView } from './CatalogSyncView';
+import { VisitorLiveLogsView } from './VisitorLiveLogsView';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -790,6 +791,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('visitors')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'visitors'
+                  ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <span>Посетители & Входы</span>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+
+            <button
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'settings'
@@ -1012,6 +1028,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
           )}
+
+          {/* TAB: REAL VISITORS & LOGS */}
+          {activeTab === 'visitors' && <VisitorLiveLogsView token={token || ''} />}
         </main>
       </div>
 

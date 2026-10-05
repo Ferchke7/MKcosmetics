@@ -32,8 +32,8 @@ func NewVisitorRepository(db *DB) repository.VisitorRepository {
 	return &visitorRepository{db: db}
 }
 
-func (r *visitorRepository) RecordVisit(ctx context.Context, countryCode string, ip string) error {
-	code := strings.ToUpper(strings.TrimSpace(countryCode))
+func (r *visitorRepository) RecordVisit(ctx context.Context, params repository.RecordVisitParams) error {
+	code := strings.ToUpper(strings.TrimSpace(params.CountryCode))
 	if code == "" {
 		code = "UZ"
 	}
@@ -51,13 +51,21 @@ func (r *visitorRepository) RecordVisit(ctx context.Context, countryCode string,
 		return err
 	}
 
-	// 2. Log visitor record
-	if ip != "" {
+	// 2. Log visitor record with real geo and metadata
+	if params.IP != "" {
 		queryLog := `
-			INSERT INTO visitor_logs (ip, country_code, visited_at)
-			VALUES (?, ?, CURRENT_TIMESTAMP);
+			INSERT INTO visitor_logs (ip, country_code, country_name, city, flag, user_agent, path, visited_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
 		`
-		_, _ = r.db.ExecContext(ctx, queryLog, ip, code)
+		_, _ = r.db.ExecContext(ctx, queryLog,
+			params.IP,
+			code,
+			params.CountryName,
+			params.City,
+			params.Flag,
+			params.UserAgent,
+			params.Path,
+		)
 	}
 
 	return nil
@@ -135,7 +143,7 @@ func (r *visitorRepository) GetRecentLogs(ctx context.Context, limit int) ([]ent
 		limit = 50
 	}
 	query := `
-		SELECT id, ip, country_code, visited_at
+		SELECT id, ip, country_code, country_name, city, flag, user_agent, path, visited_at
 		FROM visitor_logs
 		ORDER BY visited_at DESC
 		LIMIT ?;
@@ -152,9 +160,39 @@ func (r *visitorRepository) GetRecentLogs(ctx context.Context, limit int) ([]ent
 			l          entity.VisitorLog
 			visitedStr string
 		)
-		if err := rows.Scan(&l.ID, &l.IP, &l.CountryCode, &visitedStr); err != nil {
+		if err := rows.Scan(
+			&l.ID,
+			&l.IP,
+			&l.CountryCode,
+			&l.CountryName,
+			&l.City,
+			&l.Flag,
+			&l.UserAgent,
+			&l.Path,
+			&visitedStr,
+		); err != nil {
 			return nil, err
 		}
+
+		// Fallback for country presets if empty
+		if l.Flag == "" || l.CountryName == "" {
+			if preset, exists := countryPresets[l.CountryCode]; exists {
+				if l.CountryName == "" {
+					l.CountryName = preset.NameRu
+				}
+				if l.Flag == "" {
+					l.Flag = preset.Flag
+				}
+			} else {
+				if l.CountryName == "" {
+					l.CountryName = l.CountryCode
+				}
+				if l.Flag == "" {
+					l.Flag = "🌐"
+				}
+			}
+		}
+
 		if t, err := time.Parse(time.RFC3339, visitedStr); err == nil {
 			l.VisitedAt = t
 		} else {

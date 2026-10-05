@@ -25,5 +25,10 @@ type VisitorLog struct {
 	ID          int64     `json:"id"`
 	IP          string    `json:"ip"`
 	CountryCode string    `json:"countryCode"`
+	CountryName string    `json:"countryName"`
+	City        string    `json:"city"`
+	Flag        string    `json:"flag"`
+	UserAgent   string    `json:"userAgent"`
+	Path        string    `json:"path"`
 	VisitedAt   time.Time `json:"visitedAt"`
 }

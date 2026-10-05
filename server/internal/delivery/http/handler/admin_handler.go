@@ -103,7 +103,7 @@ func (h *AdminHandler) GetVisitorLogs(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
 	limit, _ := strconv.Atoi(limitStr)
 	if limit <= 0 {
-		limit = 50
+		limit = 100
 	}
 
 	logs, err := h.adminUC.GetVisitorLogs(r.Context(), limit)
@@ -113,7 +113,11 @@ func (h *AdminHandler) GetVisitorLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(logs)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"logs":    logs,
+		"total":   len(logs),
+	})
 }
 
 func (h *AdminHandler) TriggerSync(w http.ResponseWriter, r *http.Request) {

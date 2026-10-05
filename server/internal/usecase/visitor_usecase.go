@@ -33,22 +33,53 @@ type TrackInput struct {
 	Path        string `json:"path"`
 }
 
+type geoLookupResult struct {
+	CountryCode string `json:"countryCode"`
+	CountryName string `json:"country"`
+	City        string `json:"city"`
+}
+
 func (uc *VisitorUseCase) Track(ctx context.Context, input TrackInput) (*entity.VisitorStats, error) {
 	countryCode := strings.ToUpper(strings.TrimSpace(input.CountryCode))
 	ip := strings.TrimSpace(input.IP)
+	countryName := ""
+	city := ""
+	flag := ""
 
-	// If no country code provided, and we have a public IP, try quick lookup
-	if (countryCode == "" || countryCode == "XX" || countryCode == "T1") && ip != "" && !isPrivateIP(ip) {
-		if resolved, err := uc.lookupCountryByIP(ctx, ip); err == nil && resolved != "" {
-			countryCode = resolved
+	// If no country code provided, or to get city & accurate geo, lookup IP
+	if ip != "" && !isPrivateIP(ip) {
+		if geo, err := uc.lookupGeoByIP(ctx, ip); err == nil && geo != nil {
+			if countryCode == "" || countryCode == "XX" || countryCode == "T1" {
+				countryCode = geo.CountryCode
+			}
+			if geo.CountryName != "" {
+				countryName = geo.CountryName
+			}
+			if geo.City != "" {
+				city = geo.City
+			}
 		}
 	}
 
 	if countryCode == "" {
 		countryCode = "UZ"
 	}
+	if countryName == "" {
+		countryName = getCountryNameRu(countryCode)
+	}
+	flag = getCountryFlag(countryCode)
 
-	if err := uc.repo.RecordVisit(ctx, countryCode, ip); err != nil {
+	params := repository.RecordVisitParams{
+		IP:          ip,
+		CountryCode: countryCode,
+		CountryName: countryName,
+		City:        city,
+		Flag:        flag,
+		UserAgent:   input.UserAgent,
+		Path:        input.Path,
+	}
+
+	if err := uc.repo.RecordVisit(ctx, params); err != nil {
 		return nil, fmt.Errorf("failed to record visit: %w", err)
 	}
 
@@ -59,29 +90,73 @@ func (uc *VisitorUseCase) GetStats(ctx context.Context) (*entity.VisitorStats, e
 	return uc.repo.GetStats(ctx)
 }
 
-func (uc *VisitorUseCase) lookupCountryByIP(ctx context.Context, ip string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://ip-api.com/json/%s?fields=status,countryCode", ip), nil)
+func (uc *VisitorUseCase) lookupGeoByIP(ctx context.Context, ip string) (*geoLookupResult, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,countryCode,city", ip), nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	resp, err := uc.httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var result struct {
 		Status      string `json:"status"`
 		CountryCode string `json:"countryCode"`
+		Country     string `json:"country"`
+		City        string `json:"city"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if result.Status == "success" && result.CountryCode != "" {
-		return result.CountryCode, nil
+		return &geoLookupResult{
+			CountryCode: result.CountryCode,
+			CountryName: result.Country,
+			City:        result.City,
+		}, nil
 	}
-	return "", nil
+	return nil, nil
+}
+
+func getCountryNameRu(code string) string {
+	presets := map[string]string{
+		"UZ": "Узбекистан",
+		"RU": "Россия",
+		"KZ": "Казахстан",
+		"KR": "Южная Корея",
+		"US": "США",
+		"TR": "Турция",
+		"KG": "Кыргызстан",
+		"TJ": "Таджикистан",
+		"AE": "ОАЭ",
+		"DE": "Германия",
+	}
+	if name, ok := presets[code]; ok {
+		return name
+	}
+	return code
+}
+
+func getCountryFlag(code string) string {
+	presets := map[string]string{
+		"UZ": "🇺🇿",
+		"RU": "🇷🇺",
+		"KZ": "🇰🇿",
+		"KR": "🇰🇷",
+		"US": "🇺🇸",
+		"TR": "🇹🇷",
+		"KG": "🇰🇬",
+		"TJ": "🇹🇯",
+		"AE": "🇦🇪",
+		"DE": "🇩🇪",
+	}
+	if flag, ok := presets[code]; ok {
+		return flag
+	}
+	return "🌐"
 }
 
 func isPrivateIP(ip string) bool {
