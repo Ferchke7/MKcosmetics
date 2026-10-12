@@ -10,9 +10,6 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-env:
-  ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: "node24"
-
 jobs:
   build:
     name: Build & Test
@@ -22,29 +19,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile || bun install
 
       - name: Build frontend
-        run: npm run build
+        run: bun run build
 
       - name: Setup Go 1.24
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache: true
 
       - name: Start server & test health check
         run: |
           set -euo pipefail
           echo "=== Starting server on port 3101 in background ==="
-          PORT=3101 npm run start &
+          PORT=3101 go run ./server/cmd/server &
           SERVER_PID=$!
 
           HEALTH_URL="http://localhost:3101/api/health"

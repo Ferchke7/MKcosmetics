@@ -1,10 +1,10 @@
-# Stage 1: Build Frontend (Vite)
-FROM node:24-alpine AS frontend-builder
+# Stage 1: Build Frontend (Bun + Vite)
+FROM oven/bun:alpine AS frontend-builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package*.json bun.lock* ./
+RUN bun install --frozen-lockfile || bun install
 COPY . .
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Build Backend (Go)
 FROM golang:alpine AS backend-builder
