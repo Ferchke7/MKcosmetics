@@ -296,11 +296,14 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Excerpt */}
-              {product.excerpt && (
-                <p className="text-sm text-ink/70 leading-relaxed font-sans">
-                  {product.excerpt}
-                </p>
+              {/* Full Description */}
+              {(product.description || product.excerpt) && (
+                <div className="text-sm text-ink/80 leading-relaxed font-sans space-y-2">
+                  <div
+                    className="prose prose-sm max-w-none text-ink/80 text-xs sm:text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: product.description || product.excerpt || '' }}
+                  />
+                </div>
               )}
 
               {/* Quantity and Actions */}
@@ -385,17 +388,6 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Full Description & Specs */}
-            {product.description && (
-              <div className="mt-10 pt-8 border-t border-line space-y-4">
-                <h4 className="font-serif text-xl text-ink font-normal">Описание и свойства</h4>
-                <div
-                  className="prose prose-sm max-w-none text-ink/80 text-xs sm:text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              </div>
-            )}
           </div>
         </div>
 
