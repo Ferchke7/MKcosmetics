@@ -100,16 +100,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Footer: Price & Add to Cart */}
-      <div className="mt-3 pt-2.5 border-t border-line/60 flex items-center justify-between gap-1.5 sm:gap-2">
-        <div className="min-w-0 flex-1">
-          <Price amount={product.priceKrw} oldAmount={product.oldPriceKrw} size="sm" />
+      <div className="mt-3 pt-2.5 border-t border-line/60 flex items-end justify-between gap-2">
+        <div className="min-w-0 flex flex-col justify-end">
+          {product.oldPriceKrw && product.oldPriceKrw > product.priceKrw && (
+            <span className="text-[10px] sm:text-xs text-muted line-through font-normal leading-tight truncate">
+              {formatKrw(product.oldPriceKrw)}
+            </span>
+          )}
+          <span className="text-sm sm:text-base font-bold text-ink tracking-tight leading-tight">
+            {formatKrw(product.priceKrw)}
+          </span>
         </div>
 
         {onAddToCart && (
           <button
             type="button"
             onClick={() => onAddToCart(product)}
-            className={`shrink-0 h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95 ${
+            className={`shrink-0 h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95 ${
               inCartCount > 0
                 ? 'bg-gold text-white shadow-xs'
                 : 'border border-gold text-gold hover:bg-gold hover:text-white bg-paper'
@@ -124,7 +131,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             ) : (
               <>
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span className="font-medium whitespace-nowrap">В корзину</span>
+                <span className="hidden sm:inline">В корзину</span>
               </>
             )}
           </button>
