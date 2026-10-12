@@ -100,29 +100,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Footer: Price & Add to Cart */}
-      <div className="mt-3 pt-2.5 border-t border-line/60 flex items-center justify-between gap-2">
-        <Price amount={product.priceKrw} oldAmount={product.oldPriceKrw} size="sm" />
+      <div className="mt-3 pt-2.5 border-t border-line/60 flex items-center justify-between gap-1.5 sm:gap-2">
+        <div className="min-w-0 flex-1">
+          <Price amount={product.priceKrw} oldAmount={product.oldPriceKrw} size="sm" />
+        </div>
 
         {onAddToCart && (
           <button
             type="button"
             onClick={() => onAddToCart(product)}
-            className={`h-8 px-3 rounded-card text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`shrink-0 h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95 ${
               inCartCount > 0
-                ? 'bg-gold/15 text-gold border border-gold/40'
-                : 'border border-gold text-gold hover:bg-gold hover:text-white'
+                ? 'bg-gold text-white shadow-xs'
+                : 'border border-gold text-gold hover:bg-gold hover:text-white bg-paper'
             }`}
             title="Добавить в корзину"
           >
             {inCartCount > 0 ? (
               <>
-                <Check className="w-3.5 h-3.5" />
-                <span>{inCartCount}</span>
+                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span className="font-bold">{inCartCount}</span>
               </>
             ) : (
               <>
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">В корзину</span>
+                <span className="font-medium whitespace-nowrap">В корзину</span>
               </>
             )}
           </button>

@@ -127,12 +127,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-[#FDFBF7] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-full sm:max-w-md bg-[#FDFBF7] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-line bg-paper">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-line bg-paper shrink-0">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-gold" />
-            <h3 className="font-serif text-lg font-normal text-ink">
+            <ShoppingBag className="w-5 h-5 text-gold shrink-0" />
+            <h3 className="font-serif text-base sm:text-lg font-normal text-ink">
               {step === 'success'
                 ? 'Заказ оформлен'
                 : step === 'checkout'
@@ -229,31 +229,31 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Quantity and Remove */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="inline-flex items-center border border-line rounded-full bg-cream px-1 py-0.5">
+                        <div className="flex items-center justify-between pt-1 mt-auto">
+                          <div className="inline-flex items-center border border-line rounded-full bg-cream px-1.5 py-0.5">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                              className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-paper text-ink/70"
+                              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-paper active:scale-90 text-ink/70 transition-transform"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-6 text-center text-xs font-mono font-semibold">
+                            <span className="w-7 text-center text-xs font-mono font-semibold">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                              className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-paper text-ink/70"
+                              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-paper active:scale-90 text-ink/70 transition-transform"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
                           <button
                             onClick={() => removeFromCart(item.product.id)}
-                            className="text-ink/40 hover:text-sale p-1 transition-colors"
+                            className="text-ink/40 hover:text-sale p-1.5 rounded-lg hover:bg-sale/10 transition-colors"
                             title="Удалить"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -430,7 +430,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
         {/* Drawer Footer */}
         {step !== 'success' && items.length > 0 && (
-          <div className="p-6 border-t border-line bg-paper space-y-3">
+          <div className="p-4 sm:p-6 border-t border-line bg-paper space-y-3 shrink-0">
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-ink/60">
                 <span>Товары ({totalCount} шт):</span>

@@ -21,21 +21,21 @@ export const Price: React.FC<PriceProps> = ({
   size = 'md',
 }) => {
   const sizeClasses = {
-    sm: 'text-xs',
-    md: 'text-sm font-semibold',
-    lg: 'text-base font-bold',
-    xl: 'text-xl font-bold font-serif',
+    sm: 'text-xs sm:text-sm font-bold',
+    md: 'text-sm sm:text-base font-semibold',
+    lg: 'text-base sm:text-lg font-bold',
+    xl: 'text-xl sm:text-2xl font-bold font-serif',
   };
 
   const hasDiscount = Boolean(oldAmount && oldAmount > (amount || 0));
 
   return (
-    <div className={`inline-flex items-baseline gap-2 ${className}`}>
-      <span className={`text-ink ${sizeClasses[size]}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5 leading-tight ${className}`}>
+      <span className={`text-ink font-semibold tracking-tight whitespace-nowrap ${sizeClasses[size]}`}>
         {formatKrw(amount)}
       </span>
       {hasDiscount && (
-        <span className="text-xs text-muted line-through font-normal">
+        <span className="text-[10px] sm:text-xs text-muted line-through font-normal whitespace-nowrap">
           {formatKrw(oldAmount)}
         </span>
       )}

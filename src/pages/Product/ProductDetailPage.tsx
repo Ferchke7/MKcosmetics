@@ -308,9 +308,9 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Quantity and Actions */}
               <div className="pt-2 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                   {/* Stepper */}
-                  <div className="inline-flex items-center border border-line rounded-full bg-paper p-1 w-fit">
+                  <div className="inline-flex items-center justify-between border border-line rounded-full bg-paper p-1 w-full sm:w-fit">
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       disabled={quantity <= 1}
@@ -329,29 +329,33 @@ export const ProductDetailPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Add to Cart Button */}
-                  <button
-                    onClick={handleAddToCart}
-                    className="flex-1 btn-gold py-3.5 px-8 rounded-full text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 shadow-sm transition-all"
-                  >
-                    {addedSuccess ? (
-                      <>
-                        <Check className="w-4 h-4" /> Добавлено в корзину
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-4 h-4" /> Добавить в корзину
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2.5 sm:gap-4 flex-1">
+                    {/* Add to Cart Button */}
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 btn-gold py-3.5 px-4 sm:px-8 rounded-full text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 shadow-sm transition-all text-center"
+                    >
+                      {addedSuccess ? (
+                        <>
+                          <Check className="w-4 h-4 shrink-0" />
+                          <span className="truncate">Добавлено</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="w-4 h-4 shrink-0" />
+                          <span className="truncate">В корзину</span>
+                        </>
+                      )}
+                    </button>
 
-                  {/* Buy Now Button */}
-                  <button
-                    onClick={handleBuyNow}
-                    className="py-3.5 px-6 rounded-full border border-ink text-ink hover:bg-ink hover:text-paper text-xs uppercase tracking-widest font-semibold transition-colors"
-                  >
-                    Купить сейчас
-                  </button>
+                    {/* Buy Now Button */}
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-1 sm:flex-initial py-3.5 px-4 sm:px-6 rounded-full border border-ink text-ink hover:bg-ink hover:text-paper text-xs uppercase tracking-widest font-semibold transition-colors text-center whitespace-nowrap"
+                    >
+                      Купить сейчас
+                    </button>
+                  </div>
                 </div>
               </div>
 
