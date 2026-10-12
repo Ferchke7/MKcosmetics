@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowLeft, Sparkles } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 
 interface AdminLoginProps {
@@ -26,12 +26,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToShop }) => {
     } catch (err: any) {
       setError(err.message || 'Ошибка авторизации');
     }
-  };
-
-  const handleFillDemo = () => {
-    setUsername('admin');
-    setPassword('admin');
-    setError(null);
   };
 
   return (
@@ -88,7 +82,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToShop }) => {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="Ваш логин"
                   autoComplete="username"
                   className="w-full bg-[#141312] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-[#57534E] focus:outline-none focus:border-[#D4AF37] transition-all"
                 />
@@ -131,18 +125,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToShop }) => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Helper Button */}
-          <div className="mt-6 pt-6 border-t border-white/5">
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[#D4AF37] text-xs font-medium transition-all flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Заполнить по умолчанию: <strong>admin / admin</strong></span>
-            </button>
-          </div>
         </div>
 
         {/* Footer info */}
