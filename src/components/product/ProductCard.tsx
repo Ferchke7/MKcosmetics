@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { CatalogProduct } from '../../core/types/catalog';
-import { Price } from '../ui/Price';
+import { Price, formatKrw } from '../ui/Price';
 
 interface ProductCardProps {
   product: CatalogProduct;
