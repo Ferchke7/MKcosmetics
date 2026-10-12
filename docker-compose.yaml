@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: mkcosmetics
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     volumes:
       - ./data:/app/data
     environment:
@@ -15,8 +15,29 @@ services:
       - STATIC_DIR=/app/dist
       - TELEGRAM_CHANNEL=mkcosmetkor
     networks:
-      - duda-shared
+      - app-net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: mkcosmetics-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - mkcosmetics
+    networks:
+      - app-net
 
 networks:
-  duda-shared:
-    external: true
+  app-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
