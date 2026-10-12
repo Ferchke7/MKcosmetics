@@ -27,7 +27,7 @@ export const Footer: React.FC = () => {
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-serif text-base text-paper font-bold">Собственный склад в Сеуле</h4>
+              <h4 className="font-serif text-base text-paper font-bold">Прямые поставки из Кореи</h4>
               <p className="text-xs text-muted mt-1 leading-relaxed">
                 Сборка и упаковка заказов в Южной Корее с авиа- и карго-доставкой по всему миру.
               </p>
@@ -67,7 +67,7 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-muted leading-relaxed">
-              Интернет-магазин и оптовый отдел люксовой и профессиональной корейской косметики со склада в Сеуле.
+              Интернет-магазин и оптовый отдел люксовой и профессиональной корейской косметики напрямую из Южной Кореи.
             </p>
             <div className="flex flex-col gap-2 pt-2">
               <a
@@ -123,7 +123,6 @@ export const Footer: React.FC = () => {
               <li><Link to="/delivery" className="hover:text-gold transition-colors">Условия доставки и оплаты</Link></li>
               <li><Link to="/about" className="hover:text-gold transition-colors">О компании</Link></li>
               <li><Link to="/contacts" className="hover:text-gold transition-colors">Контакты</Link></li>
-              <li><Link to="/#admin" className="text-paper/40 hover:text-gold transition-colors">Вход для сотрудников (CRM)</Link></li>
             </ul>
           </div>
 
@@ -150,7 +149,7 @@ export const Footer: React.FC = () => {
                 </a>
               </p>
               <p className="text-xs text-muted/80 pt-1">
-                Склад: Сеул, Южная Корея (Seoul, Republic of Korea)
+                Южная Корея (Republic of Korea)
               </p>
             </div>
           </div>

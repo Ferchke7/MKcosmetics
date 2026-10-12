@@ -11,8 +11,8 @@ export const FeatureBadgesBar: React.FC = () => {
     },
     {
       icon: <Warehouse className="w-5 h-5 text-kraft" />,
-      title: 'Склад в Сеуле',
-      desc: 'Прямые отгрузки из Южной Кореи без посредников',
+      title: 'Прямые поставки',
+      desc: 'Отгрузки напрямую из Южной Кореи без посредников',
     },
     {
       icon: <ShieldCheck className="w-5 h-5 text-kraft" />,

@@ -104,9 +104,9 @@ export const ContactsPage: React.FC = () => {
             <div className="w-12 h-12 rounded-2xl bg-cream text-gold flex items-center justify-center border border-line">
               <MapPin className="w-6 h-6" />
             </div>
-            <h3 className="font-serif text-lg font-normal text-ink">Склад в Сеуле</h3>
+            <h3 className="font-serif text-lg font-normal text-ink">Южная Корея</h3>
             <p className="text-xs text-ink/60">
-              Республика Корея, Сеул. Курьер по Корее и доставка по всему миру
+              Курьер по Корее и международная доставка по всему миру
             </p>
             <div className="pt-2">
               <p className="text-xs font-medium text-ink leading-relaxed">

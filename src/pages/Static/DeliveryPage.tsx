@@ -55,8 +55,8 @@ export const DeliveryPage: React.FC = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-normal text-ink">Самовывоз со склада в Сеуле</h3>
-                <p className="text-xs text-ink/50">Прямой доступ к основному складу MK Cosmetics</p>
+                <h3 className="font-serif text-xl font-normal text-ink">Самовывоз (Южная Корея)</h3>
+                <p className="text-xs text-ink/50">Прямой доступ к продукции MK Cosmetics</p>
               </div>
             </div>
 
@@ -101,7 +101,7 @@ export const DeliveryPage: React.FC = () => {
             <div className="text-xs sm:text-sm text-ink/80 leading-relaxed space-y-2 font-sans">
               <p>• <strong>Банковский перевод в Южной Корее (무통장입금):</strong> Перевод на корейский расчетный счет (KB Kookmin, Shinhan, Woori).</p>
               <p>• <strong>Банковские карты:</strong> Принимаются основные международные и корейские карты.</p>
-              <p>• <strong>Наличный расчет:</strong> Возможен при самовывозе со склада в Сеуле.</p>
+              <p>• <strong>Наличный расчет:</strong> Возможен при самовывозе в Корее.</p>
             </div>
           </div>
         </div>

@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#B89254] shrink-0" />
-                <span>{language === 'uz' ? 'Ombor: Seul, Janubiy Koreya' : 'Склад: Сеул, Южная Корея (Seoul, Korea)'}</span>
+                <span>{language === 'uz' ? 'Janubiy Koreya (Korea)' : 'Южная Корея (Korea)'}</span>
               </li>
               <li>{language === 'uz' ? 'Shaxsiy parvarish tanlash' : 'Индивидуальный подбор ухода'}</li>
               <li>{language === 'uz' ? 'Ulgurji va chakana savdo' : 'Оптовые и розничные поставки'}</li>

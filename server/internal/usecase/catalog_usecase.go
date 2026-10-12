@@ -249,7 +249,7 @@ func (uc *CatalogUseCase) GetDeliveryOptions(ctx context.Context) ([]bcatalog.Ra
 	if err != nil {
 		// Fallback defaults
 		return []bcatalog.RawDelivery{
-			{ID: 1, Title: "Самовывоз из шоурума (Сеул)", Cost: 0, Enabled: true, AllowFree: true},
+			{ID: 1, Title: "Самовывоз (Южная Корея)", Cost: 0, Enabled: true, AllowFree: true},
 			{ID: 2, Title: "Курьерская доставка по Корее", Cost: 5000, Enabled: true, AllowFree: false},
 		}, nil
 	}

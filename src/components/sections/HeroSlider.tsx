@@ -18,13 +18,13 @@ const slides: Slide[] = [
   {
     id: 1,
     eyebrow: 'Ритуал корейской красоты',
-    title: 'Люксовый уход со склада в Сеуле',
+    title: 'Люксовый уход напрямую из Кореи',
     subtitle: 'Оригинальная косметика от ведущих производителей Кореи: Sulwhasoo, The History of Whoo, Amore Pacific',
     buttonText: 'В каталог',
     link: '/catalog',
     bgGradient: 'from-[#FAF8F5] via-[#F4ECE1] to-[#EBE2D3]',
     image: '/images/hero/hero-slide-1.jpg',
-    badge: 'Премиум уход • Сеул',
+    badge: 'Премиум уход • Корея',
   },
   {
     id: 2,

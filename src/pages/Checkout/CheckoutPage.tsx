@@ -35,7 +35,7 @@ const DELIVERY_METHODS = [
   },
   {
     id: 'pickup_seoul',
-    title: 'Самовывоз со склада MK Cosmetics (Сеул)',
+    title: 'Самовывоз (Южная Корея)',
     costKrw: 0,
     desc: 'Бесплатно. Согласуем удобное время самовывоза после подтверждения заказа.',
     freeThreshold: 0,

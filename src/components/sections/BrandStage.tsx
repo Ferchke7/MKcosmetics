@@ -29,7 +29,7 @@ export const BrandStage: React.FC<BrandStageProps> = ({
 }) => {
   if (!products || products.length === 0) return null;
 
-  const defaultDesc = description || `Эксклюзивная линейка средств бренда ${brand} со склада в Сеуле. Проверенные формулы и оригинальное качество от ведущих южнокорейских лабораторий.`;
+  const defaultDesc = description || `Эксклюзивная линейка средств бренда ${brand} напрямую из Южной Кореи. Проверенные формулы и оригинальное качество от ведущих лабораторий.`;
 
   return (
     <section className="py-14 sm:py-16 bg-paper border-b border-line">

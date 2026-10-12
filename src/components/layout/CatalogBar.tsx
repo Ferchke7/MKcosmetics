@@ -152,7 +152,6 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                           <div className="text-xs sm:text-sm font-medium text-ink group-hover:text-gold transition-colors truncate">
                             {c.title}
                           </div>
-                          <div className="text-[10px] sm:text-xs text-muted">{c.count} шт.</div>
                         </div>
                       </button>
                     ))}

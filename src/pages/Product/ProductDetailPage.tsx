@@ -265,7 +265,7 @@ export const ProductDetailPage: React.FC = () => {
                 {product.stock > 0 ? (
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    В наличии в Сеуле ({product.stock} шт)
+                    В наличии
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
@@ -377,9 +377,9 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-paper border border-line">
                   <PackageCheck className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="text-xs font-bold text-ink">Склад в Сеуле</h5>
+                    <h5 className="text-xs font-bold text-ink">Прямые поставки</h5>
                     <p className="text-[11px] text-ink/60 mt-0.5 leading-snug">
-                      Самовывоз и доставка по всему миру
+                      Оригинал из Южной Кореи
                     </p>
                   </div>
                 </div>
