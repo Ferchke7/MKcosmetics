@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -30,10 +29,6 @@ func main() {
 	channelUsername := getEnv("TELEGRAM_CHANNEL", "mkcosmetkor")
 	staticDir := getEnv("STATIC_DIR", "./dist")
 	jwtSecret := getEnv("JWT_SECRET", "mkcosmetics-secret-key-2026-auth")
-	syncMinutes, _ := strconv.Atoi(getEnv("SYNC_INTERVAL_MINUTES", "3"))
-	if syncMinutes <= 0 {
-		syncMinutes = 3
-	}
 
 	// 2. Initialize Database (Pure Go SQLite + WAL)
 	db, err := sqlite.NewDB(dbPath)
@@ -125,7 +120,6 @@ func main() {
 	// 8. Start Background Sync Workers
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	syncUC.StartBackgroundWorker(ctx, time.Duration(syncMinutes)*time.Minute)
 	catalogUC.StartBackgroundWorker(ctx, 30*time.Minute)
 
 	// 9. HTTP Server with Graceful Shutdown

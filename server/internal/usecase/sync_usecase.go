@@ -75,43 +75,7 @@ func (uc *SyncUseCase) Sync(ctx context.Context, deep bool) (int, error) {
 	return len(posts), nil
 }
 
-// StartBackgroundWorker runs deep sync on empty DB and regular sync intervals
+// StartBackgroundWorker is disabled as per business requirement (Telegram scraper discontinued)
 func (uc *SyncUseCase) StartBackgroundWorker(ctx context.Context, interval time.Duration) {
-	go func() {
-		// Wait 2 seconds for app bootstrap
-		time.Sleep(2 * time.Second)
-
-		count, err := uc.productRepo.Count(ctx)
-		if err != nil {
-			log.Printf("⚠️ Failed to count products in DB: %v", err)
-		}
-
-		if count < 20 {
-			log.Printf("📥 Low post count (%d) in DB. Triggering initial Deep Scrape...", count)
-			if _, err := uc.Sync(ctx, true); err != nil {
-				log.Printf("⚠️ Initial deep sync error: %v", err)
-			}
-		} else {
-			log.Printf("🔄 DB already contains %d posts. Running initial incremental sync...", count)
-			if _, err := uc.Sync(ctx, false); err != nil {
-				log.Printf("⚠️ Initial sync error: %v", err)
-			}
-		}
-
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("🛑 Telegram sync worker stopped")
-				return
-			case <-ticker.C:
-				log.Println("⏰ Periodic Telegram incremental sync...")
-				if _, err := uc.Sync(ctx, false); err != nil {
-					log.Printf("⚠️ Periodic sync error: %v", err)
-				}
-			}
-		}
-	}()
+	log.Println("ℹ️ [TelegramSync] Фоновый воркер Telegram отключён — каталог синхронизируется через Excel / b-catalog")
 }
