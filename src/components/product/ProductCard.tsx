@@ -40,6 +40,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               alt={displayTitle}
               loading={priority ? "eager" : "lazy"}
               decoding="async"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.src.endsWith('/logo.png')) {
+                  target.src = '/logo.png';
+                }
+              }}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>

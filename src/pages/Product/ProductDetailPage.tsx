@@ -245,6 +245,12 @@ export const ProductDetailPage: React.FC = () => {
               <img
                 src={currentImage}
                 alt={product.name}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.endsWith('/logo.png')) {
+                    target.src = '/logo.png';
+                  }
+                }}
                 className="w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
                 loading="eager"
               />
