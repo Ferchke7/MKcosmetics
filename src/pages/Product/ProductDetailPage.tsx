@@ -23,6 +23,9 @@ import {
   MapPin,
   ArrowLeft,
   AlertCircle,
+  Send,
+  MessageCircle,
+  Copy,
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -35,6 +38,7 @@ export const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [shareDropdownOpen, setShareDropdownOpen] = useState(false);
 
   // Fetch product by slug
   const {
@@ -125,11 +129,47 @@ export const ProductDetailPage: React.FC = () => {
     setIsCartOpen(true);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = `${product.name} — MK KOREA COSMETIC`;
+    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    setShareDropdownOpen((prev) => !prev);
+  };
+
+  const handleShareTelegram = () => {
+    const shareUrl = window.location.href;
+    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+    setShareDropdownOpen(false);
+  };
+
+  const handleShareWhatsApp = () => {
+    const shareUrl = window.location.href;
+    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)\n${shareUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+    setShareDropdownOpen(false);
+  };
+
+  const handleCopyLink = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
+      setShareDropdownOpen(false);
     }
   };
 
@@ -321,15 +361,44 @@ export const ProductDetailPage: React.FC = () => {
                   <span className="eyebrow text-ink/50">KOREAN COSMETICS</span>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="relative">
                   <button
                     onClick={handleShare}
-                    className="text-xs text-ink/50 hover:text-gold flex items-center gap-1"
+                    className="text-xs text-ink/70 hover:text-gold flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line bg-paper hover:bg-cream transition-all shadow-xs cursor-pointer"
                     title="Поделиться"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                     <span>{copiedLink ? 'Скопировано!' : 'Поделиться'}</span>
                   </button>
+
+                  {shareDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-line p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="text-[10px] font-semibold text-muted px-2.5 py-1 uppercase tracking-wider">
+                        Поделиться товаром
+                      </div>
+                      <button
+                        onClick={handleShareTelegram}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-ink hover:text-white hover:bg-[#229ED9] rounded-xl transition-colors cursor-pointer text-left"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>В Telegram</span>
+                      </button>
+                      <button
+                        onClick={handleShareWhatsApp}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-ink hover:text-white hover:bg-[#25D366] rounded-xl transition-colors cursor-pointer text-left"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>В WhatsApp</span>
+                      </button>
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-ink hover:text-gold hover:bg-cream rounded-xl transition-colors cursor-pointer text-left border-t border-line/60 mt-1 pt-1.5"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Скопировать ссылку</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -102,6 +102,14 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 	return true
 }
 
+func safeTruncate(s string, maxRunes int) string {
+	runes := []rune(s)
+	if len(runes) <= maxRunes {
+		return s
+	}
+	return string(runes[:maxRunes-3]) + "..."
+}
+
 func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProduct, slug string) []byte {
 	brand := p.Brand
 	if p.BrandOverride != "" {
@@ -112,13 +120,12 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	}
 
 	titleText := fmt.Sprintf("%s %s — купить со склада в Сеуле (Корея) | MK KOREA COSMETIC", p.Name, brand)
+	ogTitleText := fmt.Sprintf("%s (%s)", p.Name, brand)
 	descText := p.Excerpt
 	if descText == "" {
 		descText = p.Description
 	}
-	if len(descText) > 200 {
-		descText = descText[:197] + "..."
-	}
+	descText = safeTruncate(descText, 160)
 	if descText == "" {
 		descText = fmt.Sprintf("Оригинальная корейская косметика %s %s со склада в Сеуле. Прямые поставки по оптовым ценам, быстрая доставка по СНГ.", p.Name, brand)
 	}
@@ -281,18 +288,22 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
     <meta name="keywords" content="%s, %s, корейская косметика, косметика из кореи, оптом, Сеул, оригинал, уход за кожей" />
     <link rel="canonical" href="%s" />
     
-    <!-- Open Graph / Facebook / Telegram / WhatsApp -->
+    <!-- Open Graph / Telegram / WhatsApp / Facebook -->
     <meta property="og:site_name" content="MK KOREA COSMETIC" />
-    <meta property="og:type" content="product" />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
     <meta property="og:image" content="%s" />
+    <meta property="og:image:secure_url" content="%s" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="600" />
+    <meta property="og:image:height" content="600" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="product:price:amount" content="%d" />
     <meta property="product:price:currency" content="KRW" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter Card for Telegram / Twitter / Slack -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
@@ -307,12 +318,13 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		html.EscapeString(p.Name),
 		html.EscapeString(brand),
 		canonicalURL,
-		html.EscapeString(titleText),
+		html.EscapeString(ogTitleText),
 		html.EscapeString(descText),
 		canonicalURL,
 		html.EscapeString(imgURL),
+		html.EscapeString(imgURL),
 		p.PriceKRW,
-		html.EscapeString(titleText),
+		html.EscapeString(ogTitleText),
 		html.EscapeString(descText),
 		html.EscapeString(imgURL),
 		string(prodBytes),
