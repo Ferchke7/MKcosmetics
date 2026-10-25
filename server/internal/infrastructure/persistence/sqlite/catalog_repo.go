@@ -11,6 +11,7 @@ import (
 
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
+	"mkcosmetics/server/internal/infrastructure/bcatalog"
 )
 
 type catalogRepository struct {
@@ -688,15 +689,22 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 			_, _ = updateStmt.ExecContext(ctx, string(photosJSON), string(photosJSON), code, existingID)
 			updated++
 		} else {
-			// Brand extraction
-			brand := "MK KOREA"
-			parts := strings.Split(title, "|")
-			if len(parts) > 1 {
-				brand = strings.TrimSpace(parts[0])
-			} else {
-				brandWords := strings.Fields(title)
-				if len(brandWords) > 0 {
-					brand = brandWords[0]
+			// Only insert new products from Excel if they have a valid photo!
+			if item.PhotoPath == "" {
+				continue
+			}
+
+			// Brand extraction using canonical brand rules
+			brand := bcatalog.ExtractBrand(title)
+			if brand == "" || len(brand) <= 2 || brand == "THE" || brand == "O" {
+				brand = "MK Collection"
+			}
+
+			// Clean title: strip weight suffixes
+			cleanTitle := title
+			for _, suffix := range []string{"ВЕС:", "BEC:", "Вес:", "вес:", "BEC :", "Вес :", "<†"} {
+				if sIdx := strings.Index(cleanTitle, suffix); sIdx > 0 {
+					cleanTitle = strings.TrimSpace(cleanTitle[:sIdx])
 				}
 			}
 
@@ -715,7 +723,7 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 			pseudoSourceID := -int64(10000000 + idx)
 
 			_, insertErr := insertStmt.ExecContext(ctx,
-				pseudoSourceID, slug, title, brand, title, title,
+				pseudoSourceID, slug, cleanTitle, brand, cleanTitle, cleanTitle,
 				0, "Каталог", "catalog",
 				price, price, 0, 100,
 				string(photosJSON), code,

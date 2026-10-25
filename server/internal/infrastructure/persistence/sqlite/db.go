@@ -314,6 +314,32 @@ func (db *DB) migrate() error {
 
 	// 4. Ensure default admin user exists
 	db.seedDefaultAdmin()
+
+	// 5. Purge broken/dummy products from legacy Excel import (source_id < 0)
+	_, _ = db.Exec("DELETE FROM catalog_products WHERE source_id < 0;")
+
+	// 6. Normalize and sanitize brand names in catalog_products
+	cleanupQueries := []string{
+		"UPDATE catalog_products SET brand = 'The History of Whoo' WHERE UPPER(brand) IN ('THE', 'THE WHOO', 'WHOO', 'THE HISTORY OF WHOO', 'THE HISTORY', 'CHEONGIDAN') OR UPPER(title) LIKE '%WHOO%';",
+		"UPDATE catalog_products SET brand = 'O HUI' WHERE UPPER(brand) IN ('O', 'OHUI', 'O HUI', 'O-HUI') OR UPPER(title) LIKE '%O HUI%' OR UPPER(title) LIKE '%OHUI%';",
+		"UPDATE catalog_products SET brand = 'Sulwhasoo' WHERE UPPER(brand) IN ('SULWHASOO', 'SULWHASSO', 'SULWHASSOO') OR brand LIKE 'Sulwhas%' OR UPPER(title) LIKE '%SULWHASOO%';",
+		"UPDATE catalog_products SET brand = 'SU:M37' WHERE UPPER(brand) IN ('SUM:37', 'SU:M37', 'SUM37', 'SUM', 'SU:M') OR UPPER(title) LIKE '%SU:M37%' OR UPPER(title) LIKE '%SUM:37%';",
+		"UPDATE catalog_products SET brand = 'CNP Laboratory' WHERE UPPER(brand) IN ('CNP', 'CNP LABORATORY') OR UPPER(title) LIKE '%CNP%';",
+		"UPDATE catalog_products SET brand = 'AMOREPACIFIC' WHERE UPPER(brand) IN ('AMORE', 'AMORE PACIFIC', 'AMOREPACIFIC', 'AP') OR UPPER(title) LIKE '%AMORE PACIFIC%';",
+		"UPDATE catalog_products SET brand = 'VITAL BEAUTIE' WHERE UPPER(brand) IN ('VITAL', 'VITALBEAUTIE', 'VITAL BEAUTIE', 'VITALBEAUTY', 'VITAL GARDEN', 'VITALGARDEN') OR UPPER(title) LIKE '%VITAL BEAUTIE%';",
+		"UPDATE catalog_products SET brand = 'PRIMERA' WHERE UPPER(brand) IN ('PRIMERA', 'PRMR', 'PRMR VITA-TINOL', 'PRIMERA.FREE') OR UPPER(title) LIKE '%PRIMERA%';",
+		"UPDATE catalog_products SET brand = 'HOLITUAL' WHERE UPPER(brand) IN ('HOLITUAL', '홀리추얼') OR UPPER(title) LIKE '%HOLITUAL%';",
+		"UPDATE catalog_products SET brand = 'USOLAB' WHERE UPPER(brand) IN ('USOLAB') OR UPPER(title) LIKE '%USOLAB%';",
+		"UPDATE catalog_products SET brand = 'HERA' WHERE UPPER(brand) IN ('HERA') OR UPPER(title) LIKE '%HERA%';",
+		"UPDATE catalog_products SET brand = 'NUMBUZIN' WHERE UPPER(brand) IN ('NUMBUZIN', 'NUNBUZIN', 'NYMBIZIN') OR UPPER(title) LIKE '%NUMBUZIN%';",
+		"UPDATE catalog_products SET brand = 'TOM-TIT-TOT' WHERE UPPER(brand) IN ('TOM-TIT-TOT', 'TOM-TIT-TOT (TTT)', 'TTT', 'TOM-TIT-TOT TENSELOID') OR UPPER(title) LIKE '%TOM-TIT-TOT%';",
+		"UPDATE catalog_products SET brand = 'RiRe' WHERE UPPER(brand) IN ('RIRE', 'RIRE TRIPLE') OR UPPER(title) LIKE '%RIRE%';",
+		"UPDATE catalog_products SET brand = 'MK Collection' WHERE brand IN ('Косметический', 'Тональный', 'Крем', 'Пенка', 'Пробники', 'Противовоспалительный', 'Зубная', 'Красный', 'Лечебный', 'Помада', 'Антивозрастной', 'Бальзам', 'Детские', 'Коллаген', 'Кушон', 'Маска', 'Сыворотка', 'Тонер', 'Табле6тки', 'капсулы', 'таблетки', 'The', 'THE', 'O', 'o', '') OR LENGTH(brand) <= 2;",
+	}
+	for _, q := range cleanupQueries {
+		_, _ = db.Exec(q)
+	}
+
 	return nil
 }
 
