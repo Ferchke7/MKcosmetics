@@ -382,45 +382,58 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
           />
 
           {selectedFile ? (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1C1A18] p-4 rounded-xl border border-neutral-700">
-              <div className="flex items-center gap-3 text-left">
-                <FileSpreadsheet className="w-8 h-8 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-semibold text-white">{selectedFile.name}</p>
-                  <p className="text-[11px] text-neutral-400">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} МБ • Файл готов к обработке
-                  </p>
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1C1A18] p-4 rounded-xl border border-neutral-700">
+                <div className="flex items-center gap-3 text-left">
+                  <FileSpreadsheet className={`w-8 h-8 flex-shrink-0 ${selectedFile.size < 50 * 1024 ? 'text-amber-400' : 'text-emerald-400'}`} />
+                  <div>
+                    <p className="text-xs font-semibold text-white">{selectedFile.name}</p>
+                    <p className="text-[11px] text-neutral-400">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} МБ ({(selectedFile.size / 1024).toFixed(0)} КБ) • {selectedFile.size < 50 * 1024 ? 'Подозрительно маленький размер' : 'Файл готов к обработке'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    disabled={isImportActive}
+                    className="px-3 py-2 text-xs text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => excelImportMutation.mutate(selectedFile)}
+                    disabled={isImportActive || selectedFile.size < 50 * 1024}
+                    className="btn-gold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
+                  >
+                    {isImportActive ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Обработка ({elapsedSeconds}с)...
+                      </>
+                    ) : (
+                      <>
+                        <FileUp className="w-4 h-4" />
+                        Запустить импорт в базу
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                  disabled={isImportActive}
-                  className="px-3 py-2 text-xs text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  onClick={() => excelImportMutation.mutate(selectedFile)}
-                  disabled={isImportActive}
-                  className="btn-gold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
-                >
-                  {isImportActive ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Обработка ({elapsedSeconds}с)...
-                    </>
-                  ) : (
-                    <>
-                      <FileUp className="w-4 h-4" />
-                      Запустить импорт в базу
-                    </>
-                  )}
-                </button>
-              </div>
+              {selectedFile.size < 50 * 1024 && (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-left space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    ⚠️ Внимание: выбран файл размером всего {(selectedFile.size / 1024).toFixed(0)} КБ!
+                  </p>
+                  <p className="text-neutral-300 text-[11px] leading-relaxed">
+                    Этот файл является пустым печатным шаблоном Класс365/Бизнес.Ру. Настоящая полная база товаров с фотографиями называется <strong>РабочийШБ2.xls</strong> и имеет размер около <strong>26 МБ</strong>. Пожалуйста, нажмите «Отмена» и выберите файл «РабочийШБ2.xls».
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <label
@@ -432,7 +445,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 Перетащите сюда файл Excel или <span className="text-amber-400 underline underline-offset-2">выберите на компьютере</span>
               </p>
               <p className="text-[11px] text-neutral-500">
-                Поддерживаются экспорты Бизнес.Ру (.xls / .xlsx) размером до 100 МБ
+                Загружайте файл полной базы товаров «РабочийШБ2.xls» (~26 МБ с фото)
               </p>
             </label>
           )}
