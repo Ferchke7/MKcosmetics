@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { catalogApi } from '../../api/catalogApi';
 import { formatKrw } from '../ui/Price';
@@ -14,16 +14,28 @@ import {
   CheckCircle2,
   AlertCircle,
   Package,
-  Boxes,
   Layers,
   Sparkles,
   FileSpreadsheet,
   UploadCloud,
   FileUp,
+  Clock,
+  Image as ImageIcon,
+  CheckCheck,
 } from 'lucide-react';
 
 interface CatalogSyncViewProps {
   token: string;
+}
+
+interface ImportResultStats {
+  totalParsed: number;
+  added: number;
+  updated: number;
+  withPhotos: number;
+  total: number;
+  durationMs: number;
+  message: string;
 }
 
 export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
@@ -52,6 +64,10 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   });
 
   const [syncProgress, setSyncProgress] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [importStats, setImportStats] = useState<ImportResultStats | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Direct Client-Side Sync Mutation (Bypasses server datacenter IP blocks completely!)
   const directSyncMutation = useMutation({
@@ -60,7 +76,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       setSyncProgress(null);
       setFeedbackMsg({
         type: 'success',
-        text: `Прямая синхронизация завершена успешно! Обработано ${res?.total || 0} товаров (Добавлено: ${res?.added || 0}, Обновлено: ${res?.updated || 0}).`,
+        text: `Прямая онлайн-синхронизация завершена! Обработано ${res?.total || 0} товаров (Добавлено: ${res?.added || 0}, Обновлено: ${res?.updated || 0}).`,
       });
       queryClient.invalidateQueries({ queryKey: ['catalog'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
@@ -81,24 +97,18 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     mutationFn: () => catalogApi.adminSync(token),
     onSuccess: (res) => {
       const msg = res?.async
-        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме на сервере! Загружаем товары...'
-        : `Синхронизация завершена успешно! Обработано ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
+        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме на сервере!'
+        : `Серверная синхронизация завершена: ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
 
       setFeedbackMsg({
         type: 'success',
         text: msg,
       });
 
-      // Poll twice to pick up newly synced products
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['catalog'] });
         queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
       }, 2500);
-
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['catalog'] });
-        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
-      }, 6000);
 
       setTimeout(() => setFeedbackMsg(null), 8000);
     },
@@ -111,29 +121,23 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     },
   });
 
-  // Toggle Override Mutation
-  const updateOverrideMutation = useMutation({
-    mutationFn: ({ id, overrides }: { id: number; overrides: any }) =>
-      catalogApi.adminUpdateOverrides(id, overrides, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['catalog'] });
-    },
-    onError: (err: any) => {
-      alert(`Ошибка обновления: ${err.message}`);
-    },
-  });
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
+  // Excel Import Mutation with Detailed Progress
   const excelImportMutation = useMutation({
     mutationFn: (file: File) => catalogApi.adminImportExcel(token, file),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       setSelectedFile(null);
+      setImportStats({
+        totalParsed: res.totalParsed || (res.added + res.updated),
+        added: res.added || 0,
+        updated: res.updated || 0,
+        withPhotos: res.withPhotos || 0,
+        total: res.total || (res.added + res.updated),
+        durationMs: res.durationMs || (elapsedSeconds * 1000),
+        message: res.message || 'Импорт каталога успешно завершён!',
+      });
       setFeedbackMsg({
         type: 'success',
-        text: res.message || `Файл успешно обработан! Добавлено: ${res.added}, Обновлено: ${res.updated}.`,
+        text: `Excel успешно обработан! Добавлено: ${res.added}, Обновлено: ${res.updated}, Фото HD: ${res.withPhotos}.`,
       });
       queryClient.invalidateQueries({ queryKey: ['catalog'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
@@ -148,6 +152,20 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     },
   });
 
+  // Stopwatch for Import Process
+  useEffect(() => {
+    let interval: any;
+    if (excelImportMutation.isPending) {
+      setElapsedSeconds(0);
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [excelImportMutation.isPending]);
+
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -155,6 +173,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       const file = e.dataTransfer.files[0];
       if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
         setSelectedFile(file);
+        setImportStats(null);
       } else {
         alert('Пожалуйста, выберите файл таблицы Excel (.xls или .xlsx)');
       }
@@ -164,8 +183,22 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
+      setImportStats(null);
     }
   };
+
+  // Toggle Override Mutation
+  const updateOverrideMutation = useMutation({
+    mutationFn: ({ id, overrides }: { id: number; overrides: any }) =>
+      catalogApi.adminUpdateOverrides(id, overrides, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog', 'products'] });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+    },
+    onError: (err: any) => {
+      alert(`Ошибка обновления: ${err.message}`);
+    },
+  });
 
   const handleToggleHit = (product: CatalogProduct) => {
     updateOverrideMutation.mutate({
@@ -190,33 +223,34 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   };
 
   const productsList = productsData?.products || [];
-  const totalInDb = statusData?.totalProducts || 0;
-  const hitsInDb = statusData?.totalHits || 0;
+  const totalInDb = statusData?.totalProducts || statusData?.total || 0;
+  const hitsInDb = statusData?.totalHits || statusData?.hits || 0;
   const categoriesInDb = statusData?.totalCategories || 0;
   const lastSync = statusData?.lastSync;
+  const syncLogs = statusData?.syncLogs || [];
 
   return (
     <div className="space-y-6">
       {/* Top Banner / Sync Trigger */}
-      <div className="bg-paper rounded-3xl border border-line p-6 shadow-sm">
+      <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h2 className="font-serif text-2xl font-normal text-ink">
-                Синхронизация каталога с b-catalog
+              <h2 className="font-serif text-2xl font-bold text-white">
+                Синхронизация каталога
               </h2>
             </div>
-            <p className="text-xs text-ink/60 mt-1 max-w-xl leading-relaxed">
-              Автоматическое скачивание актуальных остатков и цен в корейской воне (KRW) из b-catalog каждые 30 минут. Ручные правки (хиты, скрытие, бренд) сохраняются при синхронизации.
+            <p className="text-xs text-neutral-400 mt-1 max-w-xl leading-relaxed">
+              Прямая загрузка актуальных цен и остатков из <strong>b-catalog</strong> и обогащение полной базой из <strong>Excel</strong>. Товары остаются на витрине навсегда, даже если их нет на оперативном складе.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => directSyncMutation.mutate()}
-              disabled={directSyncMutation.isPending || syncMutation.isPending}
-              className="btn-gold px-6 py-3.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 flex-shrink-0"
+              disabled={directSyncMutation.isPending || syncMutation.isPending || excelImportMutation.isPending}
+              className="btn-gold px-6 py-3 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 flex-shrink-0"
               title="Загрузка актуальных данных напрямую из b-catalog без зависимости от IP-адреса хостинга"
             >
               <RefreshCw className={`w-4 h-4 ${directSyncMutation.isPending ? 'animate-spin' : ''}`} />
@@ -225,11 +259,11 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
 
             <button
               onClick={() => syncMutation.mutate()}
-              disabled={syncMutation.isPending || directSyncMutation.isPending}
-              className="px-4 py-3.5 rounded-full border border-line text-xs uppercase tracking-wider font-medium text-ink/70 hover:bg-cream inline-flex items-center justify-center gap-2 disabled:opacity-50 flex-shrink-0 transition-colors"
+              disabled={syncMutation.isPending || directSyncMutation.isPending || excelImportMutation.isPending}
+              className="px-4 py-3 rounded-full border border-neutral-700 hover:border-neutral-500 text-xs uppercase tracking-wider font-medium text-neutral-300 hover:text-white bg-white/5 inline-flex items-center justify-center gap-2 disabled:opacity-50 flex-shrink-0 transition-colors"
               title="Фоновая синхронизация силами сервера"
             >
-              <Sparkles className="w-3.5 h-3.5 text-gold" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               Серверный Sync
             </button>
           </div>
@@ -240,73 +274,74 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
           <div
             className={`mt-4 p-4 rounded-2xl flex items-center gap-3 text-xs font-medium animate-in fade-in duration-200 ${
               feedbackMsg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                : 'bg-sale/10 text-sale border border-sale/20'
+                ? 'bg-emerald-950/50 text-emerald-300 border border-emerald-500/30'
+                : 'bg-red-950/50 text-red-300 border border-red-500/30'
             }`}
           >
             {feedbackMsg.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
             ) : (
-              <AlertCircle className="w-5 h-5 flex-shrink-0 text-sale" />
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
             )}
             <span>{feedbackMsg.text}</span>
           </div>
         )}
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-line">
-          <div className="bg-cream/50 p-4 rounded-2xl border border-line">
-            <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Товаров в базе</span>
-            <div className="font-mono text-2xl font-bold text-ink mt-1 flex items-center gap-2">
-              <Package className="w-5 h-5 text-gold" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-neutral-800">
+          <div className="bg-[#12100E] p-4 rounded-2xl border border-neutral-800">
+            <span className="text-[11px] text-neutral-400 uppercase tracking-wider block">Товаров в витрине</span>
+            <div className="font-mono text-2xl font-bold text-white mt-1 flex items-center gap-2">
+              <Package className="w-5 h-5 text-amber-400" />
               {totalInDb}
             </div>
           </div>
 
-          <div className="bg-cream/50 p-4 rounded-2xl border border-line">
-            <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Категорий</span>
-            <div className="font-mono text-2xl font-bold text-ink mt-1 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-gold" />
-              {categoriesInDb}
+          <div className="bg-[#12100E] p-4 rounded-2xl border border-neutral-800">
+            <span className="text-[11px] text-neutral-400 uppercase tracking-wider block">Категорий</span>
+            <div className="font-mono text-2xl font-bold text-white mt-1 flex items-center gap-2">
+              <Layers className="w-5 h-5 text-amber-400" />
+              {categoriesInDb || '—'}
             </div>
           </div>
 
-          <div className="bg-cream/50 p-4 rounded-2xl border border-line">
-            <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Хиты продаж</span>
-            <div className="font-mono text-2xl font-bold text-ink mt-1 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-sale" />
+          <div className="bg-[#12100E] p-4 rounded-2xl border border-neutral-800">
+            <span className="text-[11px] text-neutral-400 uppercase tracking-wider block">Хиты продаж</span>
+            <div className="font-mono text-2xl font-bold text-amber-400 mt-1 flex items-center gap-2">
+              <Flame className="w-5 h-5 text-amber-400" />
               {hitsInDb}
             </div>
           </div>
 
-          <div className="bg-cream/50 p-4 rounded-2xl border border-line">
-            <span className="text-[11px] text-ink/50 uppercase tracking-wider block">Последняя синхронизация</span>
-            <div className="text-xs font-mono text-ink/80 mt-2 truncate">
-              {lastSync?.finishedAt
-                ? new Date(lastSync.finishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
-                  ` (${lastSync.status})`
+          <div className="bg-[#12100E] p-4 rounded-2xl border border-neutral-800">
+            <span className="text-[11px] text-neutral-400 uppercase tracking-wider block">Последняя синхронизация</span>
+            <div className="text-xs font-mono text-neutral-300 mt-2 truncate">
+              {lastSync?.finishedAt || lastSync?.at
+                ? new Date(lastSync.finishedAt || lastSync.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
+                  ` (${lastSync.status || 'OK'})`
                 : 'Не выполнялась'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Excel Catalog Import Card with Go Lanczos Upscaling */}
-      <div className="bg-paper rounded-3xl border border-line p-6 shadow-sm">
+      {/* Excel Catalog Import Card with Live Process Tracking */}
+      <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-serif text-xl font-normal text-ink">
-              Импорт базы каталога из Excel (Бизнес.Ру / XLS)
+            <h3 className="font-serif text-xl font-bold text-white">
+              Импорт полной базы из Excel (Бизнес.Ру / XLS)
             </h3>
-            <p className="text-xs text-ink/60">
-              Загрузите файл <code className="bg-cream px-1.5 py-0.5 rounded text-[11px] font-mono text-ink">.xls</code> с фотографиями. Сервер автоматически извлечёт товары и выполнит качественный апскейлинг фото до 900px (Lanczos3 + контурная резкость) на Go без потери качества.
+            <p className="text-xs text-neutral-400">
+              Загрузите файл <code className="bg-black/40 px-1.5 py-0.5 rounded text-[11px] font-mono text-amber-300">.xls</code>. Сервер на Go извлечёт все товары, распакует фотографии и выполнит качественный HD-апскейлинг фото до 900px (Lanczos3 с контурной резкостью).
             </p>
           </div>
         </div>
 
+        {/* Dropzone */}
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -316,8 +351,8 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
           onDrop={handleFileDrop}
           className={`mt-4 border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
             isDragging
-              ? 'border-gold bg-gold/5'
-              : 'border-line/80 hover:border-gold/50 bg-cream/30'
+              ? 'border-amber-400 bg-amber-400/5'
+              : 'border-neutral-700 hover:border-amber-400/50 bg-[#12100E]'
           }`}
         >
           <input
@@ -329,13 +364,13 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
           />
 
           {selectedFile ? (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-paper p-4 rounded-xl border border-line">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1C1A18] p-4 rounded-xl border border-neutral-700">
               <div className="flex items-center gap-3 text-left">
-                <FileSpreadsheet className="w-8 h-8 text-emerald-600 flex-shrink-0" />
+                <FileSpreadsheet className="w-8 h-8 text-emerald-400 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-ink">{selectedFile.name}</p>
-                  <p className="text-[11px] text-ink/50">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} МБ • Файл выбран
+                  <p className="text-xs font-semibold text-white">{selectedFile.name}</p>
+                  <p className="text-[11px] text-neutral-400">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} МБ • Файл готов к обработке
                   </p>
                 </div>
               </div>
@@ -345,7 +380,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   type="button"
                   onClick={() => setSelectedFile(null)}
                   disabled={excelImportMutation.isPending}
-                  className="px-3 py-2 text-xs text-ink/60 hover:text-ink transition-colors disabled:opacity-50"
+                  className="px-3 py-2 text-xs text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
                 >
                   Отмена
                 </button>
@@ -358,7 +393,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   {excelImportMutation.isPending ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Обработка и апскейл фото...
+                      Обработка ({elapsedSeconds}с)...
                     </>
                   ) : (
                     <>
@@ -374,46 +409,239 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
               htmlFor="excel-file-input"
               className="cursor-pointer flex flex-col items-center justify-center gap-2 py-4"
             >
-              <UploadCloud className="w-10 h-10 text-ink/40 hover:text-gold transition-colors" />
-              <p className="text-xs font-medium text-ink">
-                Перетащите сюда файл Excel или <span className="text-gold underline underline-offset-2">выберите на компьютере</span>
+              <UploadCloud className="w-10 h-10 text-neutral-500 hover:text-amber-400 transition-colors" />
+              <p className="text-xs font-medium text-neutral-200">
+                Перетащите сюда файл Excel или <span className="text-amber-400 underline underline-offset-2">выберите на компьютере</span>
               </p>
-              <p className="text-[11px] text-ink/40">
-                Поддерживаются экспорты Бизнес.Ру (.xls) размером до 50 МБ
+              <p className="text-[11px] text-neutral-500">
+                Поддерживаются экспорты Бизнес.Ру (.xls / .xlsx) размером до 50 МБ
               </p>
             </label>
           )}
         </div>
 
-        <div className="mt-3 flex items-center gap-2 text-[11px] text-ink/50">
-          <Sparkles className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+        {/* Live Process Pipeline Indicator during Import */}
+        {excelImportMutation.isPending && (
+          <div className="mt-4 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 animate-in fade-in space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <RefreshCw className="w-5 h-5 text-amber-400 animate-spin" />
+                <div>
+                  <span className="font-semibold text-xs sm:text-sm text-amber-200 block">
+                    Выполняется импорт каталога и Lanczos3 HD-апскейлинг...
+                  </span>
+                  <span className="text-[11px] text-neutral-400">
+                    Пожалуйста, не закрывайте страницу, идёт обработка товаров и картинок на сервере
+                  </span>
+                </div>
+              </div>
+              <div className="text-xs font-mono font-bold px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                ⏱️ {elapsedSeconds} сек
+              </div>
+            </div>
+
+            {/* Pipeline Stage Indicators */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#141210] border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>1. Загрузка файла</span>
+              </div>
+              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
+                elapsedSeconds >= 2 ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300 animate-pulse'
+              }`}>
+                {elapsedSeconds >= 2 ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+                )}
+                <span>2. Парсинг BIFF8</span>
+              </div>
+              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
+                elapsedSeconds >= 3 ? 'border-amber-500/40 text-amber-200 animate-pulse' : 'border-neutral-800 text-neutral-500'
+              }`}>
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>3. Lanczos3 HD фото</span>
+              </div>
+              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
+                elapsedSeconds >= 5 ? 'border-amber-500/40 text-amber-200' : 'border-neutral-800 text-neutral-500'
+              }`}>
+                <Package className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>4. Запись в SQLite</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Detailed Results Card when Complete */}
+        {importStats && (
+          <div className="mt-4 p-6 rounded-3xl bg-emerald-950/40 border border-emerald-500/40 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300">
+                  <CheckCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg font-bold text-white">
+                    Отчёт об импорте каталога
+                  </h4>
+                  <p className="text-xs text-emerald-300/80">
+                    {importStats.message}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setImportStats(null)}
+                className="text-neutral-400 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-neutral-700 hover:border-neutral-500 transition-colors self-start sm:self-auto"
+              >
+                Закрыть отчёт ✕
+              </button>
+            </div>
+
+            {/* 4 Metrics Tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-[#141210] p-4 rounded-2xl border border-emerald-500/20">
+                <span className="text-[10px] text-neutral-400 uppercase tracking-wider block">
+                  Всего строк в Excel
+                </span>
+                <div className="font-mono text-2xl font-bold text-white mt-1">
+                  {importStats.totalParsed}
+                </div>
+                <span className="text-[10px] text-neutral-500 mt-0.5 block">распознано товаров</span>
+              </div>
+
+              <div className="bg-[#141210] p-4 rounded-2xl border border-emerald-500/20">
+                <span className="text-[10px] text-emerald-400/80 uppercase tracking-wider block">
+                  Новых добавлено
+                </span>
+                <div className="font-mono text-2xl font-bold text-emerald-400 mt-1">
+                  +{importStats.added}
+                </div>
+                <span className="text-[10px] text-emerald-500/70 mt-0.5 block">появились на витрине</span>
+              </div>
+
+              <div className="bg-[#141210] p-4 rounded-2xl border border-emerald-500/20">
+                <span className="text-[10px] text-sky-400/80 uppercase tracking-wider block">
+                  Обновлено в базе
+                </span>
+                <div className="font-mono text-2xl font-bold text-sky-300 mt-1">
+                  {importStats.updated}
+                </div>
+                <span className="text-[10px] text-sky-500/70 mt-0.5 block">обогащено фото/данными</span>
+              </div>
+
+              <div className="bg-[#141210] p-4 rounded-2xl border border-emerald-500/20">
+                <span className="text-[10px] text-amber-400/80 uppercase tracking-wider block">
+                  Фото HD (Lanczos3)
+                </span>
+                <div className="font-mono text-2xl font-bold text-amber-300 mt-1">
+                  {importStats.withPhotos}
+                </div>
+                <span className="text-[10px] text-amber-500/70 mt-0.5 block">апскейлено до 900px</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-neutral-400 pt-1 border-t border-emerald-500/10">
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Время выполнения: <strong className="text-white">{(importStats.durationMs / 1000).toFixed(1)} сек</strong></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Приоритет сохранён: <strong className="text-white">b-catalog &gt; Excel</strong></span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center gap-2 text-[11px] text-neutral-400">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
           <span>
             Приоритет: <strong>b-catalog &gt; Excel</strong>. Все товары из Excel сохраняются в витрине и всегда доступны клиентам для заказа.
           </span>
         </div>
       </div>
 
+      {/* Sync History Logs */}
+      {syncLogs && syncLogs.length > 0 && (
+        <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-serif text-base font-bold text-white flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400" />
+              Журнал последних синхронизаций
+            </h4>
+            <span className="text-[11px] text-neutral-500">История автоматических и ручных обновлений</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-neutral-800 text-neutral-500 uppercase text-[10px] tracking-wider">
+                  <th className="py-2.5 px-3">Дата / Время</th>
+                  <th className="py-2.5 px-3">Статус</th>
+                  <th className="py-2.5 px-3">Добавлено</th>
+                  <th className="py-2.5 px-3">Обновлено</th>
+                  <th className="py-2.5 px-3">Всего в базе</th>
+                  <th className="py-2.5 px-3 text-right">Время обработки</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-800/50">
+                {syncLogs.slice(0, 5).map((log: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-white/[0.02] text-neutral-300">
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-neutral-400">
+                      {new Date(log.at || log.created_at || Date.now()).toLocaleString('ru-RU')}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {log.error ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                          Ошибка
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Успешно
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-emerald-400 font-semibold">
+                      +{log.added || 0}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-sky-400">
+                      {log.updated || 0}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-neutral-200">
+                      {log.total || (log.added + log.updated) || 0} тов.
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-right text-neutral-400 text-[11px]">
+                      {log.durationMs ? `${(log.durationMs / 1000).toFixed(2)} с` : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Overrides & Products Grid */}
-      <div className="bg-paper rounded-3xl border border-line p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
+      <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-neutral-800">
           <div>
-            <h3 className="font-serif text-lg font-normal text-ink">
-              Управление товарами и метками
+            <h3 className="font-serif text-lg font-bold text-white">
+              Управление витриной и товарами
             </h3>
-            <p className="text-xs text-ink/50">
-              Быстрое включение меток «ХИТ», скрытие с витрины и корректировка бренда
+            <p className="text-xs text-neutral-400">
+              Быстрое включение меток «ХИТ», скрытие товаров с витрины и корректировка бренда
             </p>
           </div>
 
           {/* Search */}
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск по названию или коду..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-cream/40 border border-line rounded-full focus:outline-none focus:border-gold"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-[#12100E] border border-neutral-700 rounded-full focus:outline-none focus:border-amber-400 text-white placeholder-neutral-500"
             />
           </div>
         </div>
@@ -422,50 +650,71 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-line text-ink/50 uppercase font-semibold text-[10px] tracking-wider">
+              <tr className="border-b border-neutral-800 text-neutral-500 uppercase font-semibold text-[10px] tracking-wider">
                 <th className="py-3 px-3">Фото</th>
                 <th className="py-3 px-3">Товар / Код</th>
                 <th className="py-3 px-3">Бренд</th>
-                <th className="py-3 px-3">Цена (KRW)</th>
-                <th className="py-3 px-3">Остаток</th>
-                <th className="py-3 px-3 text-center">Хит</th>
+                <th className="py-3 px-3 text-right">Цена (KRW)</th>
+                <th className="py-3 px-3 text-center">ХИТ</th>
                 <th className="py-3 px-3 text-center">Витрина</th>
                 <th className="py-3 px-3 text-right">Действия</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-line/60">
+            <tbody className="divide-y divide-neutral-800/40">
               {isProductsLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-ink/40">
+                  <td colSpan={7} className="py-8 text-center text-neutral-500">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-400" />
                     Загрузка списка товаров...
                   </td>
                 </tr>
               ) : productsList.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-ink/40">
+                  <td colSpan={7} className="py-8 text-center text-neutral-500">
                     Товары не найдены
                   </td>
                 </tr>
               ) : (
-                productsList.map((p) => (
-                  <tr key={p.id} className="hover:bg-cream/40 transition-colors">
+                productsList.map((p: CatalogProduct) => (
+                  <tr
+                    key={p.id}
+                    className={`hover:bg-white/[0.02] transition-colors ${
+                      p.isHidden ? 'opacity-40 bg-neutral-900/30' : ''
+                    }`}
+                  >
                     {/* Photo */}
                     <td className="py-2.5 px-3">
-                      <div className="w-12 h-12 rounded-xl bg-cream border border-line/60 overflow-hidden flex items-center justify-center">
-                        <img
-                          src={p.images?.[0] || '/placeholder.png'}
-                          alt={p.name}
-                          className="w-full h-full object-contain p-1"
-                          loading="lazy"
-                        />
+                      <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {p.photos && p.photos.length > 0 && p.photos[0].w150 ? (
+                          <img
+                            src={p.photos[0].w150 || p.photos[0].full}
+                            alt={p.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : p.images && p.images.length > 0 ? (
+                          <img
+                            src={p.images[0]}
+                            alt={p.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-neutral-600" />
+                        )}
                       </div>
                     </td>
 
-                    {/* Title & SKU */}
-                    <td className="py-2.5 px-3 max-w-xs">
-                      <div className="font-medium text-ink line-clamp-1">{p.name}</div>
-                      <div className="text-[10px] text-ink/40 font-mono mt-0.5">
-                        Арт: {p.code || p.id} • {p.categoryName || 'Без категории'}
+                    {/* Title / Code */}
+                    <td className="py-2.5 px-3 max-w-xs sm:max-w-md">
+                      <div className="font-semibold text-white line-clamp-2" title={p.title}>
+                        {p.title}
+                      </div>
+                      <div className="text-[11px] text-neutral-400 font-mono mt-0.5 flex items-center gap-2">
+                        {p.code && <span>Код: {p.code}</span>}
+                        {p.categoryTitle && (
+                          <span className="text-neutral-500">| {p.categoryTitle}</span>
+                        )}
                       </div>
                     </td>
 
@@ -477,74 +726,64 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                             type="text"
                             value={editingBrandVal}
                             onChange={(e) => setEditingBrandVal(e.target.value)}
-                            className="w-28 px-2 py-1 text-xs border border-gold rounded bg-paper"
+                            className="w-28 px-2 py-1 text-xs bg-neutral-900 border border-amber-400 rounded-lg text-white outline-none"
                             autoFocus
                           />
                           <button
                             onClick={() => handleSaveBrand(p.id)}
-                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                            className="p-1 text-emerald-400 hover:text-emerald-300"
+                            title="Сохранить"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
-                        <div
+                        <button
                           onClick={() => {
                             setEditingBrandId(p.id);
-                            setEditingBrandVal(p.brand || '');
+                            setEditingBrandVal(p.brandOverride || p.brand || '');
                           }}
-                          className="cursor-pointer hover:text-gold text-ink font-semibold flex items-center gap-1 group"
+                          className="text-neutral-300 hover:text-amber-400 text-left font-medium transition-colors"
                           title="Нажмите для изменения бренда"
                         >
-                          <span>{p.brand || '—'}</span>
-                          <span className="text-[10px] text-ink/30 opacity-0 group-hover:opacity-100">✎</span>
-                        </div>
+                          {p.brandOverride || p.brand || '—'}
+                          {p.brandOverride && (
+                            <span className="ml-1 text-[9px] text-amber-400 font-normal">✎</span>
+                          )}
+                        </button>
                       )}
                     </td>
 
                     {/* Price KRW */}
-                    <td className="py-2.5 px-3 font-mono font-bold text-ink">
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400">
                       {formatKrw(p.priceKrw)}
                     </td>
 
-                    {/* Stock */}
-                    <td className="py-2.5 px-3">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          p.stock > 0
-                            ? 'bg-emerald-50 text-emerald-800'
-                            : 'bg-amber-50 text-amber-800'
-                        }`}
-                      >
-                        {p.stock} шт
-                      </span>
-                    </td>
-
-                    {/* Hit Toggle */}
+                    {/* Is Hit Toggle */}
                     <td className="py-2.5 px-3 text-center">
                       <button
                         onClick={() => handleToggleHit(p)}
-                        className={`p-1.5 rounded-lg border transition-colors ${
+                        className={`p-1.5 rounded-xl border transition-all ${
                           p.isHit
-                            ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
-                            : 'bg-cream text-ink/30 border-line hover:text-amber-600'
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
+                            : 'border-neutral-800 text-neutral-600 hover:text-neutral-400 hover:border-neutral-700'
                         }`}
-                        title={p.isHit ? 'Снять метку ХИТ' : 'Сделать Хитом продаж'}
+                        title={p.isHit ? 'Снять метку ХИТ' : 'Сделать ХИТом'}
                       >
-                        <Flame className="w-4 h-4" />
+                        <Flame className={`w-4 h-4 ${p.isHit ? 'fill-amber-400' : ''}`} />
                       </button>
                     </td>
 
-                    {/* Hidden Toggle */}
+                    {/* Is Hidden Toggle */}
                     <td className="py-2.5 px-3 text-center">
                       <button
                         onClick={() => handleToggleHidden(p)}
-                        className={`p-1.5 rounded-lg border transition-colors ${
+                        className={`p-1.5 rounded-xl border transition-all ${
                           p.isHidden
-                            ? 'bg-sale/15 text-sale border-sale/30'
-                            : 'bg-cream text-ink/60 border-line hover:text-ink'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                            : 'border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
                         }`}
-                        title={p.isHidden ? 'Товар скрыт с витрины. Нажмите чтобы показать' : 'Товар видим на витрине'}
+                        title={p.isHidden ? 'Показать на витрине' : 'Скрыть с витрины'}
                       >
                         {p.isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -556,7 +795,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                         href={`/product/${p.slug}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1.5 inline-flex rounded-lg border border-line text-ink/50 hover:text-gold hover:border-gold transition-colors"
+                        className="p-1.5 inline-flex rounded-xl border border-neutral-800 text-neutral-400 hover:text-amber-400 hover:border-amber-400/40 transition-colors"
                         title="Открыть на сайте"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />

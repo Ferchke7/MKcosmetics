@@ -263,7 +263,16 @@ export const catalogApi = {
   async adminImportExcel(
     token: string,
     file: File
-  ): Promise<{ success: boolean; added: number; updated: number; total: number; message: string }> {
+  ): Promise<{
+    success: boolean;
+    totalParsed: number;
+    added: number;
+    updated: number;
+    withPhotos: number;
+    total: number;
+    durationMs: number;
+    message: string;
+  }> {
     const formData = new FormData();
     formData.append('file', file);
 

@@ -334,7 +334,7 @@ func (h *CatalogHandler) ImportExcel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uploadsDir := filepath.Join("data", "uploads")
-	added, updated, err := h.catalogUC.ImportExcel(r.Context(), fileBytes, uploadsDir)
+	res, err := h.catalogUC.ImportExcel(r.Context(), fileBytes, uploadsDir)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
@@ -343,9 +343,15 @@ func (h *CatalogHandler) ImportExcel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
-		"added":   added,
-		"updated": updated,
-		"total":   added + updated,
-		"message": fmt.Sprintf("Успешно импортировано: %d товаров (новых: %d, обновлено: %d)", added+updated, added, updated),
+		"totalParsed": res.TotalParsed,
+		"added":       res.Added,
+		"updated":     res.Updated,
+		"withPhotos":  res.WithPhotos,
+		"total":       res.Total,
+		"durationMs":  res.DurationMs,
+		"message":     res.Message,
+
+
+
 	})
 }

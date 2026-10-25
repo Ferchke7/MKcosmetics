@@ -72,3 +72,13 @@ type ExcelImportProduct struct {
 	PriceKRW  int64
 	PhotoPath string
 }
+
+type ExcelImportResult struct {
+	TotalParsed int    `json:"totalParsed"`
+	Added       int    `json:"added"`
+	Updated     int    `json:"updated"`
+	WithPhotos  int    `json:"withPhotos"`
+	Total       int    `json:"total"`
+	DurationMs  int64  `json:"durationMs"`
+	Message     string `json:"message"`
+}

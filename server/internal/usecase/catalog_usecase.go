@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -12,8 +14,6 @@ import (
 	"mkcosmetics/server/internal/infrastructure/bcatalog"
 	"mkcosmetics/server/internal/infrastructure/excelimporter"
 	"mkcosmetics/server/internal/infrastructure/imageprocessor"
-	"os"
-	"path/filepath"
 )
 
 type CatalogUseCase struct {
@@ -172,11 +172,11 @@ func (uc *CatalogUseCase) StartBackgroundWorker(ctx context.Context, interval ti
 }
 
 type HomeResponse struct {
-	Hits          []entity.CatalogProduct `json:"hits"`
-	Sets          []entity.CatalogProduct `json:"sets"`
-	NewArrivals   []entity.CatalogProduct `json:"newArrivals"`
-	Categories    []entity.CatalogCategory `json:"categories"`
-	BrandSpotlights []BrandSpotlightItem  `json:"brandSpotlights"`
+	Hits            []entity.CatalogProduct `json:"hits"`
+	Sets            []entity.CatalogProduct `json:"sets"`
+	NewArrivals     []entity.CatalogProduct `json:"newArrivals"`
+	Categories      []entity.CatalogCategory `json:"categories"`
+	BrandSpotlights []BrandSpotlightItem     `json:"brandSpotlights"`
 }
 
 type BrandSpotlightItem struct {
@@ -284,23 +284,26 @@ func (uc *CatalogUseCase) UpdateOverrides(ctx context.Context, id int64, isHit *
 
 // ImportExcel parses an uploaded .xls file, upscales its product photos using Lanczos to 900px,
 // and safely merges them into catalog database with b-catalog > excel priority.
-func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, uploadsDir string) (int, int, error) {
+func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, uploadsDir string) (*entity.ExcelImportResult, error) {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
 
+	startTime := time.Now()
+
 	parsedItems, err := excelimporter.ParseXlsExtractProducts(fileBytes)
 	if err != nil {
-		return 0, 0, fmt.Errorf("ошибка парсинга Excel: %w", err)
+		return nil, fmt.Errorf("ошибка парсинга Excel: %w", err)
 	}
 
 	if len(parsedItems) == 0 {
-		return 0, 0, fmt.Errorf("в файле не найдено строк с товарами")
+		return nil, fmt.Errorf("в файле не найдено строк с товарами")
 	}
 
 	productsDir := filepath.Join(uploadsDir, "products")
 	_ = os.MkdirAll(productsDir, 0755)
 
 	var importList []entity.ExcelImportProduct
+	withPhotos := 0
 
 	for idx, item := range parsedItems {
 		photoRelPath := ""
@@ -312,6 +315,7 @@ func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, upl
 				destPath := filepath.Join(productsDir, filename)
 				if writeErr := os.WriteFile(destPath, upscaledBytes, 0644); writeErr == nil {
 					photoRelPath = "/uploads/products/" + filename
+					withPhotos++
 				}
 			}
 		}
@@ -324,5 +328,30 @@ func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, upl
 		})
 	}
 
-	return uc.catalogRepo.ImportExcelProducts(ctx, importList)
+	added, updated, err := uc.catalogRepo.ImportExcelProducts(ctx, importList)
+	if err != nil {
+		return nil, err
+	}
+
+	durationMs := time.Since(startTime).Milliseconds()
+
+	// Log sync result
+	_ = uc.catalogRepo.LogSync(ctx, entity.CatalogSyncResult{
+		Added:      added,
+		Updated:    updated,
+		Archived:   0,
+		Total:      added + updated,
+		DurationMs: durationMs,
+		At:         startTime,
+	})
+
+	return &entity.ExcelImportResult{
+		TotalParsed: len(parsedItems),
+		Added:       added,
+		Updated:     updated,
+		WithPhotos:  withPhotos,
+		Total:       added + updated,
+		DurationMs:  durationMs,
+		Message:     fmt.Sprintf("Успешно импортировано: %d товаров (новых: %d, обновлено: %d, фото HD: %d)", added+updated, added, updated, withPhotos),
+	}, nil
 }
