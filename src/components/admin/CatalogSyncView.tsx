@@ -60,7 +60,95 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const [isPollingImport, setIsPollingImport] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Poll for background import progress
+  // 1. Direct Client-Side Sync Mutation (Bypasses server datacenter IP blocks completely!)
+  const directSyncMutation = useMutation({
+    mutationFn: () => catalogApi.adminDirectSync(token, (msg) => setSyncProgress(msg)),
+    onSuccess: (res: any) => {
+      setSyncProgress(null);
+      setFeedbackMsg({
+        type: 'success',
+        text: `Прямая онлайн-синхронизация завершена! Обработано ${res?.total || 0} товаров (Добавлено: ${res?.added || 0}, Обновлено: ${res?.updated || 0}).`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+    onError: (err: any) => {
+      setSyncProgress(null);
+      setFeedbackMsg({
+        type: 'error',
+        text: `Ошибка прямой синхронизации: ${err.message || 'Сбой соединения'}`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 6000);
+    },
+  });
+
+  // 2. Server Sync Mutation
+  const syncMutation = useMutation({
+    mutationFn: () => catalogApi.adminSync(token),
+    onSuccess: (res) => {
+      const msg = res?.async
+        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме на сервере!'
+        : `Серверная синхронизация завершена: ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
+
+      setFeedbackMsg({
+        type: 'success',
+        text: msg,
+      });
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['catalog'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      }, 2500);
+
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+    onError: (err: any) => {
+      setFeedbackMsg({
+        type: 'error',
+        text: `Ошибка серверной синхронизации: ${err.message || 'Сбой соединения'}`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 5000);
+    },
+  });
+
+  // 3. Excel Import Mutation with Async Background Job & Polling
+  const excelImportMutation = useMutation({
+    mutationFn: (file: File) => catalogApi.adminImportExcel(token, file),
+    onSuccess: (res: any) => {
+      setSelectedFile(null);
+      setElapsedSeconds(0);
+      setImportStatus(res);
+      setIsPollingImport(true);
+      setFeedbackMsg({
+        type: 'success',
+        text: `Файл успешно загружен! Распознано ${res.totalParsed || ''} товаров. Идёт параллельный HD-апскейлинг фото и запись в базу...`,
+      });
+    },
+    onError: (err: any) => {
+      setIsPollingImport(false);
+      setFeedbackMsg({
+        type: 'error',
+        text: `Ошибка отправки файла Excel: ${err.message || 'Сбой соединения'}`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+  });
+
+  // 4. Toggle Override Mutation
+  const updateOverrideMutation = useMutation({
+    mutationFn: ({ id, overrides }: { id: number; overrides: any }) =>
+      catalogApi.adminUpdateOverrides(id, overrides, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog', 'products'] });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+    },
+    onError: (err: any) => {
+      alert(`Ошибка обновления: ${err.message}`);
+    },
+  });
+
+  // 5. Effects declared AFTER all mutations are fully initialized
   useEffect(() => {
     let interval: any;
     if (isPollingImport) {
@@ -92,7 +180,6 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     return () => clearInterval(interval);
   }, [isPollingImport, token, queryClient]);
 
-  // Stopwatch for Import Process
   useEffect(() => {
     let interval: any;
     if (excelImportMutation.isPending || isPollingImport) {
@@ -104,81 +191,6 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     }
     return () => clearInterval(interval);
   }, [excelImportMutation.isPending, isPollingImport]);
-
-  // Direct Client-Side Sync Mutation (Bypasses server datacenter IP blocks completely!)
-  const directSyncMutation = useMutation({
-    mutationFn: () => catalogApi.adminDirectSync(token, (msg) => setSyncProgress(msg)),
-    onSuccess: (res: any) => {
-      setSyncProgress(null);
-      setFeedbackMsg({
-        type: 'success',
-        text: `Прямая онлайн-синхронизация завершена! Обработано ${res?.total || 0} товаров (Добавлено: ${res?.added || 0}, Обновлено: ${res?.updated || 0}).`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
-      setTimeout(() => setFeedbackMsg(null), 8000);
-    },
-    onError: (err: any) => {
-      setSyncProgress(null);
-      setFeedbackMsg({
-        type: 'error',
-        text: `Ошибка прямой синхронизации: ${err.message || 'Сбой соединения'}`,
-      });
-      setTimeout(() => setFeedbackMsg(null), 6000);
-    },
-  });
-
-  // Server Sync Mutation
-  const syncMutation = useMutation({
-    mutationFn: () => catalogApi.adminSync(token),
-    onSuccess: (res) => {
-      const msg = res?.async
-        ? 'Синхронизация с b-catalog успешно запущена в фоновом режиме на сервере!'
-        : `Серверная синхронизация завершена: ${res?.total || res?.totalProcessed || 0} товаров (Добавлено: ${res?.added || res?.created || 0}, Обновлено: ${res?.updated || 0}).`;
-
-      setFeedbackMsg({
-        type: 'success',
-        text: msg,
-      });
-
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['catalog'] });
-        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
-      }, 2500);
-
-      setTimeout(() => setFeedbackMsg(null), 8000);
-    },
-    onError: (err: any) => {
-      setFeedbackMsg({
-        type: 'error',
-        text: `Ошибка серверной синхронизации: ${err.message || 'Сбой соединения'}`,
-      });
-      setTimeout(() => setFeedbackMsg(null), 5000);
-    },
-  });
-
-  // Excel Import Mutation with Async Background Job & Polling
-  const excelImportMutation = useMutation({
-    mutationFn: (file: File) => catalogApi.adminImportExcel(token, file),
-    onSuccess: (res: any) => {
-      setSelectedFile(null);
-      setElapsedSeconds(0);
-      setImportStatus(res);
-      setIsPollingImport(true);
-      setFeedbackMsg({
-        type: 'success',
-        text: `Файл успешно загружен! Распознано ${res.totalParsed || ''} товаров. Идёт параллельный HD-апскейлинг фото и запись в базу...`,
-      });
-    },
-    onError: (err: any) => {
-      setIsPollingImport(false);
-      setFeedbackMsg({
-        type: 'error',
-        text: `Ошибка отправки файла Excel: ${err.message || 'Сбой соединения'}`,
-      });
-      setTimeout(() => setFeedbackMsg(null), 8000);
-    },
-  });
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -200,19 +212,6 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       setImportStatus(null);
     }
   };
-
-  // Toggle Override Mutation
-  const updateOverrideMutation = useMutation({
-    mutationFn: ({ id, overrides }: { id: number; overrides: any }) =>
-      catalogApi.adminUpdateOverrides(id, overrides, token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['catalog'] });
-    },
-    onError: (err: any) => {
-      alert(`Ошибка обновления: ${err.message}`);
-    },
-  });
 
   const handleToggleHit = (product: CatalogProduct) => {
     updateOverrideMutation.mutate({
