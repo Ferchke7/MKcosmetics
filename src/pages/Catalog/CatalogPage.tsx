@@ -344,7 +344,7 @@ export const CatalogPage: React.FC = () => {
             ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {products.map((product) => (
+                  {products.map((product, index) => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -355,6 +355,7 @@ export const CatalogPage: React.FC = () => {
                         setIsCartOpen(true);
                       }}
                       inCartCount={cartItems.find((i) => i.product.id === product.id)?.quantity || 0}
+                      priority={index < 4}
                     />
                   ))}
                 </div>

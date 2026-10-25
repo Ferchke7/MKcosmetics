@@ -357,10 +357,11 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               /* 3-Column Luxury Product Grid */
               <div className="space-y-10">
                 <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                  {paginatedProducts.map((product) => (
+                  {paginatedProducts.map((product, index) => (
                     <ProductCard
                       key={product.id}
                       product={product}
+                      rank={index + 1}
                       formatPrice={formatPrice}
                       isFavorite={isFavorite(product.id)}
                       onToggleFavorite={onToggleFavorite}

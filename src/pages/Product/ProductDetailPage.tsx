@@ -262,17 +262,10 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Stock Status */}
               <div className="flex items-center gap-3">
-                {product.stock > 0 ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     В наличии
                   </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    Под заказ
-                  </div>
-                )}
 
                 {product.code && (
                   <span className="text-xs text-ink/40 font-mono">Арт: {product.code}</span>

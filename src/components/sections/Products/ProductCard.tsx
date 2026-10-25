@@ -86,7 +86,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <img
               src={photos[activePhotoIdx]}
               alt={product.name}
-              loading="lazy"
+              loading={rank !== undefined && rank <= 6 ? 'eager' : 'lazy'}
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
           ) : (

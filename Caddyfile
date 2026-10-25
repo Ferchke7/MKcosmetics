@@ -5,6 +5,19 @@ mkkoreacosmetic.com, www.mkkoreacosmetic.com {
         max_size 100MB
     }
 
+    # Security & Permissions Policy Headers
+    header {
+        # Comprehensive Content Security Policy with unsafe-eval and unsafe-inline permitted for dynamic UI
+        Content-Security-Policy "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src * data: blob:; media-src * data: blob:; connect-src *;"
+
+        # Standard, clean Permissions-Policy omitting deprecated/unrecognized ad-auction features
+        Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
     reverse_proxy mkcosmetics:3001 {
         header_up X-Real-IP {remote_host}
         header_up X-Forwarded-For {remote_host}
@@ -15,3 +28,4 @@ mkkoreacosmetic.com, www.mkkoreacosmetic.com {
         }
     }
 }
+

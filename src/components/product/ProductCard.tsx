@@ -10,6 +10,7 @@ interface ProductCardProps {
   onToggleFavorite?: (id: number) => void;
   onAddToCart?: (product: CatalogProduct) => void;
   inCartCount?: number;
+  priority?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -18,6 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onToggleFavorite,
   onAddToCart,
   inCartCount = 0,
+  priority = false,
 }) => {
   const photoUrl =
     product.photos?.[0]?.w300 ||
@@ -36,7 +38,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <img
               src={photoUrl}
               alt={displayTitle}
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
@@ -53,11 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 Хит
               </span>
             )}
-            {!product.inStock && (
-              <span className="px-2 py-0.5 rounded-full bg-muted text-white text-[10px] font-semibold">
-                Под заказ
-              </span>
-            )}
+            
           </div>
 
           {/* Wishlist Button */}

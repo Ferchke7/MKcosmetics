@@ -89,10 +89,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {products.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
+                rank={index + 1}
                 formatPrice={formatPrice}
                 isFavorite={isFavorite(product.id)}
                 onToggleFavorite={onToggleFavorite}
