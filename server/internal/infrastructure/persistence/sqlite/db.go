@@ -75,6 +75,7 @@ func (db *DB) migrate() error {
 		text TEXT NOT NULL,
 		prices_json TEXT NOT NULL DEFAULT '{}',
 		photos_json TEXT NOT NULL DEFAULT '[]',
+		code TEXT NOT NULL DEFAULT '',
 		tags_json TEXT NOT NULL DEFAULT '[]',
 		discount_percent INTEGER NOT NULL DEFAULT 0,
 		is_bestseller INTEGER NOT NULL DEFAULT 0,
@@ -273,6 +274,7 @@ func (db *DB) migrate() error {
 		"ALTER TABLE customers ADD COLUMN segment TEXT NOT NULL DEFAULT 'new';",
 		"ALTER TABLE customers ADD COLUMN notes TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE articles ADD COLUMN source_telegram_url TEXT NOT NULL DEFAULT '';",
+		"ALTER TABLE catalog_products ADD COLUMN code TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE visitor_logs ADD COLUMN country_name TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE visitor_logs ADD COLUMN city TEXT NOT NULL DEFAULT '';",
 		"ALTER TABLE visitor_logs ADD COLUMN flag TEXT NOT NULL DEFAULT '';",
@@ -297,6 +299,7 @@ func (db *DB) migrate() error {
 	CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
 	CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at DESC);
 	CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
+	CREATE INDEX IF NOT EXISTS idx_cat_prod_code ON catalog_products(code);
 	CREATE INDEX IF NOT EXISTS idx_cat_prod_cat ON catalog_products(category_id);
 	CREATE INDEX IF NOT EXISTS idx_cat_prod_brand ON catalog_products(brand);
 	CREATE INDEX IF NOT EXISTS idx_cat_prod_price ON catalog_products(price_krw);

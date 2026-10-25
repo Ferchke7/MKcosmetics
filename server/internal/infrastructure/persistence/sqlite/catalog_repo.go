@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -610,30 +611,34 @@ func (r *catalogRepository) GetCatalogStats(ctx context.Context) (int, int, int,
 }
 
 func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []entity.ExcelImportProduct) (int, int, error) {
+	// Ensure code column exists in case migration hasn't run yet
+	_, _ = r.db.ExecContext(ctx, "ALTER TABLE catalog_products ADD COLUMN code TEXT NOT NULL DEFAULT '';")
+
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("begin tx error: %w", err)
 	}
 	defer tx.Rollback()
 
 	added := 0
 	updated := 0
 
-	// Check if product already exists by code or title
-	findStmt, err := tx.PrepareContext(ctx, `SELECT id, source_id, photos_json FROM catalog_products WHERE code = ? OR LOWER(title) = LOWER(?) LIMIT 1;`)
+	// Check if product already exists by code or exact title
+	findStmt, err := tx.PrepareContext(ctx, `SELECT id, source_id, photos_json FROM catalog_products WHERE (code != '' AND code = ?) OR (title != '' AND LOWER(title) = LOWER(?)) LIMIT 1;`)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("prepare findStmt error: %w", err)
 	}
 	defer findStmt.Close()
 
 	updateStmt, err := tx.PrepareContext(ctx, `
 		UPDATE catalog_products
-		SET photos_json = CASE WHEN photos_json = '' OR photos_json = '[]' THEN ? ELSE photos_json END,
+		SET photos_json = CASE WHEN (photos_json = '' OR photos_json = '[]') AND ? != '[]' THEN ? ELSE photos_json END,
+		    code = CASE WHEN code = '' THEN ? ELSE code END,
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?;
 	`)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("prepare updateStmt error: %w", err)
 	}
 	defer updateStmt.Close()
 
@@ -651,11 +656,11 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 		);
 	`)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("prepare insertStmt error: %w", err)
 	}
 	defer insertStmt.Close()
 
-	for _, item := range items {
+	for idx, item := range items {
 		title := strings.TrimSpace(item.Title)
 		code := strings.TrimSpace(item.Code)
 		if title == "" {
@@ -679,8 +684,8 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 
 		if findErr == nil {
 			// Product exists. b-catalog has higher priority!
-			// If existing product has no photos, enrich it with Excel photo.
-			_, _ = updateStmt.ExecContext(ctx, string(photosJSON), existingID)
+			// Enrich with photos and code if missing
+			_, _ = updateStmt.ExecContext(ctx, string(photosJSON), string(photosJSON), code, existingID)
 			updated++
 		} else {
 			// Brand extraction
@@ -695,21 +700,19 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 				}
 			}
 
-			// Generate slug
-			slug := fmt.Sprintf("%s-%s", strings.ToLower(code), strings.ToLower(strings.ReplaceAll(brand, " ", "-")))
-			if len(slug) > 60 {
-				slug = slug[:60]
+			// Generate guaranteed unique slug
+			slug := fmt.Sprintf("%s-%s-%d", strings.ToLower(code), strings.ToLower(strings.ReplaceAll(brand, " ", "-")), idx+1)
+			if len(slug) > 80 {
+				slug = slug[:80]
 			}
 
-			// In Senior Architecture: All products are in stock (in_stock = 1, archived = 0)
-			// and available on showcase without showing stock numbers.
 			price := item.PriceKRW
 			if price <= 0 {
 				price = 25000 // default KRW fallback
 			}
 
-			// Pseudo unique source ID for Excel products (< 0 to prevent conflict with b-catalog IDs)
-			pseudoSourceID := -int64(len(code)*100000 + int(code[0])*1000 + len(title))
+			// Guaranteed unique negative source_id for each Excel product (< 0 to prevent conflict with b-catalog IDs)
+			pseudoSourceID := -int64(10000000 + idx)
 
 			_, insertErr := insertStmt.ExecContext(ctx,
 				pseudoSourceID, slug, title, brand, title, title,
@@ -717,14 +720,16 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 				price, price, 0, 100,
 				string(photosJSON), code,
 			)
-			if insertErr == nil {
+			if insertErr != nil {
+				log.Printf("[ExcelImport] Insert error at idx %d (code=%s): %v", idx, code, insertErr)
+			} else {
 				added++
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("commit tx error: %w", err)
 	}
 	return added, updated, nil
 }

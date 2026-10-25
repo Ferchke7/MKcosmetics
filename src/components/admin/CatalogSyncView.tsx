@@ -511,6 +511,27 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
           </div>
         )}
 
+        {/* Error Card when Import Failed */}
+        {importStatus && importStatus.stage === 'error' && (
+          <div className="mt-4 p-5 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-rose-200 text-xs space-y-2 animate-in fade-in">
+            <div className="flex items-center justify-between">
+              <span className="font-bold flex items-center gap-2 text-rose-300">
+                <AlertCircle className="w-4 h-4 text-rose-400" />
+                Сбой сохранения товаров в базу данных
+              </span>
+              <button
+                onClick={() => setImportStatus(null)}
+                className="text-neutral-400 hover:text-white px-2 py-1 rounded border border-neutral-700 text-[11px]"
+              >
+                Закрыть ✕
+              </button>
+            </div>
+            <p className="font-mono text-[11px] text-rose-300 bg-black/40 p-2.5 rounded-xl border border-rose-900/50">
+              {importStatus.error || 'Неизвестная ошибка базы данных'}
+            </p>
+          </div>
+        )}
+
         {/* Detailed Results Card when Complete */}
         {importStatus && importStatus.stage === 'done' && (
           <div className="mt-4 p-6 rounded-3xl bg-emerald-950/40 border border-emerald-500/40 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
