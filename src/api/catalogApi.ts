@@ -263,16 +263,7 @@ export const catalogApi = {
   async adminImportExcel(
     token: string,
     file: File
-  ): Promise<{
-    success: boolean;
-    totalParsed: number;
-    added: number;
-    updated: number;
-    withPhotos: number;
-    total: number;
-    durationMs: number;
-    message: string;
-  }> {
+  ): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -285,5 +276,27 @@ export const catalogApi = {
       body: formData,
     });
     return parseResponse<any>(res, 'Ошибка импорта Excel файла');
+  },
+
+  async adminGetImportStatus(token: string): Promise<{
+    isRunning: boolean;
+    stage: string;
+    current: number;
+    totalParsed: number;
+    added: number;
+    updated: number;
+    withPhotos: number;
+    total: number;
+    durationMs: number;
+    error?: string;
+    message?: string;
+  }> {
+    const res = await fetch(`${API_BASE}/admin/catalog/import-status`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return parseResponse<any>(res, 'Ошибка проверки статуса импорта');
   },
 };

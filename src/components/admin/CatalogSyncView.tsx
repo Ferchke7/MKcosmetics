@@ -28,16 +28,6 @@ interface CatalogSyncViewProps {
   token: string;
 }
 
-interface ImportResultStats {
-  totalParsed: number;
-  added: number;
-  updated: number;
-  withPhotos: number;
-  total: number;
-  durationMs: number;
-  message: string;
-}
-
 export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,8 +56,54 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const [syncProgress, setSyncProgress] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [importStats, setImportStats] = useState<ImportResultStats | null>(null);
+  const [importStatus, setImportStatus] = useState<any | null>(null);
+  const [isPollingImport, setIsPollingImport] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Poll for background import progress
+  useEffect(() => {
+    let interval: any;
+    if (isPollingImport) {
+      interval = setInterval(async () => {
+        try {
+          const st = await catalogApi.adminGetImportStatus(token);
+          setImportStatus(st);
+          if (!st.isRunning) {
+            setIsPollingImport(false);
+            if (st.stage === 'done') {
+              setFeedbackMsg({
+                type: 'success',
+                text: st.message || `Импорт завершён! Добавлено: ${st.added}, Обновлено: ${st.updated}, Фото HD: ${st.withPhotos}`,
+              });
+              queryClient.invalidateQueries({ queryKey: ['catalog'] });
+              queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+            } else if (st.stage === 'error') {
+              setFeedbackMsg({
+                type: 'error',
+                text: `Ошибка импорта: ${st.error || 'Сбой обработки'}`,
+              });
+            }
+          }
+        } catch (err: any) {
+          console.error('Failed to poll import status:', err);
+        }
+      }, 800);
+    }
+    return () => clearInterval(interval);
+  }, [isPollingImport, token, queryClient]);
+
+  // Stopwatch for Import Process
+  useEffect(() => {
+    let interval: any;
+    if (excelImportMutation.isPending || isPollingImport) {
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [excelImportMutation.isPending, isPollingImport]);
 
   // Direct Client-Side Sync Mutation (Bypasses server datacenter IP blocks completely!)
   const directSyncMutation = useMutation({
@@ -121,50 +157,28 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     },
   });
 
-  // Excel Import Mutation with Detailed Progress
+  // Excel Import Mutation with Async Background Job & Polling
   const excelImportMutation = useMutation({
     mutationFn: (file: File) => catalogApi.adminImportExcel(token, file),
     onSuccess: (res: any) => {
       setSelectedFile(null);
-      setImportStats({
-        totalParsed: res.totalParsed || (res.added + res.updated),
-        added: res.added || 0,
-        updated: res.updated || 0,
-        withPhotos: res.withPhotos || 0,
-        total: res.total || (res.added + res.updated),
-        durationMs: res.durationMs || (elapsedSeconds * 1000),
-        message: res.message || 'Импорт каталога успешно завершён!',
-      });
+      setElapsedSeconds(0);
+      setImportStatus(res);
+      setIsPollingImport(true);
       setFeedbackMsg({
         type: 'success',
-        text: `Excel успешно обработан! Добавлено: ${res.added}, Обновлено: ${res.updated}, Фото HD: ${res.withPhotos}.`,
+        text: `Файл успешно загружен! Распознано ${res.totalParsed || ''} товаров. Идёт параллельный HD-апскейлинг фото и запись в базу...`,
       });
-      queryClient.invalidateQueries({ queryKey: ['catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
-      setTimeout(() => setFeedbackMsg(null), 10000);
     },
     onError: (err: any) => {
+      setIsPollingImport(false);
       setFeedbackMsg({
         type: 'error',
-        text: `Ошибка импорта Excel: ${err.message || 'Сбой обработки файла'}`,
+        text: `Ошибка отправки файла Excel: ${err.message || 'Сбой соединения'}`,
       });
       setTimeout(() => setFeedbackMsg(null), 8000);
     },
   });
-
-  // Stopwatch for Import Process
-  useEffect(() => {
-    let interval: any;
-    if (excelImportMutation.isPending) {
-      setElapsedSeconds(0);
-      interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [excelImportMutation.isPending]);
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -173,7 +187,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       const file = e.dataTransfer.files[0];
       if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
         setSelectedFile(file);
-        setImportStats(null);
+        setImportStatus(null);
       } else {
         alert('Пожалуйста, выберите файл таблицы Excel (.xls или .xlsx)');
       }
@@ -183,7 +197,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
-      setImportStats(null);
+      setImportStatus(null);
     }
   };
 
@@ -229,6 +243,11 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const lastSync = statusData?.lastSync;
   const syncLogs = statusData?.syncLogs || [];
 
+  const isImportActive = excelImportMutation.isPending || isPollingImport || importStatus?.isRunning;
+  const currentCount = importStatus?.current || 0;
+  const totalParsed = importStatus?.totalParsed || 0;
+  const progressPct = totalParsed > 0 ? Math.min(100, Math.round((currentCount / totalParsed) * 100)) : 0;
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Sync Trigger */}
@@ -242,14 +261,14 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
               </h2>
             </div>
             <p className="text-xs text-neutral-400 mt-1 max-w-xl leading-relaxed">
-              Прямая загрузка актуальных цен и остатков из <strong>b-catalog</strong> и обогащение полной базой из <strong>Excel</strong>. Товары остаются на витрине навсегда, даже если их нет на оперативном складе.
+              Прямая загрузка цен и остатков из <strong>b-catalog</strong> и обогащение полной базой из <strong>Excel</strong>. Все 995+ товаров остаются на витрине навсегда, даже если их нет на оперативном складе.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => directSyncMutation.mutate()}
-              disabled={directSyncMutation.isPending || syncMutation.isPending || excelImportMutation.isPending}
+              disabled={directSyncMutation.isPending || syncMutation.isPending || isImportActive}
               className="btn-gold px-6 py-3 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 flex-shrink-0"
               title="Загрузка актуальных данных напрямую из b-catalog без зависимости от IP-адреса хостинга"
             >
@@ -259,7 +278,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
 
             <button
               onClick={() => syncMutation.mutate()}
-              disabled={syncMutation.isPending || directSyncMutation.isPending || excelImportMutation.isPending}
+              disabled={syncMutation.isPending || directSyncMutation.isPending || isImportActive}
               className="px-4 py-3 rounded-full border border-neutral-700 hover:border-neutral-500 text-xs uppercase tracking-wider font-medium text-neutral-300 hover:text-white bg-white/5 inline-flex items-center justify-center gap-2 disabled:opacity-50 flex-shrink-0 transition-colors"
               title="Фоновая синхронизация силами сервера"
             >
@@ -325,7 +344,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
         </div>
       </div>
 
-      {/* Excel Catalog Import Card with Live Process Tracking */}
+      {/* Excel Catalog Import Card with Real-time Progress & Worker Pool */}
       <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
@@ -336,7 +355,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
               Импорт полной базы из Excel (Бизнес.Ру / XLS)
             </h3>
             <p className="text-xs text-neutral-400">
-              Загрузите файл <code className="bg-black/40 px-1.5 py-0.5 rounded text-[11px] font-mono text-amber-300">.xls</code>. Сервер на Go извлечёт все товары, распакует фотографии и выполнит качественный HD-апскейлинг фото до 900px (Lanczos3 с контурной резкостью).
+              Загрузите файл <code className="bg-black/40 px-1.5 py-0.5 rounded text-[11px] font-mono text-amber-300">.xls</code>. Сервер на Go извлечёт все товары и параллельно выполнит качественный HD-апскейлинг фото до 900px (Lanczos3 с контурной резкостью).
             </p>
           </div>
         </div>
@@ -379,7 +398,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 <button
                   type="button"
                   onClick={() => setSelectedFile(null)}
-                  disabled={excelImportMutation.isPending}
+                  disabled={isImportActive}
                   className="px-3 py-2 text-xs text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
                 >
                   Отмена
@@ -387,10 +406,10 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 <button
                   type="button"
                   onClick={() => excelImportMutation.mutate(selectedFile)}
-                  disabled={excelImportMutation.isPending}
+                  disabled={isImportActive}
                   className="btn-gold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
                 >
-                  {excelImportMutation.isPending ? (
+                  {isImportActive ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Обработка ({elapsedSeconds}с)...
@@ -414,24 +433,26 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 Перетащите сюда файл Excel или <span className="text-amber-400 underline underline-offset-2">выберите на компьютере</span>
               </p>
               <p className="text-[11px] text-neutral-500">
-                Поддерживаются экспорты Бизнес.Ру (.xls / .xlsx) размером до 50 МБ
+                Поддерживаются экспорты Бизнес.Ру (.xls / .xlsx) размером до 100 МБ
               </p>
             </label>
           )}
         </div>
 
-        {/* Live Process Pipeline Indicator during Import */}
-        {excelImportMutation.isPending && (
+        {/* Live Process & Progress Bar during Async Import */}
+        {isImportActive && (
           <div className="mt-4 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 animate-in fade-in space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <RefreshCw className="w-5 h-5 text-amber-400 animate-spin" />
                 <div>
                   <span className="font-semibold text-xs sm:text-sm text-amber-200 block">
-                    Выполняется импорт каталога и Lanczos3 HD-апскейлинг...
+                    {importStatus?.stage === 'saving'
+                      ? 'Сохранение товаров в SQLite базу данных...'
+                      : `Обработка и Lanczos3 HD-апскейлинг фото: ${currentCount} из ${totalParsed || '—'} товаров (${progressPct}%)`}
                   </span>
                   <span className="text-[11px] text-neutral-400">
-                    Пожалуйста, не закрывайте страницу, идёт обработка товаров и картинок на сервере
+                    Многопоточный воркер Go обрабатывает каталог в фоновом режиме без блокировки сервера
                   </span>
                 </div>
               </div>
@@ -440,40 +461,46 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
               </div>
             </div>
 
-            {/* Pipeline Stage Indicators */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-              <div className="p-3 rounded-xl bg-[#141210] border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>1. Загрузка файла</span>
+            {/* Dynamic Progress Bar */}
+            <div className="w-full bg-[#12100E] rounded-full h-2.5 overflow-hidden border border-neutral-800">
+              <div
+                className="bg-gradient-to-r from-amber-500 to-emerald-400 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${Math.max(5, progressPct)}%` }}
+              />
+            </div>
+
+            {/* Live Counters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#141210] border border-neutral-800">
+                <span className="text-[10px] text-neutral-500 block">Обработано строк</span>
+                <span className="font-mono text-sm font-bold text-white">
+                  {currentCount} / {totalParsed || '—'}
+                </span>
               </div>
-              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
-                elapsedSeconds >= 2 ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300 animate-pulse'
-              }`}>
-                {elapsedSeconds >= 2 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                ) : (
-                  <RefreshCw className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
-                )}
-                <span>2. Парсинг BIFF8</span>
+              <div className="p-3 rounded-xl bg-[#141210] border border-neutral-800">
+                <span className="text-[10px] text-neutral-500 block">Прогресс</span>
+                <span className="font-mono text-sm font-bold text-amber-400">
+                  {progressPct}%
+                </span>
               </div>
-              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
-                elapsedSeconds >= 3 ? 'border-amber-500/40 text-amber-200 animate-pulse' : 'border-neutral-800 text-neutral-500'
-              }`}>
-                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>3. Lanczos3 HD фото</span>
+              <div className="p-3 rounded-xl bg-[#141210] border border-neutral-800">
+                <span className="text-[10px] text-neutral-500 block">Фотографий HD</span>
+                <span className="font-mono text-sm font-bold text-emerald-400">
+                  {importStatus?.withPhotos || 0}
+                </span>
               </div>
-              <div className={`p-3 rounded-xl bg-[#141210] border flex items-center gap-2 ${
-                elapsedSeconds >= 5 ? 'border-amber-500/40 text-amber-200' : 'border-neutral-800 text-neutral-500'
-              }`}>
-                <Package className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>4. Запись в SQLite</span>
+              <div className="p-3 rounded-xl bg-[#141210] border border-neutral-800">
+                <span className="text-[10px] text-neutral-500 block">Стадия</span>
+                <span className="font-mono text-xs font-bold text-sky-300">
+                  {importStatus?.stage === 'saving' ? 'Запись в БД' : 'Lanczos3 фото'}
+                </span>
               </div>
             </div>
           </div>
         )}
 
         {/* Detailed Results Card when Complete */}
-        {importStats && (
+        {importStatus && importStatus.stage === 'done' && (
           <div className="mt-4 p-6 rounded-3xl bg-emerald-950/40 border border-emerald-500/40 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-500/20">
               <div className="flex items-center gap-3">
@@ -485,12 +512,12 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                     Отчёт об импорте каталога
                   </h4>
                   <p className="text-xs text-emerald-300/80">
-                    {importStats.message}
+                    {importStatus.message || 'Импорт каталога успешно завершён!'}
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => setImportStats(null)}
+                onClick={() => setImportStatus(null)}
                 className="text-neutral-400 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-neutral-700 hover:border-neutral-500 transition-colors self-start sm:self-auto"
               >
                 Закрыть отчёт ✕
@@ -504,7 +531,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   Всего строк в Excel
                 </span>
                 <div className="font-mono text-2xl font-bold text-white mt-1">
-                  {importStats.totalParsed}
+                  {importStatus.totalParsed}
                 </div>
                 <span className="text-[10px] text-neutral-500 mt-0.5 block">распознано товаров</span>
               </div>
@@ -514,7 +541,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   Новых добавлено
                 </span>
                 <div className="font-mono text-2xl font-bold text-emerald-400 mt-1">
-                  +{importStats.added}
+                  +{importStatus.added}
                 </div>
                 <span className="text-[10px] text-emerald-500/70 mt-0.5 block">появились на витрине</span>
               </div>
@@ -524,7 +551,7 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   Обновлено в базе
                 </span>
                 <div className="font-mono text-2xl font-bold text-sky-300 mt-1">
-                  {importStats.updated}
+                  {importStatus.updated}
                 </div>
                 <span className="text-[10px] text-sky-500/70 mt-0.5 block">обогащено фото/данными</span>
               </div>
@@ -534,16 +561,16 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                   Фото HD (Lanczos3)
                 </span>
                 <div className="font-mono text-2xl font-bold text-amber-300 mt-1">
-                  {importStats.withPhotos}
+                  {importStatus.withPhotos}
                 </div>
-                <span className="text-[10px] text-amber-500/70 mt-0.5 block">апскейлено до 900px</span>
+                <span className="text-[10px] text-amber-500/70 mt-0.5 block">проапскейлено до 900px</span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between text-[11px] text-neutral-400 pt-1 border-t border-emerald-500/10">
               <div className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Время выполнения: <strong className="text-white">{(importStats.durationMs / 1000).toFixed(1)} сек</strong></span>
+                <span>Время выполнения: <strong className="text-white">{(importStatus.durationMs / 1000).toFixed(1)} сек</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />

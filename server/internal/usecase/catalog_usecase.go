@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"mkcosmetics/server/internal/domain/entity"
@@ -17,10 +18,12 @@ import (
 )
 
 type CatalogUseCase struct {
-	bcatClient  *bcatalog.Client
-	catalogRepo repository.CatalogRepository
-	mu          sync.Mutex
-	lastSync    time.Time
+	bcatClient   *bcatalog.Client
+	catalogRepo  repository.CatalogRepository
+	mu           sync.Mutex
+	lastSync     time.Time
+	importStatus entity.ExcelImportStatus
+	statusMu     sync.RWMutex
 }
 
 func NewCatalogUseCase(bcatClient *bcatalog.Client, catalogRepo repository.CatalogRepository) *CatalogUseCase {
@@ -282,76 +285,141 @@ func (uc *CatalogUseCase) UpdateOverrides(ctx context.Context, id int64, isHit *
 	return uc.catalogRepo.UpdateOverrides(ctx, id, isHit, isHidden, brandOverride, excerptOverride)
 }
 
-// ImportExcel parses an uploaded .xls file, upscales its product photos using Lanczos to 900px,
-// and safely merges them into catalog database with b-catalog > excel priority.
-func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, uploadsDir string) (*entity.ExcelImportResult, error) {
-	uc.mu.Lock()
-	defer uc.mu.Unlock()
+func (uc *CatalogUseCase) GetExcelImportStatus() entity.ExcelImportStatus {
+	uc.statusMu.RLock()
+	defer uc.statusMu.RUnlock()
+	return uc.importStatus
+}
 
-	startTime := time.Now()
+// StartAsyncExcelImport begins high-speed parsing and worker-pool image upscaling in background,
+// immediately returning initial progress to prevent any HTTP/reverse-proxy timeouts.
+func (uc *CatalogUseCase) StartAsyncExcelImport(ctx context.Context, fileBytes []byte, uploadsDir string) (*entity.ExcelImportStatus, error) {
+	uc.statusMu.Lock()
+	if uc.importStatus.IsRunning {
+		uc.statusMu.Unlock()
+		return nil, fmt.Errorf("импорт уже выполняется, пожалуйста подождите завершения")
+	}
 
 	parsedItems, err := excelimporter.ParseXlsExtractProducts(fileBytes)
 	if err != nil {
+		uc.statusMu.Unlock()
 		return nil, fmt.Errorf("ошибка парсинга Excel: %w", err)
 	}
 
 	if len(parsedItems) == 0 {
+		uc.statusMu.Unlock()
 		return nil, fmt.Errorf("в файле не найдено строк с товарами")
 	}
 
-	productsDir := filepath.Join(uploadsDir, "products")
-	_ = os.MkdirAll(productsDir, 0755)
+	uc.importStatus = entity.ExcelImportStatus{
+		IsRunning:   true,
+		Stage:       "processing",
+		Current:     0,
+		TotalParsed: len(parsedItems),
+	}
+	initialStatus := uc.importStatus
+	uc.statusMu.Unlock()
 
-	var importList []entity.ExcelImportProduct
-	withPhotos := 0
+	// Launch async worker pool
+	go func() {
+		startTime := time.Now()
+		productsDir := filepath.Join(uploadsDir, "products")
+		_ = os.MkdirAll(productsDir, 0755)
 
-	for idx, item := range parsedItems {
-		photoRelPath := ""
-		if len(item.ImageData) > 1000 {
-			// Process & Upscale image to 900px using Lanczos + Sharpen
-			upscaledBytes, upscaleErr := imageprocessor.ProcessAndUpscale(item.ImageData, 900)
-			if upscaleErr == nil && len(upscaledBytes) > 0 {
-				filename := fmt.Sprintf("prod_%s_%d.jpg", item.Code, idx+1)
-				destPath := filepath.Join(productsDir, filename)
-				if writeErr := os.WriteFile(destPath, upscaledBytes, 0644); writeErr == nil {
-					photoRelPath = "/uploads/products/" + filename
-					withPhotos++
+		importList := make([]entity.ExcelImportProduct, len(parsedItems))
+		var withPhotosCount int64
+		var currentCount int64
+
+		numWorkers := 4
+		jobs := make(chan int, len(parsedItems))
+		for i := range parsedItems {
+			jobs <- i
+		}
+		close(jobs)
+
+		var wg sync.WaitGroup
+		for w := 0; w < numWorkers; w++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for idx := range jobs {
+					item := parsedItems[idx]
+					photoRelPath := ""
+
+					if len(item.ImageData) > 1000 {
+						upscaledBytes, upscaleErr := imageprocessor.ProcessAndUpscale(item.ImageData, 900)
+						imgToSave := upscaledBytes
+						if upscaleErr != nil || len(imgToSave) == 0 {
+							imgToSave = item.ImageData
+						}
+
+						filename := fmt.Sprintf("prod_%s_%d.jpg", item.Code, idx+1)
+						destPath := filepath.Join(productsDir, filename)
+						if writeErr := os.WriteFile(destPath, imgToSave, 0644); writeErr == nil {
+							photoRelPath = "/uploads/products/" + filename
+							atomic.AddInt64(&withPhotosCount, 1)
+						}
+					}
+
+					importList[idx] = entity.ExcelImportProduct{
+						Code:      item.Code,
+						Title:     item.Title,
+						PriceKRW:  item.PriceKRW,
+						PhotoPath: photoRelPath,
+					}
+
+					cur := atomic.AddInt64(&currentCount, 1)
+					if cur%10 == 0 || int(cur) == len(parsedItems) {
+						uc.statusMu.Lock()
+						uc.importStatus.Current = int(cur)
+						uc.importStatus.WithPhotos = int(atomic.LoadInt64(&withPhotosCount))
+						uc.statusMu.Unlock()
+					}
 				}
-			}
+			}()
 		}
 
-		importList = append(importList, entity.ExcelImportProduct{
-			Code:      item.Code,
-			Title:     item.Title,
-			PriceKRW:  item.PriceKRW,
-			PhotoPath: photoRelPath,
+		wg.Wait()
+
+		// Save to SQLite database with b-catalog > excel priority
+		uc.statusMu.Lock()
+		uc.importStatus.Stage = "saving"
+		uc.statusMu.Unlock()
+
+		bgCtx := context.Background()
+		added, updated, saveErr := uc.catalogRepo.ImportExcelProducts(bgCtx, importList)
+
+		durationMs := time.Since(startTime).Milliseconds()
+
+		uc.statusMu.Lock()
+		defer uc.statusMu.Unlock()
+
+		if saveErr != nil {
+			uc.importStatus.IsRunning = false
+			uc.importStatus.Stage = "error"
+			uc.importStatus.Error = saveErr.Error()
+			return
+		}
+
+		uc.importStatus.IsRunning = false
+		uc.importStatus.Stage = "done"
+		uc.importStatus.Added = added
+		uc.importStatus.Updated = updated
+		uc.importStatus.Total = added + updated
+		uc.importStatus.WithPhotos = int(withPhotosCount)
+		uc.importStatus.DurationMs = durationMs
+		uc.importStatus.Message = fmt.Sprintf("Успешно импортировано: %d товаров (новых: %d, обновлено: %d, фото HD: %d)",
+			added+updated, added, updated, int(withPhotosCount))
+
+		_ = uc.catalogRepo.LogSync(bgCtx, entity.CatalogSyncResult{
+			Added:      added,
+			Updated:    updated,
+			Archived:   0,
+			Total:      added + updated,
+			DurationMs: durationMs,
+			At:         startTime,
 		})
-	}
+	}()
 
-	added, updated, err := uc.catalogRepo.ImportExcelProducts(ctx, importList)
-	if err != nil {
-		return nil, err
-	}
-
-	durationMs := time.Since(startTime).Milliseconds()
-
-	// Log sync result
-	_ = uc.catalogRepo.LogSync(ctx, entity.CatalogSyncResult{
-		Added:      added,
-		Updated:    updated,
-		Archived:   0,
-		Total:      added + updated,
-		DurationMs: durationMs,
-		At:         startTime,
-	})
-
-	return &entity.ExcelImportResult{
-		TotalParsed: len(parsedItems),
-		Added:       added,
-		Updated:     updated,
-		WithPhotos:  withPhotos,
-		Total:       added + updated,
-		DurationMs:  durationMs,
-		Message:     fmt.Sprintf("Успешно импортировано: %d товаров (новых: %d, обновлено: %d, фото HD: %d)", added+updated, added, updated, withPhotos),
-	}, nil
+	return &initialStatus, nil
 }

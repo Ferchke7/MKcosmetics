@@ -3,14 +3,14 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-	"io"
-	"fmt"
-	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	"mkcosmetics/server/internal/domain/repository"
@@ -314,9 +314,9 @@ func (h *CatalogHandler) AdminImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CatalogHandler) ImportExcel(w http.ResponseWriter, r *http.Request) {
-	// Max upload size 50MB
-	if err := r.ParseMultipartForm(50 << 20); err != nil {
-		http.Error(w, `{"error":"файл слишком большой (макс 50МБ)"}`, http.StatusBadRequest)
+	// Max upload size 100MB
+	if err := r.ParseMultipartForm(100 << 20); err != nil {
+		http.Error(w, `{"error":"файл слишком большой (макс 100МБ)"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -334,24 +334,18 @@ func (h *CatalogHandler) ImportExcel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uploadsDir := filepath.Join("data", "uploads")
-	res, err := h.catalogUC.ImportExcel(r.Context(), fileBytes, uploadsDir)
+	status, err := h.catalogUC.StartAsyncExcelImport(r.Context(), fileBytes, uploadsDir)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"totalParsed": res.TotalParsed,
-		"added":       res.Added,
-		"updated":     res.Updated,
-		"withPhotos":  res.WithPhotos,
-		"total":       res.Total,
-		"durationMs":  res.DurationMs,
-		"message":     res.Message,
+	_ = json.NewEncoder(w).Encode(status)
+}
 
-
-
-	})
+func (h *CatalogHandler) GetImportStatus(w http.ResponseWriter, r *http.Request) {
+	status := h.catalogUC.GetExcelImportStatus()
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(status)
 }

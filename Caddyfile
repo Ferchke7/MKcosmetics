@@ -1,9 +1,17 @@
 mkkoreacosmetic.com, www.mkkoreacosmetic.com {
     encode gzip zstd
 
+    request_body {
+        max_size 100MB
+    }
+
     reverse_proxy mkcosmetics:3001 {
         header_up X-Real-IP {remote_host}
         header_up X-Forwarded-For {remote_host}
         header_up X-Forwarded-Proto {scheme}
+        transport http {
+            read_timeout 10m
+            write_timeout 10m
+        }
     }
 }

@@ -82,3 +82,17 @@ type ExcelImportResult struct {
 	DurationMs  int64  `json:"durationMs"`
 	Message     string `json:"message"`
 }
+
+type ExcelImportStatus struct {
+	IsRunning   bool   `json:"isRunning"`
+	Stage       string `json:"stage"`
+	Current     int    `json:"current"`
+	TotalParsed int    `json:"totalParsed"`
+	Added       int    `json:"added"`
+	Updated     int    `json:"updated"`
+	WithPhotos  int    `json:"withPhotos"`
+	Total       int    `json:"total"`
+	DurationMs  int64  `json:"durationMs"`
+	Error       string `json:"error,omitempty"`
+	Message     string `json:"message,omitempty"`
+}

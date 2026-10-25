@@ -132,9 +132,9 @@ func main() {
 	srv := &http.Server{
 		Addr:         ":" + port,
 		Handler:      r,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  10 * time.Minute,
+		WriteTimeout: 10 * time.Minute,
+		IdleTimeout:  10 * time.Minute,
 	}
 
 	// Listen for OS signals in a separate goroutine
