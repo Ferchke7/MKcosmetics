@@ -38,6 +38,15 @@ const StorefrontLayout: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname, location.search]);
 
+  // Global visitor tracker: records real visits with geo-location
+  React.useEffect(() => {
+    fetch('/api/visitor/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: location.pathname }),
+    }).catch(() => {});
+  }, [location.pathname]);
+
   // Load categories and brands for the sticky CatalogBar
   const { data: categories = [] } = useQuery({
     queryKey: ['catalog', 'categories'],

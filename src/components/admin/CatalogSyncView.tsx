@@ -17,6 +17,9 @@ import {
   Boxes,
   Layers,
   Sparkles,
+  FileSpreadsheet,
+  UploadCloud,
+  FileUp,
 } from 'lucide-react';
 
 interface CatalogSyncViewProps {
@@ -120,6 +123,49 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       alert(`Ошибка обновления: ${err.message}`);
     },
   });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const excelImportMutation = useMutation({
+    mutationFn: (file: File) => catalogApi.adminImportExcel(token, file),
+    onSuccess: (res) => {
+      setSelectedFile(null);
+      setFeedbackMsg({
+        type: 'success',
+        text: res.message || `Файл успешно обработан! Добавлено: ${res.added}, Обновлено: ${res.updated}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      setTimeout(() => setFeedbackMsg(null), 10000);
+    },
+    onError: (err: any) => {
+      setFeedbackMsg({
+        type: 'error',
+        text: `Ошибка импорта Excel: ${err.message || 'Сбой обработки файла'}`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+  });
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+        setSelectedFile(file);
+      } else {
+        alert('Пожалуйста, выберите файл таблицы Excel (.xls или .xlsx)');
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
 
   const handleToggleHit = (product: CatalogProduct) => {
     updateOverrideMutation.mutate({
@@ -242,6 +288,108 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 : 'Не выполнялась'}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Excel Catalog Import Card with Go Lanczos Upscaling */}
+      <div className="bg-paper rounded-3xl border border-line p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+            <FileSpreadsheet className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-serif text-xl font-normal text-ink">
+              Импорт базы каталога из Excel (Бизнес.Ру / XLS)
+            </h3>
+            <p className="text-xs text-ink/60">
+              Загрузите файл <code className="bg-cream px-1.5 py-0.5 rounded text-[11px] font-mono text-ink">.xls</code> с фотографиями. Сервер автоматически извлечёт товары и выполнит качественный апскейлинг фото до 900px (Lanczos3 + контурная резкость) на Go без потери качества.
+            </p>
+          </div>
+        </div>
+
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleFileDrop}
+          className={`mt-4 border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+            isDragging
+              ? 'border-gold bg-gold/5'
+              : 'border-line/80 hover:border-gold/50 bg-cream/30'
+          }`}
+        >
+          <input
+            type="file"
+            id="excel-file-input"
+            accept=".xls,.xlsx"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {selectedFile ? (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-paper p-4 rounded-xl border border-line">
+              <div className="flex items-center gap-3 text-left">
+                <FileSpreadsheet className="w-8 h-8 text-emerald-600 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-ink">{selectedFile.name}</p>
+                  <p className="text-[11px] text-ink/50">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} МБ • Файл выбран
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(null)}
+                  disabled={excelImportMutation.isPending}
+                  className="px-3 py-2 text-xs text-ink/60 hover:text-ink transition-colors disabled:opacity-50"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  onClick={() => excelImportMutation.mutate(selectedFile)}
+                  disabled={excelImportMutation.isPending}
+                  className="btn-gold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {excelImportMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Обработка и апскейл фото...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="w-4 h-4" />
+                      Запустить импорт в базу
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              htmlFor="excel-file-input"
+              className="cursor-pointer flex flex-col items-center justify-center gap-2 py-4"
+            >
+              <UploadCloud className="w-10 h-10 text-ink/40 hover:text-gold transition-colors" />
+              <p className="text-xs font-medium text-ink">
+                Перетащите сюда файл Excel или <span className="text-gold underline underline-offset-2">выберите на компьютере</span>
+              </p>
+              <p className="text-[11px] text-ink/40">
+                Поддерживаются экспорты Бизнес.Ру (.xls) размером до 50 МБ
+              </p>
+            </label>
+          )}
+        </div>
+
+        <div className="mt-3 flex items-center gap-2 text-[11px] text-ink/50">
+          <Sparkles className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+          <span>
+            Приоритет: <strong>b-catalog &gt; Excel</strong>. Все товары из Excel сохраняются в витрине и всегда доступны клиентам для заказа.
+          </span>
         </div>
       </div>
 

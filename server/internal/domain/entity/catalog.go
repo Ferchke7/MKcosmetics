@@ -65,3 +65,10 @@ type CatalogBrand struct {
 	Slug  string `json:"slug"`
 	Count int    `json:"count"`
 }
+
+type ExcelImportProduct struct {
+	Code      string
+	Title     string
+	PriceKRW  int64
+	PhotoPath string
+}

@@ -147,30 +147,9 @@ func (r *catalogRepository) UpsertCategories(ctx context.Context, categories []e
 }
 
 func (r *catalogRepository) ArchiveMissing(ctx context.Context, currentSourceIDs []int64) (int, error) {
-	if len(currentSourceIDs) == 0 {
-		return 0, nil
-	}
-
-	// Build placeholder list
-	placeholders := make([]string, len(currentSourceIDs))
-	args := make([]interface{}, len(currentSourceIDs))
-	for i, id := range currentSourceIDs {
-		placeholders[i] = "?"
-		args[i] = id
-	}
-
-	query := fmt.Sprintf(`
-		UPDATE catalog_products
-		SET archived = 1, in_stock = 0, updated_at = CURRENT_TIMESTAMP
-		WHERE source_id NOT IN (%s) AND archived = 0;
-	`, strings.Join(placeholders, ","))
-
-	res, err := r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return 0, err
-	}
-	affected, _ := res.RowsAffected()
-	return int(affected), nil
+	// In Senior Architecture: products from Excel and b-catalog are NEVER archived or hidden.
+	// All products always remain active on storefront for customers to browse, view photos and place orders.
+	return 0, nil
 }
 
 func scanProduct(scanner interface {
@@ -628,4 +607,124 @@ func (r *catalogRepository) GetCatalogStats(ctx context.Context) (int, int, int,
 		return 0, 0, 0, 0, 0, err
 	}
 	return int(total.Int64), int(inStock.Int64), int(hits.Int64), int(hidden.Int64), int(archived.Int64), nil
+}
+
+func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []entity.ExcelImportProduct) (int, int, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback()
+
+	added := 0
+	updated := 0
+
+	// Check if product already exists by code or title
+	findStmt, err := tx.PrepareContext(ctx, `SELECT id, source_id, photos_json FROM catalog_products WHERE code = ? OR LOWER(title) = LOWER(?) LIMIT 1;`)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer findStmt.Close()
+
+	updateStmt, err := tx.PrepareContext(ctx, `
+		UPDATE catalog_products
+		SET photos_json = CASE WHEN photos_json = '' OR photos_json = '[]' THEN ? ELSE photos_json END,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?;
+	`)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer updateStmt.Close()
+
+	insertStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO catalog_products (
+			source_id, slug, title, brand, description, excerpt,
+			category_id, category_title, category_slug,
+			price_krw, old_price_krw, discount_pct, stock, in_stock, archived,
+			photos_json, code, synced_at, created_at, updated_at
+		) VALUES (
+			?, ?, ?, ?, ?, ?,
+			?, ?, ?,
+			?, ?, ?, ?, 1, 0,
+			?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+		);
+	`)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer insertStmt.Close()
+
+	for _, item := range items {
+		title := strings.TrimSpace(item.Title)
+		code := strings.TrimSpace(item.Code)
+		if title == "" {
+			continue
+		}
+
+		var existingID, sourceID int64
+		var existingPhotos string
+		findErr := findStmt.QueryRowContext(ctx, code, title).Scan(&existingID, &sourceID, &existingPhotos)
+
+		photosList := []entity.CatalogPhoto{}
+		if item.PhotoPath != "" {
+			photosList = append(photosList, entity.CatalogPhoto{
+				Full: item.PhotoPath,
+				W600: item.PhotoPath,
+				W300: item.PhotoPath,
+				W150: item.PhotoPath,
+			})
+		}
+		photosJSON, _ := json.Marshal(photosList)
+
+		if findErr == nil {
+			// Product exists. b-catalog has higher priority!
+			// If existing product has no photos, enrich it with Excel photo.
+			_, _ = updateStmt.ExecContext(ctx, string(photosJSON), existingID)
+			updated++
+		} else {
+			// Brand extraction
+			brand := "MK KOREA"
+			parts := strings.Split(title, "|")
+			if len(parts) > 1 {
+				brand = strings.TrimSpace(parts[0])
+			} else {
+				brandWords := strings.Fields(title)
+				if len(brandWords) > 0 {
+					brand = brandWords[0]
+				}
+			}
+
+			// Generate slug
+			slug := fmt.Sprintf("%s-%s", strings.ToLower(code), strings.ToLower(strings.ReplaceAll(brand, " ", "-")))
+			if len(slug) > 60 {
+				slug = slug[:60]
+			}
+
+			// In Senior Architecture: All products are in stock (in_stock = 1, archived = 0)
+			// and available on showcase without showing stock numbers.
+			price := item.PriceKRW
+			if price <= 0 {
+				price = 25000 // default KRW fallback
+			}
+
+			// Pseudo unique source ID for Excel products (< 0 to prevent conflict with b-catalog IDs)
+			pseudoSourceID := -int64(len(code)*100000 + int(code[0])*1000 + len(title))
+
+			_, insertErr := insertStmt.ExecContext(ctx,
+				pseudoSourceID, slug, title, brand, title, title,
+				0, "Каталог", "catalog",
+				price, price, 0, 100,
+				string(photosJSON), code,
+			)
+			if insertErr == nil {
+				added++
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+	return added, updated, nil
 }

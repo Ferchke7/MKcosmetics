@@ -10,6 +10,10 @@ import (
 	"mkcosmetics/server/internal/domain/entity"
 	"mkcosmetics/server/internal/domain/repository"
 	"mkcosmetics/server/internal/infrastructure/bcatalog"
+	"mkcosmetics/server/internal/infrastructure/excelimporter"
+	"mkcosmetics/server/internal/infrastructure/imageprocessor"
+	"os"
+	"path/filepath"
 )
 
 type CatalogUseCase struct {
@@ -276,4 +280,49 @@ func (uc *CatalogUseCase) GetAdminCatalogStats(ctx context.Context) (map[string]
 
 func (uc *CatalogUseCase) UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string) error {
 	return uc.catalogRepo.UpdateOverrides(ctx, id, isHit, isHidden, brandOverride, excerptOverride)
+}
+
+// ImportExcel parses an uploaded .xls file, upscales its product photos using Lanczos to 900px,
+// and safely merges them into catalog database with b-catalog > excel priority.
+func (uc *CatalogUseCase) ImportExcel(ctx context.Context, fileBytes []byte, uploadsDir string) (int, int, error) {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
+
+	parsedItems, err := excelimporter.ParseXlsExtractProducts(fileBytes)
+	if err != nil {
+		return 0, 0, fmt.Errorf("ошибка парсинга Excel: %w", err)
+	}
+
+	if len(parsedItems) == 0 {
+		return 0, 0, fmt.Errorf("в файле не найдено строк с товарами")
+	}
+
+	productsDir := filepath.Join(uploadsDir, "products")
+	_ = os.MkdirAll(productsDir, 0755)
+
+	var importList []entity.ExcelImportProduct
+
+	for idx, item := range parsedItems {
+		photoRelPath := ""
+		if len(item.ImageData) > 1000 {
+			// Process & Upscale image to 900px using Lanczos + Sharpen
+			upscaledBytes, upscaleErr := imageprocessor.ProcessAndUpscale(item.ImageData, 900)
+			if upscaleErr == nil && len(upscaledBytes) > 0 {
+				filename := fmt.Sprintf("prod_%s_%d.jpg", item.Code, idx+1)
+				destPath := filepath.Join(productsDir, filename)
+				if writeErr := os.WriteFile(destPath, upscaledBytes, 0644); writeErr == nil {
+					photoRelPath = "/uploads/products/" + filename
+				}
+			}
+		}
+
+		importList = append(importList, entity.ExcelImportProduct{
+			Code:      item.Code,
+			Title:     item.Title,
+			PriceKRW:  item.PriceKRW,
+			PhotoPath: photoRelPath,
+		})
+	}
+
+	return uc.catalogRepo.ImportExcelProducts(ctx, importList)
 }

@@ -259,4 +259,22 @@ export const catalogApi = {
     const importRes = await catalogApi.adminImportProducts(token, allProducts);
     return importRes.result || importRes;
   },
+
+  async adminImportExcel(
+    token: string,
+    file: File
+  ): Promise<{ success: boolean; added: number; updated: number; total: number; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/admin/catalog/import-excel`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    return parseResponse<any>(res, 'Ошибка импорта Excel файла');
+  },
 };

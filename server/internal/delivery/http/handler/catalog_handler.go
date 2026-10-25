@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io"
+	"fmt"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	"mkcosmetics/server/internal/domain/repository"
@@ -307,5 +310,42 @@ func (h *CatalogHandler) AdminImport(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"result":  res,
+	})
+}
+
+func (h *CatalogHandler) ImportExcel(w http.ResponseWriter, r *http.Request) {
+	// Max upload size 50MB
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		http.Error(w, `{"error":"файл слишком большой (макс 50МБ)"}`, http.StatusBadRequest)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, `{"error":"файл 'file' не передан"}`, http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, `{"error":"не удалось прочитать файл"}`, http.StatusInternalServerError)
+		return
+	}
+
+	uploadsDir := filepath.Join("data", "uploads")
+	added, updated, err := h.catalogUC.ImportExcel(r.Context(), fileBytes, uploadsDir)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"added":   added,
+		"updated": updated,
+		"total":   added + updated,
+		"message": fmt.Sprintf("Успешно импортировано: %d товаров (новых: %d, обновлено: %d)", added+updated, added, updated),
 	})
 }

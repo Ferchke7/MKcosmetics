@@ -23,6 +23,7 @@ type CatalogFilter struct {
 
 type CatalogRepository interface {
 	UpsertProducts(ctx context.Context, products []entity.CatalogProduct) (added int, updated int, err error)
+	ImportExcelProducts(ctx context.Context, items []entity.ExcelImportProduct) (added int, updated int, err error)
 	UpsertCategories(ctx context.Context, categories []entity.CatalogCategory) error
 	ArchiveMissing(ctx context.Context, currentSourceIDs []int64) (archived int, err error)
 	List(ctx context.Context, filter CatalogFilter) (products []entity.CatalogProduct, total int, err error)
