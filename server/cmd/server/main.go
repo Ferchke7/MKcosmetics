@@ -92,6 +92,7 @@ func main() {
 	customerHandler := handler.NewCustomerHandler(customerUC)
 	articleHandler := handler.NewArticleHandler(articleUC)
 	telegramHandler := handler.NewTelegramHandler(tgBotService, orderUC)
+	seoHandler := handler.NewSEOHandler(catalogRepo)
 	authMiddleware := middleware.NewAuthMiddleware(authUC)
 
 	// 7. Chi HTTP Router & Static SPA Server
@@ -114,6 +115,8 @@ func main() {
 		articleHandler,
 		telegramHandler,
 		catalogHandler,
+		seoHandler,
+		catalogRepo,
 		authMiddleware,
 	)
 

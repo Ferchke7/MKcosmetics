@@ -7,6 +7,9 @@ import { SpotlightRail } from '../../components/sections/SpotlightRail';
 import { BrandStage } from '../../components/sections/BrandStage';
 import { CategoryTiles } from '../../components/sections/CategoryTiles';
 import { StoryInNumbers } from '../../components/sections/StoryInNumbers';
+import { SeoContentSection } from '../../components/sections/SEO/SeoContentSection';
+import { FAQ } from '../../components/sections/FAQ/FAQ';
+import { SEOHead } from '../../components/common/SEOHead';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
 
@@ -60,6 +63,13 @@ export const HomePage: React.FC = () => {
 
   return (
     <div>
+      <SEOHead
+        title="MK KOREA COSMETIC — Люксовая корейская косметика со склада в Сеуле (Корея)"
+        description="Оптово-розничный склад оригинальной корейской косметики в Сеуле: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Кореи."
+        keywords="косметика из кореи, корейская косметика, корейская косметика оптом, сеул косметика склад, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion"
+        canonical="https://mkkoreacosmetic.com/"
+      />
+
       {/* 1. Hero Luxury Slider */}
       <HeroSlider />
 
@@ -133,6 +143,12 @@ export const HomePage: React.FC = () => {
 
       {/* 7. Wellbeing X: Our Story In Numbers */}
       <StoryInNumbers />
+
+      {/* 8. Comprehensive SEO & LSI Semantic Block */}
+      <SeoContentSection />
+
+      {/* 9. Interactive FAQ Section & Rich Snippet */}
+      <FAQ />
     </div>
   );
 };

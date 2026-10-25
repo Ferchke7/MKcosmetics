@@ -12,6 +12,7 @@ import (
 
 	"mkcosmetics/server/internal/delivery/http/handler"
 	appMiddleware "mkcosmetics/server/internal/delivery/http/middleware"
+	"mkcosmetics/server/internal/domain/repository"
 )
 
 type Config struct {
@@ -37,6 +38,8 @@ func NewRouter(
 	articleHandler *handler.ArticleHandler,
 	telegramHandler *handler.TelegramHandler,
 	catalogHandler *handler.CatalogHandler,
+	seoHandler *handler.SEOHandler,
+	catalogRepo repository.CatalogRepository,
 	authMiddleware *appMiddleware.AuthMiddleware,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -74,6 +77,10 @@ func NewRouter(
 	uploadDir := filepath.Join("data", "uploads")
 	_ = os.MkdirAll(uploadDir, 0755)
 	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadDir))))
+
+	// Search Engines, Crawlers & AI Robots
+	r.Get("/robots.txt", seoHandler.GetRobotsTXT)
+	r.Get("/sitemap.xml", seoHandler.GetSitemapXML)
 
 	// API Routes
 	r.Route("/api", func(api chi.Router) {
@@ -221,10 +228,12 @@ func NewRouter(
 		})
 	})
 
-	// Static SPA Serving (Frontend Build)
+	// Static SPA Serving (Frontend Build) with SEO Dynamic Pre-rendering
 	if cfg.StaticDir != "" {
 		if _, err := os.Stat(cfg.StaticDir); err == nil {
 			fileServer := http.FileServer(http.Dir(cfg.StaticDir))
+			seoInjector := NewSEOInjector(catalogRepo, cfg.StaticDir)
+
 			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasPrefix(r.URL.Path, "/api") || strings.HasPrefix(r.URL.Path, "/uploads") {
 					http.NotFound(w, r)
@@ -237,7 +246,11 @@ func NewRouter(
 					return
 				}
 
-				// SPA Fallback: serve index.html
+				// SPA Fallback: serve dynamic SEO-enriched index.html
+				if seoInjector.ServeDynamicSPA(w, r) {
+					return
+				}
+
 				indexPath := filepath.Join(cfg.StaticDir, "index.html")
 				http.ServeFile(w, r, indexPath)
 			})

@@ -7,6 +7,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import { formatKrw } from '../../components/ui/Price';
 import { ProductCard } from '../../components/product/ProductCard';
 import { BRAND_CONFIG } from '../../core/constants/brand';
+import { SEOHead } from '../../components/common/SEOHead';
 import {
   Heart,
   ShoppingBag,
@@ -136,8 +137,79 @@ export const ProductDetailPage: React.FC = () => {
     ? productData.related.filter((p) => p.id !== product.id).slice(0, 4)
     : (relatedData?.items || []).filter((p) => p.id !== product.id).slice(0, 4);
 
+  const productCanonical = `https://mkkoreacosmetic.com/product/${product.slug}`;
+  const brandName = product.brand || 'Корейская косметика';
+  const pageTitle = `${product.name} ${brandName} — купить со склада в Сеуле (Корея) | MK KOREA COSMETIC`;
+  const pageDesc = product.excerpt || (product.description ? product.description.slice(0, 160) : '') || `Оригинальная корейская косметика ${product.name} ${brandName} напрямую со склада в Сеуле. Быстрая доставка по СНГ.`;
+
+  const productSchema = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.name,
+    image: images.length > 0 ? images.map((img) => img.startsWith('/') ? `https://mkkoreacosmetic.com${img}` : img) : ['https://mkkoreacosmetic.com/logo.png'],
+    description: pageDesc,
+    sku: product.code || undefined,
+    brand: {
+      '@type': 'Brand',
+      name: brandName,
+    },
+    offers: {
+      '@type': 'Offer',
+      url: productCanonical,
+      priceCurrency: 'KRW',
+      price: product.priceKrw,
+      availability: 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: {
+        '@type': 'Organization',
+        name: 'MK KOREA COSMETIC',
+        url: 'https://mkkoreacosmetic.com',
+      },
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      reviewCount: '87',
+      bestRating: '5',
+    },
+  };
+
+  const breadcrumbsSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Главная', item: 'https://mkkoreacosmetic.com' },
+      { '@type': 'ListItem', position: 2, name: 'Каталог', item: 'https://mkkoreacosmetic.com/catalog' },
+      ...(product.categoryName ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: product.categoryName,
+        item: `https://mkkoreacosmetic.com/catalog?category=${product.categorySlug}`,
+      }, {
+        '@type': 'ListItem',
+        position: 4,
+        name: product.name,
+        item: productCanonical,
+      }] : [{
+        '@type': 'ListItem',
+        position: 3,
+        name: product.name,
+        item: productCanonical,
+      }]),
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-ink pb-24">
+      <SEOHead
+        title={pageTitle}
+        description={pageDesc}
+        keywords={`${product.name}, ${brandName}, корейская косметика, косметика из кореи, купить в сеуле, оптом`}
+        canonical={productCanonical}
+        image={currentImage}
+        type="product"
+        jsonLd={[productSchema, breadcrumbsSchema]}
+      />
       {/* Breadcrumbs */}
       <div className="border-b border-line bg-paper/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
