@@ -6,6 +6,7 @@ import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
 import { formatKrw } from '../../components/ui/Price';
 import { ProductCard } from '../../components/product/ProductCard';
+import { ProductDescription } from '../../components/product/ProductDescription';
 import { BRAND_CONFIG } from '../../core/constants/brand';
 import { SEOHead } from '../../components/common/SEOHead';
 import {
@@ -436,15 +437,12 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Full Description */}
-              {(product.description || product.excerpt) && (
-                <div className="text-sm text-ink/80 leading-relaxed font-sans space-y-2">
-                  <div
-                    className="prose prose-sm max-w-none text-ink/80 text-xs sm:text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: product.description || product.excerpt || '' }}
-                  />
-                </div>
-              )}
+              {/* Luxury Styled Description */}
+              <ProductDescription
+                description={product.description}
+                excerpt={product.excerpt}
+                brand={product.brand}
+              />
 
               {/* Quantity and Actions */}
               <div className="pt-2 space-y-3">
