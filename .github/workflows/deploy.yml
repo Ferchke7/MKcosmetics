@@ -125,6 +125,7 @@ jobs:
 
             echo "--> Rebuilding and starting container..."
             docker compose up -d --build --remove-orphans
+            docker compose restart caddy || docker exec mkcosmetics-caddy caddy reload --config /etc/caddy/Caddyfile || true
 
             echo "--> Verifying service health..."
             HEALTH_URL="http://localhost:3001/api/health"

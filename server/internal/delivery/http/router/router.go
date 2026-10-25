@@ -58,6 +58,18 @@ func NewRouter(
 		MaxAge:           300,
 	}))
 
+	// Security & Permissions Policy Middleware
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Security-Policy", "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src * data: blob:; media-src * data: blob:; connect-src *;")
+			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Static Uploads Serving (Images & Payment Receipts)
 	uploadDir := filepath.Join("data", "uploads")
 	_ = os.MkdirAll(uploadDir, 0755)
