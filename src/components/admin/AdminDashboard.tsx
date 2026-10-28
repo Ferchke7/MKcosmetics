@@ -6,9 +6,11 @@ import {
   Shield,
   X,
   RefreshCw,
+  Globe2,
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { CatalogSyncView } from './CatalogSyncView';
+import { VisitorLiveLogsView } from './VisitorLiveLogsView';
 
 interface AdminDashboardProps {
   onBackToShop: () => void;
@@ -18,6 +20,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToShop }) => {
   const { token, logout, changePassword } = useAuth();
+  const [activeTab, setActiveTab] = useState<'sync' | 'visitors'>('sync');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -100,9 +103,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToShop }) 
         </div>
       </header>
 
+      {/* Navigation Sub-header / Tabs */}
+      <div className="bg-[#12100E] border-b border-amber-500/10 px-4 sm:px-8 py-2.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('sync')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'sync'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${activeTab === 'sync' ? 'text-amber-400' : ''}`} />
+            Синхронизация каталога
+          </button>
+
+          <button
+            onClick={() => setActiveTab('visitors')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'visitors'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <Globe2 className={`w-3.5 h-3.5 ${activeTab === 'visitors' ? 'text-amber-400' : ''}`} />
+            Посетители & География
+          </button>
+        </div>
+      </div>
+
       {/* Main Content Pane */}
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
-        <CatalogSyncView token={token || ''} />
+        {activeTab === 'sync' ? (
+          <CatalogSyncView token={token || ''} />
+        ) : (
+          <VisitorLiveLogsView token={token || ''} />
+        )}
       </main>
 
       {/* Password Change Modal */}
