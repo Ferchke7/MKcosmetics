@@ -77,7 +77,7 @@ export const HeroSlider: React.FC = () => {
             <source srcSet={active.imageWebp} type="image/webp" />
             <img
               key={active.imageWebp}
-              src={active.imageJpg}
+              src={active.imageWebp}
               alt={active.title}
               loading="eager"
               // @ts-ignore
