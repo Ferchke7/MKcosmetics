@@ -131,11 +131,20 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Center: Brand Logo Emblem */}
           <Link to="/" className="flex items-center justify-center group py-0.5" title="MK KOREA COSMETIC">
-            <img
-              src="/logo.png"
-              alt="MK KOREA COSMETIC"
-              className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-paper"
-            />
+            <picture>
+              <source srcSet="/logo.webp" type="image/webp" />
+              <img
+                src="/logo.png"
+                alt="MK KOREA COSMETIC"
+                loading="eager"
+                // @ts-ignore
+                fetchpriority="high"
+                decoding="sync"
+                width={80}
+                height={80}
+                className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all duration-300 border border-line/60 bg-[#FAF8F5]"
+              />
+            </picture>
           </Link>
 
           {/* Right: Company Info & Wishlist */}

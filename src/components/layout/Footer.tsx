@@ -52,11 +52,16 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img
-                src="/logo.png"
-                alt="MK KOREA"
-                className="w-14 h-14 rounded-full object-contain bg-white p-0.5 border border-line/40 shadow-sm shrink-0"
-              />
+              <picture>
+                <source srcSet="/logo.webp" type="image/webp" />
+                <img
+                  src="/logo.png"
+                  alt="MK KOREA"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-14 h-14 rounded-full object-contain bg-white p-0.5 border border-line/40 shadow-sm shrink-0"
+                />
+              </picture>
               <div>
                 <div className="font-serif text-lg sm:text-xl font-bold tracking-wider text-paper uppercase">
                   MK KOREA
