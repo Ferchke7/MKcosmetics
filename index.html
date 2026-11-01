@@ -38,8 +38,21 @@
 
     <!-- Critical Asset Preloading for Instant LCP -->
     <link rel="preload" as="image" href="/logo.webp" type="image/webp" fetchpriority="high" />
+      <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=113980905', 'ym');
+
+        ym(113980905, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    </script>
+    <!-- /Yandex.Metrika counter -->
   </head>
-  <body class="bg-[#F8F5F0] text-[#1C1B19] font-sans antialiased selection:bg-[#A8834A] selection:text-white">
+    <body class="bg-[#F8F5F0] text-[#1C1B19] font-sans antialiased selection:bg-[#A8834A] selection:text-white">
+    <noscript><div><img src="https://mc.yandex.ru/watch/113980905" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <div id="root"></div>
     <script type="module" src="/src/app/main.tsx"></script>
   </body>
