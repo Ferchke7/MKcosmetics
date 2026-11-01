@@ -19,6 +19,8 @@ type CatalogFilter struct {
 	Page         int
 	PageSize     int
 	IncludeAdmin bool // include hidden and archived
+	Source       string // "all", "bcatalog", "excel"
+	StatusFilter string // "all", "visible", "hidden", "hits", "archived"
 }
 
 type CatalogRepository interface {
@@ -35,7 +37,7 @@ type CatalogRepository interface {
 	GetHits(ctx context.Context, limit int) ([]entity.CatalogProduct, error)
 	GetSets(ctx context.Context, limit int) ([]entity.CatalogProduct, error)
 	GetRelated(ctx context.Context, categoryID int64, currentID int64, limit int) ([]entity.CatalogProduct, error)
-	UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string) error
+	UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string, titleOverride *string, descriptionOverride *string, priceKrwOverride *int64) error
 	LogSync(ctx context.Context, res entity.CatalogSyncResult) error
 	GetLatestSyncLogs(ctx context.Context, limit int) ([]entity.CatalogSyncResult, error)
 	GetCatalogStats(ctx context.Context) (total int, inStock int, hits int, hidden int, archived int, err error)

@@ -40,6 +40,13 @@ export interface CatalogProduct {
   isHidden: boolean;
   brandOverride?: string;
   excerptOverride?: string;
+  titleOverride?: string;
+  descriptionOverride?: string;
+  priceKrwOverride?: number;
+  originalTitle?: string;
+  originalBrand?: string;
+  originalPriceKrw?: number;
+  sourceType?: 'bcatalog' | 'excel';
   syncedAt: string;
   createdAt: string;
   updatedAt: string;

@@ -233,6 +233,9 @@ func (h *CatalogHandler) AdminGetProducts(w http.ResponseWriter, r *http.Request
 		Page:         page,
 		PageSize:     pageSize,
 		IncludeAdmin: true,
+		Source:       q.Get("source"),
+		StatusFilter: q.Get("status"),
+		Sort:         q.Get("sort"),
 	}
 
 	products, total, err := h.catalogUC.List(r.Context(), filter)
@@ -250,10 +253,13 @@ func (h *CatalogHandler) AdminGetProducts(w http.ResponseWriter, r *http.Request
 }
 
 type updateOverridesInput struct {
-	IsHit           *bool   `json:"isHit"`
-	IsHidden        *bool   `json:"isHidden"`
-	BrandOverride   *string `json:"brandOverride"`
-	ExcerptOverride *string `json:"excerptOverride"`
+	IsHit               *bool   `json:"isHit"`
+	IsHidden            *bool   `json:"isHidden"`
+	BrandOverride       *string `json:"brandOverride"`
+	ExcerptOverride     *string `json:"excerptOverride"`
+	TitleOverride       *string `json:"titleOverride"`
+	DescriptionOverride *string `json:"descriptionOverride"`
+	PriceKrwOverride    *int64  `json:"priceKrwOverride"`
 }
 
 func (h *CatalogHandler) AdminUpdateOverrides(w http.ResponseWriter, r *http.Request) {
@@ -270,7 +276,7 @@ func (h *CatalogHandler) AdminUpdateOverrides(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := h.catalogUC.UpdateOverrides(r.Context(), id, input.IsHit, input.IsHidden, input.BrandOverride, input.ExcerptOverride); err != nil {
+	if err := h.catalogUC.UpdateOverrides(r.Context(), id, input.IsHit, input.IsHidden, input.BrandOverride, input.ExcerptOverride, input.TitleOverride, input.DescriptionOverride, input.PriceKrwOverride); err != nil {
 		http.Error(w, `{"error":"failed to update overrides: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}

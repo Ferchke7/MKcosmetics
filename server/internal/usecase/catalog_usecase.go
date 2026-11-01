@@ -281,8 +281,8 @@ func (uc *CatalogUseCase) GetAdminCatalogStats(ctx context.Context) (map[string]
 	}, nil
 }
 
-func (uc *CatalogUseCase) UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string) error {
-	return uc.catalogRepo.UpdateOverrides(ctx, id, isHit, isHidden, brandOverride, excerptOverride)
+func (uc *CatalogUseCase) UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string, titleOverride *string, descriptionOverride *string, priceKrwOverride *int64) error {
+	return uc.catalogRepo.UpdateOverrides(ctx, id, isHit, isHidden, brandOverride, excerptOverride, titleOverride, descriptionOverride, priceKrwOverride)
 }
 
 func (uc *CatalogUseCase) GetExcelImportStatus() entity.ExcelImportStatus {

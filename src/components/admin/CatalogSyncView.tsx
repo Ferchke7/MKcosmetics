@@ -22,7 +22,15 @@ import {
   Clock,
   Image as ImageIcon,
   CheckCheck,
+  Edit3,
+  Filter,
+  Globe2,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  Tag,
 } from 'lucide-react';
+import { ProductCatalogEditModal } from './ProductCatalogEditModal';
 
 interface CatalogSyncViewProps {
   token: string;
@@ -31,8 +39,15 @@ interface CatalogSyncViewProps {
 export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'bcatalog' | 'excel'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'visible' | 'hidden' | 'hits' | 'no_photo'>('all');
+  const [sortFilter, setSortFilter] = useState<string>('newest');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(25);
+
   const [editingBrandId, setEditingBrandId] = useState<number | null>(null);
   const [editingBrandVal, setEditingBrandVal] = useState('');
+  const [selectedProductForEdit, setSelectedProductForEdit] = useState<CatalogProduct | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Status query
@@ -42,14 +57,22 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
     staleTime: 30 * 1000,
   });
 
-  // Products query
+  // Products query with pagination and filters
   const {
     data: productsData,
     isLoading: isProductsLoading,
     refetch: refetchProducts,
   } = useQuery({
-    queryKey: ['admin', 'catalog', 'products', searchQuery],
-    queryFn: () => catalogApi.adminGetProducts(token, searchQuery, 1, 100),
+    queryKey: ['admin', 'catalog', 'products', searchQuery, sourceFilter, statusFilter, sortFilter, currentPage, pageSize],
+    queryFn: () =>
+      catalogApi.adminGetProducts(token, {
+        q: searchQuery,
+        page: currentPage,
+        pageSize,
+        source: sourceFilter,
+        status: statusFilter,
+        sort: sortFilter,
+      }),
     staleTime: 10 * 1000,
   });
 
@@ -682,37 +705,152 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
       )}
 
       {/* Overrides & Products Grid */}
-      <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-neutral-800">
+      <div className="bg-[#181614] rounded-3xl border border-neutral-800 p-6 shadow-sm space-y-5">
+        {/* Header with Title and Search */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-800">
           <div>
-            <h3 className="font-serif text-lg font-bold text-white">
-              Управление витриной и товарами
-            </h3>
-            <p className="text-xs text-neutral-400">
-              Быстрое включение меток «ХИТ», скрытие товаров с витрины и корректировка бренда
+            <div className="flex items-center gap-2">
+              <h3 className="font-serif text-lg font-bold text-white">
+                Каталог товаров и управление витриной
+              </h3>
+              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                {productsData?.total ?? productsList.length} товаров
+              </span>
+            </div>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Фильтрация по источнику поступления (b-catalog vs Excel), редактирование и контроль статусов
             </p>
           </div>
 
           {/* Search */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 text-neutral-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск по названию или коду..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[#12100E] border border-neutral-700 rounded-full focus:outline-none focus:border-amber-400 text-white placeholder-neutral-500"
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Поиск по названию, бренду или коду..."
+              className="w-full pl-9 pr-8 py-2 text-xs bg-[#12100E] border border-neutral-700 rounded-xl focus:outline-none focus:border-amber-400 text-white placeholder-neutral-500"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Pills: Source & Status */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Source Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-[#12100E] p-1 rounded-xl border border-neutral-800 text-xs">
+            <button
+              onClick={() => {
+                setSourceFilter('all');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                sourceFilter === 'all'
+                  ? 'bg-amber-500/20 text-amber-300 shadow-sm border border-amber-500/30'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              Все источники
+            </button>
+            <button
+              onClick={() => {
+                setSourceFilter('bcatalog');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                sourceFilter === 'bcatalog'
+                  ? 'bg-sky-500/20 text-sky-300 shadow-sm border border-sky-500/30'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <Globe2 className="w-3.5 h-3.5 text-sky-400" />
+              b-catalog.ru (Онлайн)
+            </button>
+            <button
+              onClick={() => {
+                setSourceFilter('excel');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                sourceFilter === 'excel'
+                  ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/30'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              Excel База
+            </button>
+          </div>
+
+          {/* Status and Sort Controls */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Select */}
+            <select
+              value={statusFilter}
+              onChange={(e: any) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-[#12100E] border border-neutral-700 text-xs text-neutral-300 focus:border-amber-400 outline-none"
+            >
+              <option value="all">Все статусы</option>
+              <option value="visible">👁️ Только на витрине</option>
+              <option value="hidden">🚫 Только скрытые</option>
+              <option value="hits">🔥 Только ХИТы</option>
+              <option value="no_photo">🖼️ Без фото</option>
+            </select>
+
+            {/* Sort Select */}
+            <select
+              value={sortFilter}
+              onChange={(e) => {
+                setSortFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-[#12100E] border border-neutral-700 text-xs text-neutral-300 focus:border-amber-400 outline-none"
+            >
+              <option value="newest">Сначала новые (по дате)</option>
+              <option value="popular">По популярности / Хиты</option>
+              <option value="price_asc">Цена: по возрастанию</option>
+              <option value="price_desc">Цена: по убыванию</option>
+              <option value="name_asc">По алфавиту (А-Я)</option>
+            </select>
+
+            {/* Page Size Select */}
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-1.5 rounded-xl bg-[#12100E] border border-neutral-700 text-xs text-neutral-300 focus:border-amber-400 outline-none font-mono"
+            >
+              <option value={25}>25 / стр</option>
+              <option value={50}>50 / стр</option>
+              <option value={100}>100 / стр</option>
+            </select>
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-neutral-800 text-neutral-500 uppercase font-semibold text-[10px] tracking-wider">
+              <tr className="bg-[#141210] border-b border-neutral-800 text-neutral-400 uppercase font-semibold text-[10px] tracking-wider">
                 <th className="py-3 px-3">Фото</th>
                 <th className="py-3 px-3">Товар / Код</th>
+                <th className="py-3 px-3">Источник & Дата</th>
                 <th className="py-3 px-3">Бренд</th>
                 <th className="py-3 px-3 text-right">Цена (KRW)</th>
                 <th className="py-3 px-3 text-center">ХИТ</th>
@@ -720,154 +858,239 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 <th className="py-3 px-3 text-right">Действия</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800/40">
+            <tbody className="divide-y divide-neutral-800/40 bg-[#161412]">
               {isProductsLoading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-neutral-500">
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-400" />
-                    Загрузка списка товаров...
+                  <td colSpan={8} className="py-12 text-center text-neutral-500">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-400" />
+                    Загрузка каталога товаров...
                   </td>
                 </tr>
               ) : productsList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-neutral-500">
-                    Товары не найдены
+                  <td colSpan={8} className="py-12 text-center text-neutral-500">
+                    По заданным фильтрам товары не найдены
                   </td>
                 </tr>
               ) : (
-                productsList.map((p: CatalogProduct) => (
-                  <tr
-                    key={p.id}
-                    className={`hover:bg-white/[0.02] transition-colors ${
-                      p.isHidden ? 'opacity-40 bg-neutral-900/30' : ''
-                    }`}
-                  >
-                    {/* Photo */}
-                    <td className="py-2.5 px-3">
-                      <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        {p.photos && p.photos.length > 0 && p.photos[0].w150 ? (
-                          <img
-                            src={p.photos[0].w150 || p.photos[0].full}
-                            alt={p.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : p.images && p.images.length > 0 ? (
-                          <img
-                            src={p.images[0]}
-                            alt={p.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <ImageIcon className="w-4 h-4 text-neutral-600" />
-                        )}
-                      </div>
-                    </td>
+                productsList.map((p: CatalogProduct) => {
+                  const isExcelProd = p.sourceType === 'excel' || p.sourceId < 0;
+                  const hasOverrides = !!(
+                    p.titleOverride ||
+                    p.brandOverride ||
+                    (p.priceKrwOverride && p.priceKrwOverride > 0) ||
+                    p.descriptionOverride
+                  );
 
-                    {/* Title / Code */}
-                    <td className="py-2.5 px-3 max-w-xs sm:max-w-md">
-                      <div className="font-semibold text-white line-clamp-2" title={p.title}>
-                        {p.title}
-                      </div>
-                      <div className="text-[11px] text-neutral-400 font-mono mt-0.5 flex items-center gap-2">
-                        {p.code && <span>Код: {p.code}</span>}
-                        {p.categoryTitle && (
-                          <span className="text-neutral-500">| {p.categoryTitle}</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Brand */}
-                    <td className="py-2.5 px-3">
-                      {editingBrandId === p.id ? (
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={editingBrandVal}
-                            onChange={(e) => setEditingBrandVal(e.target.value)}
-                            className="w-28 px-2 py-1 text-xs bg-neutral-900 border border-amber-400 rounded-lg text-white outline-none"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => handleSaveBrand(p.id)}
-                            className="p-1 text-emerald-400 hover:text-emerald-300"
-                            title="Сохранить"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setEditingBrandId(p.id);
-                            setEditingBrandVal(p.brandOverride || p.brand || '');
-                          }}
-                          className="text-neutral-300 hover:text-amber-400 text-left font-medium transition-colors"
-                          title="Нажмите для изменения бренда"
-                        >
-                          {p.brandOverride || p.brand || '—'}
-                          {p.brandOverride && (
-                            <span className="ml-1 text-[9px] text-amber-400 font-normal">✎</span>
+                  return (
+                    <tr
+                      key={p.id}
+                      className={`hover:bg-white/[0.03] transition-colors ${
+                        p.isHidden ? 'opacity-40 bg-neutral-900/30' : ''
+                      }`}
+                    >
+                      {/* Photo */}
+                      <td className="py-2.5 px-3">
+                        <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                          {p.photos && p.photos.length > 0 && p.photos[0].w150 ? (
+                            <img
+                              src={p.photos[0].w150 || p.photos[0].full}
+                              alt={p.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : p.images && p.images.length > 0 ? (
+                            <img
+                              src={p.images[0]}
+                              alt={p.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <ImageIcon className="w-4 h-4 text-neutral-600" />
                           )}
+                          {hasOverrides && (
+                            <div
+                              className="absolute top-0 right-0 w-2.5 h-2.5 bg-amber-400 rounded-bl-md"
+                              title="Имеет ручные правки"
+                            />
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Title / Code */}
+                      <td className="py-2.5 px-3 max-w-xs sm:max-w-sm">
+                        <div className="font-semibold text-white line-clamp-2" title={p.title}>
+                          {p.title}
+                        </div>
+                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
+                          {p.code && <span className="bg-neutral-900/80 px-1.5 py-0.2 rounded border border-neutral-800">#{p.code}</span>}
+                          {hasOverrides && (
+                            <span className="text-[10px] text-amber-300 font-semibold bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                              ✏️ Ручные правки
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Source & Date Badge */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
+                              isExcelProd
+                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                                : 'bg-sky-500/15 text-sky-300 border border-sky-500/25'
+                            }`}
+                          >
+                            {isExcelProd ? (
+                              <>
+                                <FileSpreadsheet className="w-3 h-3" />
+                                Excel База
+                              </>
+                            ) : (
+                              <>
+                                <Globe2 className="w-3 h-3" />
+                                b-catalog
+                              </>
+                            )}
+                          </span>
+                          <span className="text-[10px] text-neutral-500 font-mono">
+                            {new Date(p.syncedAt || p.updatedAt || Date.now()).toLocaleDateString('ru-RU')}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Brand */}
+                      <td className="py-2.5 px-3">
+                        <span className="text-neutral-300 font-medium">
+                          {p.brandOverride || p.brand || '—'}
+                        </span>
+                        {p.brandOverride && (
+                          <span className="ml-1 text-[9px] text-amber-400 font-mono" title="Переопределено вручную">
+                            (override)
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Price KRW */}
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400">
+                        {formatKrw(p.priceKrw)}
+                        {p.priceKrwOverride && p.priceKrwOverride > 0 && (
+                          <span className="block text-[10px] text-amber-300/80 font-normal">
+                            (ручная)
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Is Hit Toggle */}
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          onClick={() => handleToggleHit(p)}
+                          className={`p-1.5 rounded-xl border transition-all ${
+                            p.isHit
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
+                              : 'border-neutral-800 text-neutral-600 hover:text-neutral-400 hover:border-neutral-700'
+                          }`}
+                          title={p.isHit ? 'Снять метку ХИТ' : 'Сделать ХИТом'}
+                        >
+                          <Flame className={`w-4 h-4 ${p.isHit ? 'fill-amber-400' : ''}`} />
                         </button>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Price KRW */}
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400">
-                      {formatKrw(p.priceKrw)}
-                    </td>
+                      {/* Is Hidden Toggle */}
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          onClick={() => handleToggleHidden(p)}
+                          className={`p-1.5 rounded-xl border transition-all ${
+                            p.isHidden
+                              ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                              : 'border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                          }`}
+                          title={p.isHidden ? 'Показать на витрине' : 'Скрыть с витрины'}
+                        >
+                          {p.isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </td>
 
-                    {/* Is Hit Toggle */}
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        onClick={() => handleToggleHit(p)}
-                        className={`p-1.5 rounded-xl border transition-all ${
-                          p.isHit
-                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
-                            : 'border-neutral-800 text-neutral-600 hover:text-neutral-400 hover:border-neutral-700'
-                        }`}
-                        title={p.isHit ? 'Снять метку ХИТ' : 'Сделать ХИТом'}
-                      >
-                        <Flame className={`w-4 h-4 ${p.isHit ? 'fill-amber-400' : ''}`} />
-                      </button>
-                    </td>
-
-                    {/* Is Hidden Toggle */}
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        onClick={() => handleToggleHidden(p)}
-                        className={`p-1.5 rounded-xl border transition-all ${
-                          p.isHidden
-                            ? 'bg-red-500/20 text-red-400 border-red-500/40'
-                            : 'border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
-                        }`}
-                        title={p.isHidden ? 'Показать на витрине' : 'Скрыть с витрины'}
-                      >
-                        {p.isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-2.5 px-3 text-right">
-                      <a
-                        href={`/product/${p.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 inline-flex rounded-xl border border-neutral-800 text-neutral-400 hover:text-amber-400 hover:border-amber-400/40 transition-colors"
-                        title="Открыть на сайте"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </td>
-                  </tr>
-                ))
+                      {/* Actions */}
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedProductForEdit(p)}
+                            className="p-1.5 inline-flex rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-colors"
+                            title="Редактировать товар и сравнить с исходным"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <a
+                            href={`/product/${p.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 inline-flex rounded-xl border border-neutral-800 text-neutral-400 hover:text-amber-400 hover:border-amber-400/40 transition-colors"
+                            title="Открыть на сайте"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {productsData && productsData.total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs text-neutral-400">
+            <div>
+              Показано {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, productsData.total)} из{' '}
+              <strong className="text-white">{productsData.total}</strong> товаров
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1 || isProductsLoading}
+                className="p-2 rounded-xl bg-[#12100E] border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="px-3 py-1.5 rounded-xl bg-[#12100E] border border-neutral-800 font-mono text-neutral-200">
+                Стр. {currentPage} из {Math.ceil(productsData.total / pageSize) || 1}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={currentPage >= Math.ceil(productsData.total / pageSize) || isProductsLoading}
+                className="p-2 rounded-xl bg-[#12100E] border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Product Edit & Diff Comparison Modal */}
+      <ProductCatalogEditModal
+        isOpen={selectedProductForEdit !== null}
+        onClose={() => setSelectedProductForEdit(null)}
+        product={selectedProductForEdit}
+        onSave={async (id, overrides) => {
+          await updateOverrideMutation.mutateAsync({ id, overrides });
+          setSelectedProductForEdit(null);
+          setFeedbackMsg({
+            type: 'success',
+            text: 'Изменения товара успешно сохранены!',
+          });
+          setTimeout(() => setFeedbackMsg(null), 4000);
+        }}
+        isSaving={updateOverrideMutation.isPending}
+      />
     </div>
   );
 };

@@ -174,11 +174,31 @@ export const catalogApi = {
     return parseResponse<any>(res, 'Ошибка получения статуса каталога');
   },
 
-  async adminGetProducts(token: string, q = '', page = 1, pageSize = 50): Promise<{
+  async adminGetProducts(
+    token: string,
+    params: {
+      q?: string;
+      page?: number;
+      pageSize?: number;
+      source?: string;
+      status?: string;
+      sort?: string;
+    } = {}
+  ): Promise<{
     products: CatalogProduct[];
     total: number;
+    page: number;
+    pageSize: number;
   }> {
-    const qs = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) });
+    const { q = '', page = 1, pageSize = 50, source = 'all', status = 'all', sort = '' } = params;
+    const qs = new URLSearchParams({
+      q,
+      page: String(page),
+      pageSize: String(pageSize),
+      ...(source && source !== 'all' ? { source } : {}),
+      ...(status && status !== 'all' ? { status } : {}),
+      ...(sort ? { sort } : {}),
+    });
     const res = await fetch(`${API_BASE}/admin/catalog/products?${qs.toString()}`, {
       headers: {
         Accept: 'application/json',
@@ -189,6 +209,8 @@ export const catalogApi = {
     return {
       products: (data.products || []).map(normalizeProduct),
       total: data.total ?? 0,
+      page: data.page ?? page,
+      pageSize: data.pageSize ?? pageSize,
     };
   },
 
@@ -199,6 +221,9 @@ export const catalogApi = {
       isHidden?: boolean;
       brandOverride?: string;
       excerptOverride?: string;
+      titleOverride?: string;
+      descriptionOverride?: string;
+      priceKrwOverride?: number;
     },
     token: string
   ): Promise<void> {

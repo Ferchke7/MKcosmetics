@@ -44,7 +44,14 @@ type CatalogProduct struct {
 	IsHit           bool           `json:"isHit"`
 	IsHidden        bool           `json:"isHidden"`
 	BrandOverride   string         `json:"brandOverride"`
-	ExcerptOverride string         `json:"excerptOverride"`
+	ExcerptOverride     string         `json:"excerptOverride"`
+	TitleOverride       string         `json:"titleOverride,omitempty"`
+	DescriptionOverride string         `json:"descriptionOverride,omitempty"`
+	PriceKrwOverride    int64          `json:"priceKrwOverride,omitempty"`
+	OriginalTitle       string         `json:"originalTitle,omitempty"`
+	OriginalBrand       string         `json:"originalBrand,omitempty"`
+	OriginalPriceKRW    int64          `json:"originalPriceKrw,omitempty"`
+	SourceType          string         `json:"sourceType,omitempty"`
 	SyncedAt        time.Time      `json:"syncedAt"`
 	CreatedAt       time.Time      `json:"createdAt"`
 	UpdatedAt       time.Time      `json:"updatedAt"`

@@ -170,6 +170,9 @@ func scanProduct(scanner interface {
 		&p.CategoryID, &p.CategoryTitle, &p.CategorySlug,
 		&p.PriceKRW, &p.OldPriceKRW, &p.DiscountPct, &p.Stock, &inStockInt, &archivedInt,
 		&photosJSON, &isHitInt, &isHiddenInt, &p.BrandOverride, &p.ExcerptOverride,
+		&p.TitleOverride, &p.DescriptionOverride, &p.PriceKrwOverride,
+		&p.OriginalTitle, &p.OriginalBrand, &p.OriginalPriceKRW,
+		&p.Code,
 		&syncedAtStr, &createdStr, &updStr,
 	)
 	if err != nil {
@@ -181,11 +184,38 @@ func scanProduct(scanner interface {
 	p.IsHit = isHitInt == 1
 	p.IsHidden = isHiddenInt == 1
 
+	if p.SourceID < 0 {
+		p.SourceType = "excel"
+	} else {
+		p.SourceType = "bcatalog"
+	}
+
+	// Save original background values if not explicitly populated
+	if p.OriginalTitle == "" {
+		p.OriginalTitle = p.Title
+	}
+	if p.OriginalBrand == "" {
+		p.OriginalBrand = p.Brand
+	}
+	if p.OriginalPriceKRW == 0 {
+		p.OriginalPriceKRW = p.PriceKRW
+	}
+
+	// Apply overrides for storefront presentation
 	if p.BrandOverride != "" {
 		p.Brand = p.BrandOverride
 	}
 	if p.ExcerptOverride != "" {
 		p.Excerpt = p.ExcerptOverride
+	}
+	if p.TitleOverride != "" {
+		p.Title = p.TitleOverride
+	}
+	if p.DescriptionOverride != "" {
+		p.Description = p.DescriptionOverride
+	}
+	if p.PriceKrwOverride > 0 {
+		p.PriceKRW = p.PriceKrwOverride
 	}
 
 	_ = json.Unmarshal([]byte(photosJSON), &p.Photos)
@@ -211,6 +241,9 @@ const productCols = `
 	category_id, category_title, category_slug,
 	price_krw, old_price_krw, discount_pct, stock, in_stock, archived,
 	photos_json, is_hit, is_hidden, brand_override, excerpt_override,
+	COALESCE(title_override, ''), COALESCE(description_override, ''), COALESCE(price_krw_override, 0),
+	COALESCE(original_title, ''), COALESCE(original_brand, ''), COALESCE(original_price_krw, 0),
+	COALESCE(code, ''),
 	synced_at, created_at, updated_at
 `
 
@@ -257,8 +290,29 @@ func (r *catalogRepository) List(ctx context.Context, f repository.CatalogFilter
 
 	if f.Query != "" {
 		qPattern := "%" + strings.TrimSpace(f.Query) + "%"
-		whereClauses = append(whereClauses, "(title LIKE ? OR brand LIKE ? OR brand_override LIKE ? OR description LIKE ?)")
-		args = append(args, qPattern, qPattern, qPattern, qPattern)
+		whereClauses = append(whereClauses, "(title LIKE ? OR title_override LIKE ? OR brand LIKE ? OR brand_override LIKE ? OR description LIKE ? OR code LIKE ?)")
+		args = append(args, qPattern, qPattern, qPattern, qPattern, qPattern, qPattern)
+	}
+
+	// Filter by Source: "bcatalog" (source_id > 0) vs "excel" (source_id < 0)
+	if f.Source == "bcatalog" {
+		whereClauses = append(whereClauses, "source_id > 0")
+	} else if f.Source == "excel" {
+		whereClauses = append(whereClauses, "source_id < 0")
+	}
+
+	// Filter by Status: "visible", "hidden", "hits", "archived", "no_photo"
+	switch f.StatusFilter {
+	case "visible":
+		whereClauses = append(whereClauses, "is_hidden = 0")
+	case "hidden":
+		whereClauses = append(whereClauses, "is_hidden = 1")
+	case "hits":
+		whereClauses = append(whereClauses, "is_hit = 1")
+	case "archived":
+		whereClauses = append(whereClauses, "archived = 1")
+	case "no_photo":
+		whereClauses = append(whereClauses, "(photos_json = '' OR photos_json = '[]')")
 	}
 
 	whereSQL := ""
@@ -512,7 +566,7 @@ func (r *catalogRepository) GetRelated(ctx context.Context, categoryID int64, cu
 	return products, nil
 }
 
-func (r *catalogRepository) UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string) error {
+func (r *catalogRepository) UpdateOverrides(ctx context.Context, id int64, isHit *bool, isHidden *bool, brandOverride *string, excerptOverride *string, titleOverride *string, descriptionOverride *string, priceKrwOverride *int64) error {
 	var sets []string
 	var args []interface{}
 
@@ -539,6 +593,18 @@ func (r *catalogRepository) UpdateOverrides(ctx context.Context, id int64, isHit
 	if excerptOverride != nil {
 		sets = append(sets, "excerpt_override = ?")
 		args = append(args, *excerptOverride)
+	}
+	if titleOverride != nil {
+		sets = append(sets, "title_override = ?")
+		args = append(args, *titleOverride)
+	}
+	if descriptionOverride != nil {
+		sets = append(sets, "description_override = ?")
+		args = append(args, *descriptionOverride)
+	}
+	if priceKrwOverride != nil {
+		sets = append(sets, "price_krw_override = ?")
+		args = append(args, *priceKrwOverride)
 	}
 
 	if len(sets) == 0 {
