@@ -32,17 +32,20 @@ func (r *catalogRepository) UpsertProducts(ctx context.Context, products []entit
 	added := 0
 	updated := 0
 
+	// Ensure code column exists
+	_, _ = r.db.ExecContext(ctx, "ALTER TABLE catalog_products ADD COLUMN code TEXT NOT NULL DEFAULT '';")
+
 	query := `
 	INSERT INTO catalog_products (
 		source_id, slug, title, brand, description, excerpt,
 		category_id, category_title, category_slug,
 		price_krw, old_price_krw, discount_pct, stock, in_stock, archived,
-		photos_json, synced_at, created_at, updated_at
+		photos_json, code, synced_at, created_at, updated_at
 	) VALUES (
 		?, ?, ?, ?, ?, ?,
 		?, ?, ?,
 		?, ?, ?, ?, ?, ?,
-		?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+		?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 	)
 	ON CONFLICT(source_id) DO UPDATE SET
 		slug = excluded.slug,
@@ -60,6 +63,7 @@ func (r *catalogRepository) UpsertProducts(ctx context.Context, products []entit
 		in_stock = excluded.in_stock,
 		archived = excluded.archived,
 		photos_json = excluded.photos_json,
+		code = CASE WHEN excluded.code != '' THEN excluded.code ELSE catalog_products.code END,
 		synced_at = CURRENT_TIMESTAMP,
 		updated_at = CURRENT_TIMESTAMP;
 	`
@@ -76,10 +80,36 @@ func (r *catalogRepository) UpsertProducts(ctx context.Context, products []entit
 	}
 	defer checkStmt.Close()
 
+	// Check if this product was previously imported as an Excel draft (source_id < 0)
+	findExcelDraftStmt, err := tx.PrepareContext(ctx, `
+		SELECT id FROM catalog_products 
+		WHERE source_id < 0 
+		  AND ((code != '' AND code = ?) OR (title != '' AND LOWER(title) = LOWER(?)))
+		LIMIT 1;
+	`)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer findExcelDraftStmt.Close()
+
+	deleteDraftStmt, err := tx.PrepareContext(ctx, `DELETE FROM catalog_products WHERE id = ?`)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer deleteDraftStmt.Close()
+
 	for _, p := range products {
 		var existingID int64
 		err := checkStmt.QueryRowContext(ctx, p.SourceID).Scan(&existingID)
 		isNew := (err == sql.ErrNoRows)
+
+		// When a product arrives from b-catalog (source_id > 0), upgrade any matching Excel draft placeholder
+		if p.SourceID > 0 && (p.Code != "" || p.Title != "") {
+			var draftID int64
+			if errDraft := findExcelDraftStmt.QueryRowContext(ctx, p.Code, strings.ToLower(p.Title)).Scan(&draftID); errDraft == nil && draftID > 0 {
+				_, _ = deleteDraftStmt.ExecContext(ctx, draftID)
+			}
+		}
 
 		photosJSON, _ := json.Marshal(p.Photos)
 
@@ -96,7 +126,7 @@ func (r *catalogRepository) UpsertProducts(ctx context.Context, products []entit
 			p.SourceID, p.Slug, p.Title, p.Brand, p.Description, p.Excerpt,
 			p.CategoryID, p.CategoryTitle, p.CategorySlug,
 			p.PriceKRW, p.OldPriceKRW, p.DiscountPct, p.Stock, inStockInt, archivedInt,
-			string(photosJSON),
+			string(photosJSON), p.Code,
 		)
 		if err != nil {
 			return 0, 0, fmt.Errorf("upsert product %d failed: %w", p.SourceID, err)

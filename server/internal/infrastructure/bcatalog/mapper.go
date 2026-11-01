@@ -69,6 +69,13 @@ func MapRawProductToEntity(raw RawProduct) entity.CatalogProduct {
 		catSlug = raw.Category.Slug
 	}
 
+	code := ""
+	if raw.Code != nil && *raw.Code != "" {
+		code = *raw.Code
+	} else if raw.Part != nil && *raw.Part != "" {
+		code = *raw.Part
+	}
+
 	inStock := raw.Amount > 0 && !raw.Archive
 
 	now := time.Now()
@@ -90,6 +97,7 @@ func MapRawProductToEntity(raw RawProduct) entity.CatalogProduct {
 		InStock:       inStock,
 		Archived:      raw.Archive,
 		Photos:        photos,
+		Code:          code,
 		SyncedAt:      now,
 		CreatedAt:     now,
 		UpdatedAt:     now,
