@@ -62,6 +62,8 @@ jobs:
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
             LogLevel ERROR
+            ServerAliveInterval 30
+            ServerAliveCountMax 5
             IdentityFile ~/.ssh/id_rsa
           EOF
           chmod 600 ~/.ssh/config
@@ -70,7 +72,7 @@ jobs:
         run: |
           echo "=== [1/2] Syncing changed files via rsync ==="
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
@@ -88,7 +90,7 @@ jobs:
       - name: Rebuild & Restart Docker Container
         run: |
           echo "=== [2/2] Running deployment and health check on remote server ==="
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash << 'EOF'
             set -euo pipefail
 
             echo "--> Navigating to project directory: ${{ secrets.DEPLOY_PATH }}"
@@ -99,17 +101,13 @@ jobs:
             docker compose restart caddy || docker exec mkcosmetics-caddy caddy reload --config /etc/caddy/Caddyfile || true
 
             echo "--> Verifying service health..."
-            HEALTH_URL="http://localhost:3001/api/health"
             MAX_RETRIES=30
             RETRY_INTERVAL=2
             SUCCESS=0
 
             for i in $(seq 1 $MAX_RETRIES); do
-              if curl -s -f "$HEALTH_URL" > /dev/null 2>&1 || docker exec mkcosmetics wget -qO- "$HEALTH_URL" > /dev/null 2>&1; then
+              if docker exec mkcosmetics wget -qO- http://127.0.0.1:3001/api/health > /dev/null 2>&1 || curl -s -f http://127.0.0.1/api/health > /dev/null 2>&1; then
                 echo "✅ Service is healthy on attempt $i!"
-                if command -v curl > /dev/null 2>&1; then
-                  echo "Health response: $(curl -s "$HEALTH_URL")"
-                fi
                 SUCCESS=1
                 break
               fi
