@@ -8,12 +8,13 @@ on:
 
 concurrency:
   group: deploy-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -43,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Starting server on port 3101 in background ==="
-          PORT=3101 ./server_bin &
+          PORT=3101 ./server_bin > /tmp/server.log 2>&1 &
           SERVER_PID=$!
 
           HEALTH_URL="http://localhost:3101/api/health"
@@ -63,10 +64,11 @@ jobs:
             sleep $RETRY_INTERVAL
           done
 
-          kill $SERVER_PID || true
+          kill -9 $SERVER_PID 2>/dev/null || true
 
           if [ $SUCCESS -ne 1 ]; then
             echo "❌ Health check test failed after $((MAX_RETRIES * RETRY_INTERVAL))s"
+            cat /tmp/server.log || true
             exit 1
           fi
 
@@ -74,6 +76,7 @@ jobs:
     name: Deploy to Production
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: production
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
