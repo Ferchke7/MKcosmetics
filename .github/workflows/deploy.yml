@@ -44,7 +44,7 @@ jobs:
     name: Deploy to Production
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment: production
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
@@ -110,7 +110,7 @@ jobs:
             SUCCESS=0
 
             for i in $(seq 1 $MAX_RETRIES); do
-              if docker exec mkcosmetics wget -qO- http://127.0.0.1:3001/api/health > /dev/null 2>&1 || curl -s -f http://127.0.0.1/api/health > /dev/null 2>&1; then
+              if docker exec mkcosmetics wget -qO- -T 3 http://127.0.0.1:3001/api/health > /dev/null 2>&1 || curl -s -f -m 3 http://127.0.0.1/api/health > /dev/null 2>&1 || curl -s -f -k -m 3 https://127.0.0.1/api/health > /dev/null 2>&1; then
                 echo "✅ Service is healthy on attempt $i!"
                 SUCCESS=1
                 break

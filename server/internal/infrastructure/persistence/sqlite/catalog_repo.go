@@ -32,8 +32,6 @@ func (r *catalogRepository) UpsertProducts(ctx context.Context, products []entit
 	added := 0
 	updated := 0
 
-	// Ensure code column exists
-	_, _ = r.db.ExecContext(ctx, "ALTER TABLE catalog_products ADD COLUMN code TEXT NOT NULL DEFAULT '';")
 
 	query := `
 	INSERT INTO catalog_products (
@@ -708,8 +706,6 @@ func (r *catalogRepository) GetCatalogStats(ctx context.Context) (int, int, int,
 }
 
 func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []entity.ExcelImportProduct) (int, int, error) {
-	// Ensure code column exists in case migration hasn't run yet
-	_, _ = r.db.ExecContext(ctx, "ALTER TABLE catalog_products ADD COLUMN code TEXT NOT NULL DEFAULT '';")
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {

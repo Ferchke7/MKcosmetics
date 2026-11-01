@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -21,7 +22,10 @@ func NewHealthHandler(productRepo repository.ProductRepository) *HealthHandler {
 }
 
 func (h *HealthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	count, _ := h.productRepo.Count(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	count, _ := h.productRepo.Count(ctx)
 
 	resp := map[string]interface{}{
 		"status":     "healthy",

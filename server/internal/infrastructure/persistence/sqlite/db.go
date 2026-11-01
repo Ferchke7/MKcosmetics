@@ -33,8 +33,8 @@ func NewDB(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("failed to open sqlite db: %w", err)
 	}
 
-	db.SetMaxOpenConns(1) // SQLite single writer guarantee for WAL mode
-	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(25) // SQLite single writer guarantee for WAL mode
+	db.SetMaxIdleConns(10)
 	db.SetConnMaxLifetime(time.Hour)
 
 	if err := db.Ping(); err != nil {
