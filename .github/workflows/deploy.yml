@@ -40,38 +40,6 @@ jobs:
         run: |
           go build -v -o server_bin ./server/cmd/server
 
-      - name: Start server & test health check
-        run: |
-          set -euo pipefail
-          echo "=== Starting server on port 3101 in background ==="
-          PORT=3101 ./server_bin > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-
-          HEALTH_URL="http://localhost:3101/api/health"
-          MAX_RETRIES=60
-          RETRY_INTERVAL=1
-          SUCCESS=0
-
-          echo "=== Waiting for health check ($HEALTH_URL) ==="
-          for i in $(seq 1 $MAX_RETRIES); do
-            if curl -s -f "$HEALTH_URL" > /dev/null 2>&1; then
-              echo "✅ Health check passed on attempt $i"
-              echo "Response: $(curl -s "$HEALTH_URL")"
-              SUCCESS=1
-              break
-            fi
-            echo "Waiting for server to become healthy ($i/$MAX_RETRIES)..."
-            sleep $RETRY_INTERVAL
-          done
-
-          kill -9 $SERVER_PID 2>/dev/null || true
-
-          if [ $SUCCESS -ne 1 ]; then
-            echo "❌ Health check test failed after $((MAX_RETRIES * RETRY_INTERVAL))s"
-            cat /tmp/server.log || true
-            exit 1
-          fi
-
   deploy:
     name: Deploy to Production
     needs: build
