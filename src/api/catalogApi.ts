@@ -324,4 +324,26 @@ export const catalogApi = {
     });
     return parseResponse<any>(res, 'Ошибка проверки статуса импорта');
   },
+
+  async adminClearExcelProducts(token: string): Promise<{ success: boolean; deleted: number; message: string }> {
+    const res = await fetch(`${API_BASE}/admin/catalog/clear-excel`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return parseResponse<any>(res, 'Ошибка очистки Excel товаров');
+  },
+
+  async adminResetCatalog(token: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/admin/catalog/reset`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return parseResponse<any>(res, 'Ошибка сброса каталога');
+  },
 };

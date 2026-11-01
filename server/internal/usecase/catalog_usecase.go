@@ -426,3 +426,19 @@ func (uc *CatalogUseCase) StartAsyncExcelImport(ctx context.Context, fileBytes [
 
 	return &initialStatus, nil
 }
+
+func (uc *CatalogUseCase) ClearExcelProducts(ctx context.Context) (int64, error) {
+	return uc.catalogRepo.ClearExcelProducts(ctx)
+}
+
+func (uc *CatalogUseCase) ResetCatalog(ctx context.Context) (*entity.CatalogSyncResult, error) {
+	if err := uc.catalogRepo.ResetCatalog(ctx); err != nil {
+		return nil, err
+	}
+	// Re-ingest fresh snapshot from seed or sync
+	seed := bcatalog.GetEmbeddedSeedProducts()
+	if len(seed) > 0 {
+		return uc.IngestRawProducts(ctx, seed)
+	}
+	return uc.Sync(ctx)
+}

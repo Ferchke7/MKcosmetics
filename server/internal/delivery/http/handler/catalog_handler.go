@@ -355,3 +355,31 @@ func (h *CatalogHandler) GetImportStatus(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(status)
 }
+
+func (h *CatalogHandler) ClearExcel(w http.ResponseWriter, r *http.Request) {
+	count, err := h.catalogUC.ClearExcelProducts(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"deleted": count,
+		"message": fmt.Sprintf("Успешно удалено %d товаров, импортированных из Excel", count),
+	})
+}
+
+func (h *CatalogHandler) ResetCatalog(w http.ResponseWriter, r *http.Request) {
+	res, err := h.catalogUC.ResetCatalog(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"result":  res,
+		"message": "Каталог успешно очищен и синхронизирован заново",
+	})
+}

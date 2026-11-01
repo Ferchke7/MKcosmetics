@@ -41,4 +41,6 @@ type CatalogRepository interface {
 	LogSync(ctx context.Context, res entity.CatalogSyncResult) error
 	GetLatestSyncLogs(ctx context.Context, limit int) ([]entity.CatalogSyncResult, error)
 	GetCatalogStats(ctx context.Context) (total int, inStock int, hits int, hidden int, archived int, err error)
+	ClearExcelProducts(ctx context.Context) (int64, error)
+	ResetCatalog(ctx context.Context) error
 }

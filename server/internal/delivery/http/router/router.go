@@ -156,6 +156,8 @@ func NewRouter(
 				cat.Post("/import", catalogHandler.AdminImport)
 				cat.Post("/import-excel", catalogHandler.ImportExcel)
 				cat.Get("/import-status", catalogHandler.GetImportStatus)
+				cat.Post("/clear-excel", catalogHandler.ClearExcel)
+				cat.Post("/reset", catalogHandler.ResetCatalog)
 				cat.Get("/status", catalogHandler.AdminGetStatus)
 				cat.Get("/products", catalogHandler.AdminGetProducts)
 				cat.Put("/products/{id}", catalogHandler.AdminUpdateOverrides)

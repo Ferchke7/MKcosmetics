@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Database,
   Tag,
+  Trash2,
 } from 'lucide-react';
 import { ProductCatalogEditModal } from './ProductCatalogEditModal';
 
@@ -103,6 +104,48 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
         text: `Ошибка прямой синхронизации: ${err.message || 'Сбой соединения'}`,
       });
       setTimeout(() => setFeedbackMsg(null), 6000);
+    },
+  });
+
+  // Clear Excel Imported Products Mutation
+  const clearExcelMutation = useMutation({
+    mutationFn: () => catalogApi.adminClearExcelProducts(token),
+    onSuccess: (res: any) => {
+      setFeedbackMsg({
+        type: 'success',
+        text: res.message || 'Товары из Excel успешно удалены.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+    onError: (err: any) => {
+      setFeedbackMsg({
+        type: 'error',
+        text: err.message || 'Ошибка удаления товаров Excel',
+      });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+  });
+
+  // Full Catalog Reset Mutation
+  const resetCatalogMutation = useMutation({
+    mutationFn: () => catalogApi.adminResetCatalog(token),
+    onSuccess: (res: any) => {
+      setFeedbackMsg({
+        type: 'success',
+        text: res.message || 'Каталог успешно очищен и сброшен к чистому снимку b-catalog.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] });
+      setTimeout(() => setFeedbackMsg(null), 8000);
+    },
+    onError: (err: any) => {
+      setFeedbackMsg({
+        type: 'error',
+        text: err.message || 'Ошибка сброса каталога',
+      });
+      setTimeout(() => setFeedbackMsg(null), 8000);
     },
   });
 
@@ -363,6 +406,48 @@ export const CatalogSyncView: React.FC<CatalogSyncViewProps> = ({ token }) => {
                 : 'Не выполнялась'}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Danger Zone: Clear Data */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-red-950/20 border border-red-500/20 shadow-sm">
+        <div>
+          <h4 className="text-sm font-semibold text-red-300 flex items-center gap-2">
+            <Trash2 className="w-4 h-4 text-red-400" />
+            Очистка данных и сброс каталога
+          </h4>
+          <p className="text-xs text-neutral-400 mt-1 max-w-xl">
+            Позволяет быстро стереть товары из Excel перед повторной загрузкой или полностью сбросить витрину до эталонного состояния.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Вы уверены, что хотите стереть ВСЕ товары, загруженные из Excel? Основные товары b-catalog и заказы останутся в сохранности.')) {
+                clearExcelMutation.mutate();
+              }
+            }}
+            disabled={clearExcelMutation.isPending || isImportActive}
+            className="px-4 py-2.5 rounded-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 hover:text-red-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {clearExcelMutation.isPending ? 'Удаление...' : 'Стереть товары из Excel'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('ВНИМАНИЕ: Сбросить весь каталог? Все товары будут очищены и заново синхронизированы из чистого источника b-catalog.')) {
+                resetCatalogMutation.mutate();
+              }
+            }}
+            disabled={resetCatalogMutation.isPending || isImportActive}
+            className="px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-neutral-700 text-neutral-300 hover:text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${resetCatalogMutation.isPending ? 'animate-spin' : ''}`} />
+            {resetCatalogMutation.isPending ? 'Сброс...' : 'Сбросить каталог полностью'}
+          </button>
         </div>
       </div>
 

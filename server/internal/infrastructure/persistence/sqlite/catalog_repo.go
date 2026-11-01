@@ -833,3 +833,25 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 	}
 	return added, updated, nil
 }
+
+func (r *catalogRepository) ClearExcelProducts(ctx context.Context) (int64, error) {
+	// Delete all products imported purely from Excel (negative source_id)
+	res, err := r.db.ExecContext(ctx, "DELETE FROM catalog_products WHERE source_id < 0;")
+	if err != nil {
+		return 0, fmt.Errorf("failed to clear excel products: %w", err)
+	}
+	deleted, _ := res.RowsAffected()
+
+	// Also clear Excel photos from b-catalog products if they had temporary Excel uploads
+	_, _ = r.db.ExecContext(ctx, "UPDATE catalog_products SET photos_json = '[]' WHERE photos_json LIKE '%/uploads/products/%';")
+
+	return deleted, nil
+}
+
+func (r *catalogRepository) ResetCatalog(ctx context.Context) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM catalog_products;")
+	if err != nil {
+		return fmt.Errorf("failed to reset catalog: %w", err)
+	}
+	return nil
+}
