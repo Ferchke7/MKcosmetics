@@ -408,18 +408,6 @@ export const ProductDetailPage: React.FC = () => {
                 {product.name}
               </h1>
 
-              {/* Stock Status */}
-              <div className="flex items-center gap-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    В наличии
-                  </div>
-
-                {product.code && (
-                  <span className="text-xs text-ink/40 font-mono">Арт: {product.code}</span>
-                )}
-              </div>
-
               {/* Price Block */}
               <div className="bg-cream/50 rounded-2xl p-5 border border-line flex flex-wrap items-baseline gap-4">
                 <div className="text-3xl sm:text-4xl font-serif font-bold text-ink tracking-tight">
