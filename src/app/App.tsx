@@ -13,19 +13,25 @@ import { Footer } from '../components/layout/Footer';
 import { CatalogBar } from '../components/layout/CatalogBar';
 import { CartDrawer } from '../components/cart/CartDrawer';
 
-// Pages
+// Critical Core Pages (Eagerly Loaded)
 import { HomePage } from '../pages/Home/HomePage';
 import { CatalogPage } from '../pages/Catalog/CatalogPage';
 import { ProductDetailPage } from '../pages/Product/ProductDetailPage';
-import { CheckoutPage } from '../pages/Checkout/CheckoutPage';
-import { WishlistPage } from '../pages/Wishlist/WishlistPage';
-import { DeliveryPage } from '../pages/Static/DeliveryPage';
-import { ContactsPage } from '../pages/Static/ContactsPage';
-import { AboutPage } from '../pages/Static/AboutPage';
 
-// Admin components
-import { AdminLogin } from '../components/admin/AdminLogin';
-import { AdminDashboard } from '../components/admin/AdminDashboard';
+// Secondary & Admin Pages (Code-Split & Lazy-Loaded on demand)
+const CheckoutPage = React.lazy(() => import('../pages/Checkout/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
+const WishlistPage = React.lazy(() => import('../pages/Wishlist/WishlistPage').then(m => ({ default: m.WishlistPage })));
+const DeliveryPage = React.lazy(() => import('../pages/Static/DeliveryPage').then(m => ({ default: m.DeliveryPage })));
+const ContactsPage = React.lazy(() => import('../pages/Static/ContactsPage').then(m => ({ default: m.ContactsPage })));
+const AboutPage = React.lazy(() => import('../pages/Static/AboutPage').then(m => ({ default: m.AboutPage })));
+const AdminLogin = React.lazy(() => import('../components/admin/AdminLogin').then(m => ({ default: m.AdminLogin })));
+const AdminDashboard = React.lazy(() => import('../components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+  </div>
+);
 
 // Storefront Layout Wrapper
 const StorefrontLayout: React.FC = () => {
@@ -136,15 +142,15 @@ export function App() {
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/catalog/:categorySlug" element={<CatalogPage />} />
         <Route path="/product/:slug" element={<ProductDetailPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/wishlist" element={<WishlistPage />} />
-        <Route path="/delivery" element={<DeliveryPage />} />
-        <Route path="/contacts" element={<ContactsPage />} />
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/checkout" element={<React.Suspense fallback={<PageLoader />}><CheckoutPage /></React.Suspense>} />
+        <Route path="/wishlist" element={<React.Suspense fallback={<PageLoader />}><WishlistPage /></React.Suspense>} />
+        <Route path="/delivery" element={<React.Suspense fallback={<PageLoader />}><DeliveryPage /></React.Suspense>} />
+        <Route path="/contacts" element={<React.Suspense fallback={<PageLoader />}><ContactsPage /></React.Suspense>} />
+        <Route path="/about" element={<React.Suspense fallback={<PageLoader />}><AboutPage /></React.Suspense>} />
       </Route>
 
       {/* Dedicated Admin Route */}
-      <Route path="/admin/*" element={<AdminRoute />} />
+      <Route path="/admin/*" element={<React.Suspense fallback={<PageLoader />}><AdminRoute /></React.Suspense>} />
 
       {/* Fallback */}
       <Route path="*" element={<HomePage />} />
