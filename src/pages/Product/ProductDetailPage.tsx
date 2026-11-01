@@ -110,8 +110,12 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const images = product.images && product.images.length > 0 ? product.images : [];
-  const currentImage = images[activeImageIdx] || '/placeholder.png';
+  const images = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.photos && product.photos.length > 0)
+      ? product.photos.map((p) => p.full || p.w600 || p.w300)
+      : ['/logo.png'];
+  const currentImage = images[activeImageIdx] || images[0] || '/logo.png';
   const hasDiscount = product.oldPriceKrw && product.oldPriceKrw > product.priceKrw;
   const discountPercent = hasDiscount
     ? Math.round(((product.oldPriceKrw! - product.priceKrw) / product.oldPriceKrw!) * 100)
@@ -286,6 +290,10 @@ export const ProductDetailPage: React.FC = () => {
               <img
                 src={currentImage}
                 alt={product.name}
+                loading="eager"
+                // @ts-ignore
+                fetchPriority="high"
+                decoding="async"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (!target.src.endsWith('/logo.png')) {
@@ -293,7 +301,6 @@ export const ProductDetailPage: React.FC = () => {
                   }
                 }}
                 className="w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
-                loading="eager"
               />
 
               {/* Badges */}

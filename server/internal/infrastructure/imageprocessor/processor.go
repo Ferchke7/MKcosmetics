@@ -26,7 +26,7 @@ func ProcessAndUpscale(data []byte, targetHeight int) ([]byte, error) {
 	h := bounds.Dy()
 
 	if targetHeight <= 0 {
-		targetHeight = 900
+		targetHeight = 720
 	}
 
 	// Calculate target width preserving aspect ratio
@@ -37,11 +37,11 @@ func ProcessAndUpscale(data []byte, targetHeight int) ([]byte, error) {
 	resized := imaging.Resize(src, targetWidth, targetHeight, imaging.Lanczos)
 
 	// Unsharp mask / edge sharpening for cosmetic bottles and text
-	sharpened := imaging.Sharpen(resized, 0.6)
+	sharpened := imaging.Sharpen(resized, 0.5)
 
-	// Encode to clean high-quality JPEG (Quality: 92)
+	// Encode to clean web-optimized high-speed JPEG (Quality: 82)
 	var buf bytes.Buffer
-	err = jpeg.Encode(&buf, sharpened, &jpeg.Options{Quality: 92})
+	err = jpeg.Encode(&buf, sharpened, &jpeg.Options{Quality: 82})
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode jpeg: %w", err)
 	}

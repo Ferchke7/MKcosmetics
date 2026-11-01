@@ -21,32 +21,42 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   inCartCount = 0,
   priority = false,
 }) => {
+  const [imgLoaded, setImgLoaded] = React.useState(false);
   const photoUrl =
     product.photos?.[0]?.w300 ||
     product.photos?.[0]?.w600 ||
     product.photos?.[0]?.full ||
     product.images?.[0] ||
-    '/placeholder.png';
+    '/logo.png';
   const displayTitle = product.title || product.name || 'Товар';
 
   return (
     <div className="group flex flex-col justify-between bg-paper rounded-card border border-line p-3 transition-all duration-300 hover:shadow-soft-lg hover:border-gold/30">
       <div>
-        {/* Photo Stage */}
+        {/* Photo Stage with Skeleton Shimmer */}
         <div className="relative aspect-square w-full overflow-hidden rounded-[10px] bg-cream-soft mb-3">
           <Link to={`/product/${product.slug}`} className="block w-full h-full">
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-[#F4EFEA] animate-pulse flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-gold/15" />
+              </div>
+            )}
             <img
               src={photoUrl}
               alt={displayTitle}
               loading={priority ? "eager" : "lazy"}
+              // @ts-ignore
+              fetchPriority={priority ? "high" : "auto"}
               decoding="async"
+              onLoad={() => setImgLoaded(true)}
               onError={(e) => {
+                setImgLoaded(true);
                 const target = e.target as HTMLImageElement;
                 if (!target.src.endsWith('/logo.png')) {
                   target.src = '/logo.png';
                 }
               }}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
             />
           </Link>
 

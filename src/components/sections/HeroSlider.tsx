@@ -10,7 +10,8 @@ interface Slide {
   buttonText: string;
   link: string;
   bgGradient: string;
-  image: string;
+  imageWebp: string;
+  imageJpg: string;
   badge: string;
 }
 
@@ -23,7 +24,8 @@ const slides: Slide[] = [
     buttonText: 'В каталог',
     link: '/catalog',
     bgGradient: 'from-[#FAF8F5] via-[#F4ECE1] to-[#EBE2D3]',
-    image: '/images/hero/hero-slide-1.jpg',
+    imageWebp: '/images/hero/hero-slide-1.webp',
+    imageJpg: '/images/hero/hero-slide-1.jpg',
     badge: 'Премиум уход • Корея',
   },
   {
@@ -34,7 +36,8 @@ const slides: Slide[] = [
     buttonText: 'Смотреть бренды',
     link: '/catalog',
     bgGradient: 'from-[#F7F4EF] via-[#EFE9DF] to-[#E3DACB]',
-    image: '/images/hero/hero-slide-2.jpg',
+    imageWebp: '/images/hero/hero-slide-2.webp',
+    imageJpg: '/images/hero/hero-slide-2.jpg',
     badge: '100% Оригинал • Прямой рейс',
   },
   {
@@ -45,7 +48,8 @@ const slides: Slide[] = [
     buttonText: 'Смотреть наборы',
     link: '/catalog?categorySlug=nabory-588136',
     bgGradient: 'from-[#FAF5F0] via-[#F0E4D8] to-[#E8D6C6]',
-    image: '/images/hero/hero-slide-3.jpg',
+    imageWebp: '/images/hero/hero-slide-3.webp',
+    imageJpg: '/images/hero/hero-slide-3.jpg',
     badge: 'Выгода до 40% • Готовые сеты',
   },
 ];
@@ -60,7 +64,6 @@ export const HeroSlider: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-
   const active = slides[current];
 
   return (
@@ -70,12 +73,19 @@ export const HeroSlider: React.FC = () => {
       >
         {/* Dynamic AI Skincare Photo with Seamless Gradient Blend */}
         <div className="absolute right-0 top-0 bottom-0 w-full sm:w-2/3 lg:w-3/5 overflow-hidden pointer-events-none">
-          <img
-            key={active.image}
-            src={active.image}
-            alt={active.title}
-            className="w-full h-full object-cover object-[center_right] animate-in fade-in zoom-in-105 duration-1000 transform transition-transform"
-          />
+          <picture>
+            <source srcSet={active.imageWebp} type="image/webp" />
+            <img
+              key={active.imageWebp}
+              src={active.imageJpg}
+              alt={active.title}
+              loading="eager"
+              // @ts-ignore
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full object-cover object-[center_right] animate-in fade-in zoom-in-105 duration-1000 transform transition-transform"
+            />
+          </picture>
           {/* Subtle warm luxury gradients to smoothly blend into left content & edges */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-[#FAF8F5]/80 sm:via-[#FAF8F5]/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5]/40 via-transparent to-[#FAF8F5]/30" />
@@ -83,7 +93,7 @@ export const HeroSlider: React.FC = () => {
 
         {/* Subtle Luxury Pattern & Watermark */}
         <div className="watermark right-12 top-1/2 -translate-y-1/2 hidden xl:block opacity-20 pointer-events-none text-white">
-          Seoul
+          Korea
         </div>
 
         {/* Left Content */}
@@ -128,17 +138,16 @@ export const HeroSlider: React.FC = () => {
           <span>{active.badge}</span>
         </div>
 
-
-        {/* Slide Indicator Dots */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        {/* Slide Indicators */}
+        <div className="absolute left-6 sm:left-12 lg:left-20 bottom-4 sm:bottom-6 z-10 flex items-center gap-2">
           {slides.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrent(idx)}
-              className={`h-2 rounded-full transition-all duration-300 ${
+              aria-label={`Slide ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
                 current === idx ? 'w-8 bg-gold' : 'w-2 bg-ink/20 hover:bg-ink/40'
               }`}
-              aria-label={`Слайд ${idx + 1}`}
             />
           ))}
         </div>

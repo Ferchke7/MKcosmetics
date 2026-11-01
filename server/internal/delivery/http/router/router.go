@@ -73,10 +73,14 @@ func NewRouter(
 		})
 	})
 
-	// Static Uploads Serving (Images & Payment Receipts)
+	// Static Uploads Serving with 30-Day Browser & CDN Caching
 	uploadDir := filepath.Join("data", "uploads")
 	_ = os.MkdirAll(uploadDir, 0755)
-	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadDir))))
+	uploadFS := http.FileServer(http.Dir(uploadDir))
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=2592000, immutable")
+		uploadFS.ServeHTTP(w, r)
+	})))
 
 	// Search Engines, Crawlers & AI Robots
 	r.Get("/robots.txt", seoHandler.GetRobotsTXT)
@@ -246,11 +250,18 @@ func NewRouter(
 
 				requestedPath := filepath.Join(cfg.StaticDir, filepath.Clean(r.URL.Path))
 				if info, err := os.Stat(requestedPath); err == nil && !info.IsDir() {
+					ext := strings.ToLower(filepath.Ext(requestedPath))
+					if strings.HasPrefix(r.URL.Path, "/assets/") || ext == ".webp" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".woff2" || ext == ".svg" || ext == ".ico" {
+						w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					} else {
+						w.Header().Set("Cache-Control", "public, max-age=86400")
+					}
 					fileServer.ServeHTTP(w, r)
 					return
 				}
 
 				// SPA Fallback: serve dynamic SEO-enriched index.html
+				w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 				if seoInjector.ServeDynamicSPA(w, r) {
 					return
 				}

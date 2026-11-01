@@ -384,7 +384,7 @@ export const CatalogPage: React.FC = () => {
                         setIsCartOpen(true);
                       }}
                       inCartCount={cartItems.find((i) => i.product.id === product.id)?.quantity || 0}
-                      priority={index < 4}
+                      priority={index < 8}
                     />
                   ))}
                 </div>

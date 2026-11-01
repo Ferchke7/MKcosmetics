@@ -29,12 +29,19 @@ export const Logo: React.FC<LogoProps> = ({
   // Official Emblem Render
   const EmblemImage = !imgError ? (
     <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#B89254] via-[#DFCBA0] to-[#9E7B42] shadow-xs transition-transform duration-300 group-hover:scale-105 ${currentSize.imgClass}`}>
-      <img
-        src="/logo.png"
-        alt="MK KOREA COSMETIC"
-        className="w-full h-full object-cover rounded-full bg-[#FAF8F5]"
-        onError={() => setImgError(true)}
-      />
+      <picture>
+        <source srcSet="/logo.webp" type="image/webp" />
+        <img
+          src="/logo.png"
+          alt="MK KOREA COSMETIC"
+          width={currentSize.sizePx}
+          height={currentSize.sizePx}
+          loading="eager"
+          decoding="async"
+          className="w-full h-full object-cover rounded-full bg-[#FAF8F5]"
+          onError={() => setImgError(true)}
+        />
+      </picture>
     </div>
   ) : (
     <div className={`relative shrink-0 rounded-full p-[2px] bg-gradient-to-tr from-[#B89254] via-[#DFCBA0] to-[#9E7B42] shadow-xs flex items-center justify-center bg-[#FAF8F5] text-[#B89254] font-serif font-bold ${currentSize.imgClass}`}>
