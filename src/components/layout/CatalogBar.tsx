@@ -31,16 +31,20 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
 
   const barRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on outside click
+  // Close dropdowns on outside click or mobile touch
   useEffect(() => {
-    const handleDocClick = (e: MouseEvent) => {
+    const handleDocClick = (e: MouseEvent | TouchEvent) => {
       if (barRef.current && !barRef.current.contains(e.target as Node)) {
         setActiveMenu(null);
         setShowSuggestions(false);
       }
     };
     document.addEventListener('mousedown', handleDocClick);
-    return () => document.removeEventListener('mousedown', handleDocClick);
+    document.addEventListener('touchstart', handleDocClick);
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick);
+      document.removeEventListener('touchstart', handleDocClick);
+    };
   }, []);
 
   // Debounced search suggestions
@@ -253,17 +257,23 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
             </div>
           </div>
 
-          {/* Right: Search Input with Live Suggestions */}
+          {/* Right: Search Input with Responsive Mobile-Optimized Dropdown */}
           <div className="relative flex-1">
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-muted absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
-                type="search"
+                type="text"
+                inputMode="search"
+                autoComplete="off"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder="Поиск косметики по названию, бренду..."
-                className="w-full h-10 sm:h-11 pl-10 sm:pl-11 pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm md:text-base text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
+                onFocus={() => {
+                  if (suggestions.length > 0 || searchQuery.trim().length >= 2) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                placeholder="Поиск косметики..."
+                className="w-full h-10 sm:h-11 pl-8 sm:pl-10 pr-8 sm:pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
               />
               {searchQuery && (
                 <button
@@ -273,55 +283,83 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                     setSuggestions([]);
                     setShowSuggestions(false);
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                  className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted hover:text-ink transition-colors"
+                  aria-label="Очистить"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </form>
 
-            {/* Live Suggestions Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-paper rounded-2xl shadow-soft-lg border border-line p-2 z-40 max-h-[420px] overflow-y-auto animate-in fade-in duration-150">
-                <div className="p-2 text-[11px] font-bold uppercase tracking-wider text-muted border-b border-line">
-                  Найдено в каталоге
-                </div>
-                <div className="divide-y divide-line/60">
-                  {suggestions.map((p) => (
+            {/* Live Suggestions Dropdown - Full Width on Mobile, Anchored on Desktop */}
+            {showSuggestions && (
+              <div className="absolute top-full right-0 sm:left-0 sm:right-auto sm:w-full w-[calc(100vw-2rem)] max-w-lg mt-2 bg-paper rounded-2xl shadow-soft-xl border border-line p-2.5 z-50 max-h-[75vh] sm:max-h-[460px] overflow-y-auto animate-in fade-in duration-150">
+                {isSearching ? (
+                  <div className="p-6 text-center text-xs text-muted flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+                    <span>Поиск «{searchQuery}»...</span>
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-line text-[11px] font-bold uppercase tracking-wider text-muted">
+                      <span>Найдено в каталоге</span>
+                      <span className="text-[10px] font-semibold text-gold">({suggestions.length})</span>
+                    </div>
+                    <div className="divide-y divide-line/60">
+                      {suggestions.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setShowSuggestions(false);
+                            navigate(`/product/${p.slug}`);
+                          }}
+                          className="w-full p-2.5 flex items-center gap-3 hover:bg-cream-soft transition-colors text-left rounded-xl group"
+                        >
+                          <div className="w-12 h-12 rounded-lg bg-cream-deep overflow-hidden shrink-0 border border-line/60">
+                            <img
+                              src={p.photos?.[0]?.w150 || p.photos?.[0]?.full || p.images?.[0] || '/logo.png'}
+                              alt={p.title}
+                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/logo.png';
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-bold text-gold uppercase tracking-wider truncate mb-0.5">
+                              {p.brand || 'K-Beauty'}
+                            </div>
+                            <div className="text-xs sm:text-sm font-semibold text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
+                              {p.title}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 pl-2">
+                            <div className="text-xs sm:text-sm font-bold text-ink whitespace-nowrap">
+                              {formatKrw(p.priceKrw)}
+                            </div>
+                            {p.oldPriceKrw > p.priceKrw && (
+                              <div className="text-[10px] text-muted line-through whitespace-nowrap">
+                                {formatKrw(p.oldPriceKrw)}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                     <button
-                      key={p.id}
                       type="button"
-                      onClick={() => {
-                        setShowSuggestions(false);
-                        navigate(`/product/${p.slug}`);
-                      }}
-                      className="w-full p-2.5 flex items-center gap-3 hover:bg-cream-soft transition-colors text-left rounded-xl"
+                      onClick={handleSearchSubmit}
+                      className="w-full text-center py-2.5 text-xs text-gold font-bold hover:underline border-t border-line mt-1 block tracking-wide"
                     >
-                      <img
-                        src={p.photos?.[0]?.w150 || p.photos?.[0]?.full || '/placeholder.png'}
-                        alt={p.title}
-                        className="w-10 h-10 rounded-lg object-cover bg-cream-deep shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-semibold text-gold uppercase">{p.brand}</div>
-                        <div className="text-xs font-medium text-ink truncate">{p.title}</div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xs font-bold text-ink">{formatKrw(p.priceKrw)}</div>
-                        {p.oldPriceKrw > p.priceKrw && (
-                          <div className="text-[10px] text-muted line-through">{formatKrw(p.oldPriceKrw)}</div>
-                        )}
-                      </div>
+                      Смотреть все результаты для «{searchQuery}» →
                     </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSearchSubmit}
-                  className="w-full text-center py-2.5 text-xs text-gold font-semibold hover:underline border-t border-line mt-1 block"
-                >
-                  Смотреть все результаты для «{searchQuery}» →
-                </button>
+                  </>
+                ) : (
+                  <div className="p-6 text-center text-xs text-muted">
+                    По запросу «{searchQuery}» ничего не найдено
+                  </div>
+                )}
               </div>
             )}
           </div>
