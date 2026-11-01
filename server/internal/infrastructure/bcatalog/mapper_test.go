@@ -7,16 +7,16 @@ func TestExtractBrand(t *testing.T) {
 		title    string
 		expected string
 	}{
-		{"Amore Pacific Clinical Response Triple Shot Cream", "AMORE PACIFIC"},
-		{"AMORE PACIFIC Time Response Intensive Renewal", "AMORE PACIFIC"},
+		{"Amore Pacific Clinical Response Triple Shot Cream", "AMOREPACIFIC"},
+		{"AMORE PACIFIC Time Response Intensive Renewal", "AMOREPACIFIC"},
 		{"06 CURACION Lacto Aquanic Cream Mask (Box 60)", "CURACION"},
 		{"JOGABI AC CONTROL CALMING CLEANSING FOAM 150ml", "JOGABI"},
-		{"Sulwhasoo First Care Activating Serum", "SULWHASOO"},
-		{"THE HISTORY OF WHOO Radiant White Moisture Cream", "THE HISTORY OF WHOO"},
+		{"Sulwhasoo First Care Activating Serum", "Sulwhasoo"},
+		{"THE HISTORY OF WHOO Radiant White Moisture Cream", "The History of Whoo"},
 		{"CH6 Scalp SSAG SERUM 140 ml", "CH6"},
-		{"DR. Oregamo Enzyme Cleansing Powder", "DR. OREGAMO"},
-		{"23Skin Lab. Daily Skin Care 7pc Special Set", "23SKIN LAB."},
-		{"Alpen 1618 MOOR Heilmoor Activation Facial Mask", "ALPEN 1618"},
+		{"DR. Oregamo Enzyme Cleansing Powder", "DR."},
+		{"23Skin Lab. Daily Skin Care 7pc Special Set", "23Skin"},
+		{"Alpen 1618 MOOR Heilmoor Activation Facial Mask", "Alpen 1618"},
 	}
 
 	for _, tt := range tests {

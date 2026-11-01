@@ -74,10 +74,13 @@ type CatalogBrand struct {
 }
 
 type ExcelImportProduct struct {
-	Code      string
-	Title     string
-	PriceKRW  int64
-	PhotoPath string
+	Code          string
+	Title         string
+	PriceKRW      int64
+	PhotoPath     string
+	CategoryID    int64
+	CategoryTitle string
+	CategorySlug  string
 }
 
 type ExcelImportResult struct {

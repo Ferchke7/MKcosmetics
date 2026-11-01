@@ -362,10 +362,13 @@ func (uc *CatalogUseCase) StartAsyncExcelImport(ctx context.Context, fileBytes [
 					}
 
 					importList[idx] = entity.ExcelImportProduct{
-						Code:      item.Code,
-						Title:     item.Title,
-						PriceKRW:  item.PriceKRW,
-						PhotoPath: photoRelPath,
+						Code:          item.Code,
+						Title:         item.Title,
+						PriceKRW:      item.PriceKRW,
+						PhotoPath:     photoRelPath,
+						CategoryID:    item.CategoryID,
+						CategoryTitle: item.CategoryTitle,
+						CategorySlug:  item.CategorySlug,
 					}
 
 					cur := atomic.AddInt64(&currentCount, 1)

@@ -699,8 +699,16 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 
 	updateStmt, err := tx.PrepareContext(ctx, `
 		UPDATE catalog_products
-		SET photos_json = CASE WHEN (photos_json = '' OR photos_json = '[]') AND ? != '[]' THEN ? ELSE photos_json END,
+		SET photos_json = CASE 
+		        WHEN ? != '[]' AND (photos_json = '' OR photos_json = '[]' OR photos_json LIKE '%/uploads/products/%') THEN ? 
+		        ELSE photos_json 
+		    END,
 		    code = CASE WHEN code = '' THEN ? ELSE code END,
+		    category_id = CASE WHEN (category_id = 0 OR category_id IS NULL) AND ? > 0 THEN ? ELSE category_id END,
+		    category_title = CASE WHEN (category_title = '' OR category_title = 'Каталог' OR category_title IS NULL) AND ? != '' THEN ? ELSE category_title END,
+		    category_slug = CASE WHEN (category_slug = '' OR category_slug = 'catalog' OR category_slug IS NULL) AND ? != '' THEN ? ELSE category_slug END,
+		    price_krw = CASE WHEN (source_id < 0 OR price_krw <= 0) AND ? > 0 THEN ? ELSE price_krw END,
+		    original_price_krw = CASE WHEN original_price_krw <= 0 AND ? > 0 THEN ? ELSE original_price_krw END,
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?;
 	`)
@@ -751,8 +759,17 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 
 		if findErr == nil {
 			// Product exists. b-catalog has higher priority!
-			// Enrich with photos and code if missing
-			_, _ = updateStmt.ExecContext(ctx, string(photosJSON), string(photosJSON), code, existingID)
+			// Enrich with photos, code, price, and category
+			_, _ = updateStmt.ExecContext(ctx,
+				string(photosJSON), string(photosJSON),
+				code,
+				item.CategoryID, item.CategoryID,
+				item.CategoryTitle, item.CategoryTitle,
+				item.CategorySlug, item.CategorySlug,
+				item.PriceKRW, item.PriceKRW,
+				item.PriceKRW, item.PriceKRW,
+				existingID,
+			)
 			updated++
 		} else {
 			// Only insert new products from Excel if they have a valid photo!
@@ -788,9 +805,18 @@ func (r *catalogRepository) ImportExcelProducts(ctx context.Context, items []ent
 			// Guaranteed unique negative source_id for each Excel product (< 0 to prevent conflict with b-catalog IDs)
 			pseudoSourceID := -int64(10000000 + idx)
 
+			catID := item.CategoryID
+			catTitle := item.CategoryTitle
+			catSlug := item.CategorySlug
+			if catID <= 0 {
+				catID = 588149
+				catTitle = "Разное"
+				catSlug = "raznoe-588149"
+			}
+
 			_, insertErr := insertStmt.ExecContext(ctx,
 				pseudoSourceID, slug, cleanTitle, brand, cleanTitle, cleanTitle,
-				0, "Каталог", "catalog",
+				catID, catTitle, catSlug,
 				price, price, 0, 100,
 				string(photosJSON), code,
 			)
