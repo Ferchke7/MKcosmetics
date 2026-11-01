@@ -322,8 +322,6 @@ func (db *DB) migrate() error {
 	// 4. Ensure default admin user exists
 	db.seedDefaultAdmin()
 
-	// 5. Purge broken/dummy products from legacy Excel import (source_id < 0)
-	_, _ = db.Exec("DELETE FROM catalog_products WHERE source_id < 0;")
 
 	// 6. Normalize and sanitize brand names in catalog_products
 	cleanupQueries := []string{
