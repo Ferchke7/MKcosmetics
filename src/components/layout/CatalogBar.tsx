@@ -19,6 +19,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
   // Search state with live suggestions
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<CatalogProduct[]>([]);
+  const [totalFound, setTotalFound] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -57,8 +58,9 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await catalogApi.getProducts({ q: searchQuery.trim(), pageSize: 6 });
+        const res = await catalogApi.getProducts({ q: searchQuery.trim(), pageSize: 12 });
         setSuggestions(res.products || []);
+        setTotalFound(res.total || res.products?.length || 0);
         setShowSuggestions(true);
       } catch (err) {
         console.error('Suggest error:', err);
@@ -106,7 +108,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
 
   return (
     <div ref={barRef} className="sticky top-0 z-30 bg-paper/95 backdrop-blur-md border-y border-line shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 relative">
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Left Buttons: Categories / Brands / Price */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -257,8 +259,8 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
             </div>
           </div>
 
-          {/* Right: Search Input with Responsive Mobile-Optimized Dropdown */}
-          <div className="relative flex-1">
+          {/* Right: Search Input */}
+          <div className="flex-1">
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-muted absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -268,12 +270,13 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
+                  setActiveMenu(null);
                   if (suggestions.length > 0 || searchQuery.trim().length >= 2) {
                     setShowSuggestions(true);
                   }
                 }}
-                placeholder="Поиск косметики..."
-                className="w-full h-10 sm:h-11 pl-8 sm:pl-10 pr-8 sm:pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
+                placeholder="Поиск косметики по названию, бренду..."
+                className="w-full h-10 sm:h-11 pl-8.5 sm:pl-10.5 pr-8 sm:pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
               />
               {searchQuery && (
                 <button
@@ -281,6 +284,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                   onClick={() => {
                     setSearchQuery('');
                     setSuggestions([]);
+                    setTotalFound(0);
                     setShowSuggestions(false);
                   }}
                   className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted hover:text-ink transition-colors"
@@ -290,80 +294,97 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                 </button>
               )}
             </form>
+          </div>
+        </div>
 
-            {/* Live Suggestions Dropdown - Full Width on Mobile, Anchored on Desktop */}
-            {showSuggestions && (
-              <div className="absolute top-full right-0 sm:left-0 sm:right-auto sm:w-full w-[calc(100vw-2rem)] max-w-lg mt-2 bg-paper rounded-2xl shadow-soft-xl border border-line p-2.5 z-50 max-h-[75vh] sm:max-h-[460px] overflow-y-auto animate-in fade-in duration-150">
-                {isSearching ? (
-                  <div className="p-6 text-center text-xs text-muted flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-gold border-t-transparent animate-spin" />
-                    <span>Поиск «{searchQuery}»...</span>
-                  </div>
-                ) : suggestions.length > 0 ? (
-                  <>
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-line text-[11px] font-bold uppercase tracking-wider text-muted">
-                      <span>Найдено в каталоге</span>
-                      <span className="text-[10px] font-semibold text-gold">({suggestions.length})</span>
-                    </div>
-                    <div className="divide-y divide-line/60">
-                      {suggestions.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setShowSuggestions(false);
-                            navigate(`/product/${p.slug}`);
-                          }}
-                          className="w-full p-2.5 flex items-center gap-3 hover:bg-cream-soft transition-colors text-left rounded-xl group"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-cream-deep overflow-hidden shrink-0 border border-line/60">
-                            <img
-                              src={p.photos?.[0]?.w150 || p.photos?.[0]?.full || p.images?.[0] || '/logo.png'}
-                              alt={p.title}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/logo.png';
-                              }}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-bold text-gold uppercase tracking-wider truncate mb-0.5">
-                              {p.brand || 'K-Beauty'}
-                            </div>
-                            <div className="text-xs sm:text-sm font-semibold text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
-                              {p.title}
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0 pl-2">
-                            <div className="text-xs sm:text-sm font-bold text-ink whitespace-nowrap">
-                              {formatKrw(p.priceKrw)}
-                            </div>
-                            {p.oldPriceKrw > p.priceKrw && (
-                              <div className="text-[10px] text-muted line-through whitespace-nowrap">
-                                {formatKrw(p.oldPriceKrw)}
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+        {/* Live Search Results: Appears slightly below, across the FULL WIDTH of the container */}
+        {showSuggestions && (
+          <div className="absolute top-full left-3 right-3 sm:left-6 sm:right-6 lg:left-8 lg:right-8 mt-2 bg-paper/98 backdrop-blur-xl rounded-2xl shadow-soft-2xl border border-line p-3 sm:p-4 z-50 max-h-[75vh] sm:max-h-[540px] overflow-y-auto animate-in fade-in duration-200">
+            {isSearching ? (
+              <div className="p-8 text-center text-xs text-muted flex items-center justify-center gap-2.5">
+                <div className="w-4 h-4 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+                <span>Ищем «{searchQuery}» в каталоге...</span>
+              </div>
+            ) : suggestions.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-line text-xs font-bold uppercase tracking-wider text-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span>Найдено товаров</span>
+                    {totalFound > 0 && <span className="text-gold">({totalFound})</span>}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSearchSubmit}
+                    className="text-gold hover:underline font-semibold capitalize text-xs"
+                  >
+                    Показать все ({totalFound || suggestions.length})
+                  </button>
+                </div>
+                
+                {/* Responsive Grid: 1 col on mobile, 2 cols on tablet/desktop with 12 items */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
+                  {suggestions.map((p) => (
                     <button
+                      key={p.id}
                       type="button"
-                      onClick={handleSearchSubmit}
-                      className="w-full text-center py-2.5 text-xs text-gold font-bold hover:underline border-t border-line mt-1 block tracking-wide"
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        navigate(`/product/${p.slug}`);
+                      }}
+                      className="p-2 sm:p-2.5 flex items-center gap-3 bg-cream-soft/50 hover:bg-cream-soft border border-line/60 hover:border-gold/40 rounded-xl transition-all text-left group"
                     >
-                      Смотреть все результаты для «{searchQuery}» →
+                      <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-lg bg-cream-deep overflow-hidden shrink-0 border border-line/60">
+                        <img
+                          src={p.photos?.[0]?.w150 || p.photos?.[0]?.full || p.images?.[0] || '/logo.png'}
+                          alt={p.title}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/logo.png';
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] font-bold text-gold uppercase tracking-wider truncate">
+                          {p.brand || 'K-Beauty'}
+                        </div>
+                        <div className="text-xs sm:text-sm font-semibold text-ink line-clamp-2 leading-snug group-hover:text-gold transition-colors">
+                          {p.title}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs sm:text-sm font-bold text-ink">
+                            {formatKrw(p.priceKrw)}
+                          </span>
+                          {p.oldPriceKrw > p.priceKrw && (
+                            <span className="text-[10px] text-muted line-through">
+                              {formatKrw(p.oldPriceKrw)}
+                            </span>
+                          )}
+                          {p.discountPct > 0 && (
+                            <span className="px-1.5 py-0.2 bg-sale text-white text-[9px] font-bold rounded">
+                              -{p.discountPct}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </button>
-                  </>
-                ) : (
-                  <div className="p-6 text-center text-xs text-muted">
-                    По запросу «{searchQuery}» ничего не найдено
-                  </div>
-                )}
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSearchSubmit}
+                  className="w-full text-center py-3 text-xs sm:text-sm text-gold font-bold hover:underline border-t border-line mt-3 block tracking-wide"
+                >
+                  Смотреть все найденные товары ({totalFound || suggestions.length}) в каталоге →
+                </button>
+              </>
+            ) : (
+              <div className="p-8 text-center text-xs text-muted">
+                По запросу «{searchQuery}» ничего не найдено в каталоге
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
