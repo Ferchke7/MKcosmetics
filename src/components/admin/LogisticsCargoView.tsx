@@ -68,7 +68,7 @@ export const LogisticsCargoView: React.FC<LogisticsCargoViewProps> = ({ token })
 
   const handleOpenAdd = () => {
     setEditingBatch(null);
-    setFormTitle(`Рейс Сеул ➔ Ташкент #${batches.length + 1}`);
+    setFormTitle(`Рейс Корея ➔ Ташкент #${batches.length + 1}`);
     setFormOrigin('Seoul (ICN)');
     setFormDestination('Tashkent (TAS)');
     setFormAwb('');
@@ -171,7 +171,7 @@ export const LogisticsCargoView: React.FC<LogisticsCargoViewProps> = ({ token })
   };
 
   const statusBadges: Record<CargoBatch['status'], { label: string; color: string }> = {
-    draft: { label: '📦 Формируется в Сеуле', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+    draft: { label: '📦 Формируется на складе в Корее', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
     in_transit: { label: '✈️ Вылетел / В пути', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
     customs: { label: '🛃 Таможенное оформление', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
     arrived: { label: '🏢 Прибыл на склад выдачи', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
@@ -196,7 +196,7 @@ export const LogisticsCargoView: React.FC<LogisticsCargoViewProps> = ({ token })
               Карго & Авиа-Логистика из Кореи
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-              Seoul Flight Hub
+              Korea Flight Hub
             </span>
           </div>
           <p className="text-xs text-[#A8A29E] mt-0.5">
@@ -504,7 +504,7 @@ export const LogisticsCargoView: React.FC<LogisticsCargoViewProps> = ({ token })
                   onChange={(e) => setFormStatus(e.target.value as any)}
                   className="w-full bg-[#141312] border border-white/10 rounded-xl p-2.5 text-white focus:border-[#D4AF37] focus:outline-none cursor-pointer"
                 >
-                  <option value="draft">📦 Формируется на складе в Сеуле (Draft)</option>
+                  <option value="draft">📦 Формируется на складе в Корее (Draft)</option>
                   <option value="in_transit">✈️ Вылетел / В пути (In Transit)</option>
                   <option value="customs">🛃 Таможенное оформление (Customs)</option>
                   <option value="arrived">🏢 Прибыл на склад выдачи (Arrived)</option>

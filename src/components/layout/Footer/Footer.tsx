@@ -42,7 +42,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-2 text-xs text-[#B89254] font-semibold">
               <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>100% Original Seoul Direct • 100% Оригинал</span>
+              <span>100% Original Korea Direct • 100% Оригинал</span>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export const Footer: React.FC = () => {
         <div className="pt-6 border-t border-[#ECE8E1] flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#8A8680] gap-4">
           <p>© {new Date().getFullYear()} {BRAND_CONFIG.brandName}. {language === 'uz' ? 'Barcha huquqlar himoyalangan.' : 'Все права защищены.'}</p>
           <div className="flex items-center gap-4">
-            <span>Direct Imports from Seoul, South Korea</span>
+            <span>Direct Imports from South Korea</span>
           </div>
         </div>
       </div>

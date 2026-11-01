@@ -80,7 +80,9 @@ func NewRouter(
 
 	// Search Engines, Crawlers & AI Robots
 	r.Get("/robots.txt", seoHandler.GetRobotsTXT)
+	r.Head("/robots.txt", seoHandler.GetRobotsTXT)
 	r.Get("/sitemap.xml", seoHandler.GetSitemapXML)
+	r.Head("/sitemap.xml", seoHandler.GetSitemapXML)
 
 	// API Routes
 	r.Route("/api", func(api chi.Router) {
@@ -236,7 +238,7 @@ func NewRouter(
 			fileServer := http.FileServer(http.Dir(cfg.StaticDir))
 			seoInjector := NewSEOInjector(catalogRepo, cfg.StaticDir)
 
-			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+			spaHandler := func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasPrefix(r.URL.Path, "/api") || strings.HasPrefix(r.URL.Path, "/uploads") {
 					http.NotFound(w, r)
 					return
@@ -255,7 +257,10 @@ func NewRouter(
 
 				indexPath := filepath.Join(cfg.StaticDir, "index.html")
 				http.ServeFile(w, r, indexPath)
-			})
+			}
+
+			r.Get("/*", spaHandler)
+			r.Head("/*", spaHandler)
 		}
 	}
 

@@ -119,7 +119,7 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		brand = "Корейская косметика"
 	}
 
-	titleText := fmt.Sprintf("%s %s — купить со склада в Сеуле (Корея) | MK KOREA COSMETIC", p.Name, brand)
+	titleText := fmt.Sprintf("%s %s — купить со склада в Южной Корее | MK KOREA COSMETIC", p.Name, brand)
 	ogTitleText := fmt.Sprintf("%s (%s)", p.Name, brand)
 	descText := p.Excerpt
 	if descText == "" {
@@ -127,7 +127,7 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	}
 	descText = safeTruncate(descText, 160)
 	if descText == "" {
-		descText = fmt.Sprintf("Оригинальная корейская косметика %s %s со склада в Сеуле. Прямые поставки по оптовым ценам, быстрая доставка по СНГ.", p.Name, brand)
+		descText = fmt.Sprintf("Оригинальная корейская косметика %s %s со склада в Южной Корее. Прямые поставки по оптовым ценам, быстрая доставка по СНГ.", p.Name, brand)
 	}
 
 	canonicalURL := fmt.Sprintf("https://mkkoreacosmetic.com/product/%s", slug)
@@ -285,7 +285,7 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	metaTags := fmt.Sprintf(`
     <title>%s</title>
     <meta name="description" content="%s" />
-    <meta name="keywords" content="%s, %s, корейская косметика, косметика из кореи, оптом, Сеул, оригинал, уход за кожей" />
+    <meta name="keywords" content="%s, %s, корейская косметика, косметика из кореи, оптом, Южная Корея, оригинал, уход за кожей" />
     <link rel="canonical" href="%s" />
     
     <!-- Open Graph / Telegram / WhatsApp / Facebook -->
@@ -335,17 +335,17 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 }
 
 func (inj *SEOInjector) injectCatalogSEO(baseHTML []byte, brand, category string) []byte {
-	titleText := "Каталог корейской косметики со склада в Сеуле — оптом и в розницу | MK KOREA COSMETIC"
-	descText := "Широкий ассортимент оригинальной корейской косметики напрямую из Сеула. AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Оптовые цены со склада."
+	titleText := "Каталог корейской косметики со склада в Южной Корее — оптом и в розницу | MK KOREA COSMETIC"
+	descText := "Широкий ассортимент оригинальной корейской косметики напрямую из Южной Кореи. AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Оптовые цены со склада."
 	canonicalURL := "https://mkkoreacosmetic.com/catalog"
 
 	if brand != "" {
-		titleText = fmt.Sprintf("%s — корейская косметика оптом и в розницу со склада в Сеуле | MK KOREA COSMETIC", brand)
-		descText = fmt.Sprintf("Купить оригинальную косметику %s напрямую из Кореи. 100%% оригинал со склада в Сеуле, оптовые и розничные поставки по СНГ.", brand)
+		titleText = fmt.Sprintf("%s — корейская косметика оптом и в розницу со склада в Южной Корее | MK KOREA COSMETIC", brand)
+		descText = fmt.Sprintf("Купить оригинальную косметику %s напрямую из Кореи. 100%% оригинал со склада в Южной Корее, оптовые и розничные поставки по СНГ.", brand)
 		canonicalURL = fmt.Sprintf("https://mkkoreacosmetic.com/catalog?brand=%s", brand)
 	} else if category != "" {
-		titleText = fmt.Sprintf("Корейская косметика %s — каталог со склада в Сеуле | MK KOREA COSMETIC", category)
-		descText = fmt.Sprintf("Каталог средств %s от ведущих корейских брендов. Доставка напрямую из Сеула со склада в Россию, Казахстан, Узбекистан и СНГ.", category)
+		titleText = fmt.Sprintf("Корейская косметика %s — каталог со склада в Южной Корее | MK KOREA COSMETIC", category)
+		descText = fmt.Sprintf("Каталог средств %s от ведущих корейских брендов. Доставка напрямую из Южной Кореи со склада в Россию, Казахстан, Узбекистан и СНГ.", category)
 		canonicalURL = fmt.Sprintf("https://mkkoreacosmetic.com/catalog?category=%s", category)
 	}
 
@@ -384,8 +384,8 @@ func (inj *SEOInjector) injectCatalogSEO(baseHTML []byte, brand, category string
 }
 
 func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
-	titleText := "MK KOREA COSMETIC — Люксовая корейская косметика со склада в Сеуле (Корея)"
-	descText := "Оптово-розничный склад оригинальной корейской косметики в Сеуле: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Южной Кореи."
+	titleText := "MK KOREA COSMETIC — Люксовая корейская косметика со склада в Южной Корее"
+	descText := "Оптово-розничный склад оригинальной корейской косметики в Южной Корее: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Южной Кореи."
 	canonicalURL := "https://mkkoreacosmetic.com/"
 
 	// WebSite Schema with SearchAction
@@ -410,7 +410,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
   "url": "https://mkkoreacosmetic.com/",
   "logo": "https://mkkoreacosmetic.com/logo.png",
   "image": "https://mkkoreacosmetic.com/logo.png",
-  "description": "Прямые поставки оригинальной корейской косметики оптом и в розницу со склада в Сеуле, Южная Корея.",
+  "description": "Прямые поставки оригинальной корейской косметики оптом и в розницу со склада в Южной Корее, Южная Корея.",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Seoul",
@@ -432,7 +432,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
       "name": "Оригинальная ли косметика и откуда отправляются заказы?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "100% оригинальная сертифицированная продукция с внутреннего рынка Южной Кореи. Все заказы собираются и отправляются напрямую с нашего склада в Сеуле с батч-кодами и актуальными сроками годности."
+        "text": "100% оригинальная сертифицированная продукция с внутреннего рынка Южной Кореи. Все заказы собираются и отправляются напрямую с нашего склада в Южной Корее с батч-кодами и актуальными сроками годности."
       }
     },
     {
@@ -440,7 +440,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
       "name": "Как работает доставка в Россию, Казахстан, Узбекистан и страны СНГ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Мы отправляем заказы авиалиниями из Сеула. Средний срок доставки составляет 7-14 рабочих дней. Каждому отправлению присваивается международный трек-номер для отслеживания."
+        "text": "Мы отправляем заказы авиалиниями из Южной Кореи. Средний срок доставки составляет 7-14 рабочих дней. Каждому отправлению присваивается международный трек-номер для отслеживания."
       }
     },
     {
@@ -448,7 +448,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
       "name": "Работаете ли вы оптом для магазинов, шоурумов и косметологов?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Да, MK KOREA COSMETIC специализируется на оптовых поставках корейской косметики по прямому сеульскому прайсу. Предоставляем индивидуальные оптовые скидки, регулярные поставки брендов Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION."
+        "text": "Да, MK KOREA COSMETIC специализируется на оптовых поставках корейской косметики по прямому прямому корейскому прайсу. Предоставляем индивидуальные оптовые скидки, регулярные поставки брендов Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION."
       }
     },
     {
@@ -465,7 +465,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
 	metaTags := fmt.Sprintf(`
     <title>%s</title>
     <meta name="description" content="%s" />
-    <meta name="keywords" content="косметика из кореи, корейская косметика, корейская косметика оптом, сеул косметика склад, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion" />
+    <meta name="keywords" content="косметика из кореи, корейская косметика, корейская косметика оптом, косметика из южной кореи склад, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion" />
     <link rel="canonical" href="%s" />
 
     <!-- Open Graph -->
@@ -504,19 +504,9 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
 	return replaceHeadContent(baseHTML, metaTags)
 }
 
-func replaceHeadContent(baseHTML []byte, newHeadTags string) []byte {
-	s := string(baseHTML)
-
-	// Remove default title
-	if start := strings.Index(s, "<title>"); start != -1 {
-		if end := strings.Index(s[start:], "</title>"); end != -1 {
-			s = s[:start] + s[start+end+8:]
-		}
-	}
-
-	// Remove default description meta tag
+func stripTag(s, prefix string) string {
 	for {
-		idx := strings.Index(s, `<meta name="description"`)
+		idx := strings.Index(s, prefix)
 		if idx == -1 {
 			break
 		}
@@ -530,6 +520,25 @@ func replaceHeadContent(baseHTML []byte, newHeadTags string) []byte {
 			break
 		}
 	}
+	return s
+}
+
+func replaceHeadContent(baseHTML []byte, newHeadTags string) []byte {
+	s := string(baseHTML)
+
+	// Remove default title
+	if start := strings.Index(s, "<title>"); start != -1 {
+		if end := strings.Index(s[start:], "</title>"); end != -1 {
+			s = s[:start] + s[start+end+8:]
+		}
+	}
+
+	// Remove default and fallback meta/og/twitter tags so injected ones take full precedence
+	s = stripTag(s, `<meta name="description"`)
+	s = stripTag(s, `<meta name="keywords"`)
+	s = stripTag(s, `<meta property="og:`)
+	s = stripTag(s, `<meta name="twitter:`)
+	s = stripTag(s, `<link rel="canonical"`)
 
 	// Insert before </head>
 	headEnd := strings.Index(s, "</head>")

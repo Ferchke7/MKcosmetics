@@ -28,7 +28,7 @@ const HERO_SLIDES: HeroSlide[] = [
     id: 1,
     tagRu: 'SEOUL DIRECT • 100% ОРИГИНАЛ',
     tagUz: 'SEUL DIRECT • 100% ORIGINAL',
-    titleRu: 'Премиальная корейская косметика напрямую из Сеула',
+    titleRu: 'Премиальная корейская косметика напрямую из Южной Кореи',
     titleUz: "Seuldan to'g'ridan-to'g'ri premium Koreya kosmetikasi",
     subRu: 'Прямые оптовые и розничные поставки. Более 250+ проверенных средств от ведущих бьюти-лабораторий Южной Кореи.',
     subUz: "To'g'ridan-to'g'ri ulgurji va chakana yetkazib berish. Janubiy Koreyaning yetakchi brendlaridan 250+ dan ortiq vositalar.",
@@ -38,7 +38,7 @@ const HERO_SLIDES: HeroSlide[] = [
   },
   {
     id: 2,
-    tagRu: 'ЭКСКЛЮЗИВ СЕУЛА • TOP BRANDS',
+    tagRu: 'K-BEAUTY EXCLUSIVE • TOP BRANDS',
     tagUz: 'SEUL EKSKLYUZIVI • TOP BRANDS',
     titleRu: 'Эксклюзив: Curación, JOGABI, Sulwhasoo & Whoo',
     titleUz: 'Eksklyuziv: Curación, JOGABI, Sulwhasoo & Whoo',
@@ -55,7 +55,7 @@ const HERO_SLIDES: HeroSlide[] = [
     tagUz: 'EKSPRESS AVIA • TOSHKENT VA MDH',
     titleRu: 'Свежие партии с завода и быстрая авиа-доставка',
     titleUz: "Zavoddan yangi partiyalar va tezkor avia yetkazib berish",
-    subRu: 'Гарантия максимальных сроков годности. Регулярные рейсы Сеул-Ташкент и доставка до ваших дверей.',
+    subRu: 'Гарантия максимальных сроков годности. Регулярные рейсы Корея-Ташкент и доставка до ваших дверей.',
     subUz: "Maksimal yaroqlilik muddatlari kafolati. Doimiy Seul-Toshkent reyslari va eshigingizgacha yetkazib berish.",
     btnRu: 'Оформить заказ',
     btnUz: 'Buyurtma berish',
@@ -213,7 +213,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCatalog, onSelectCategory, tot
             </div>
             <div>
               <h4 className="text-xs font-bold text-[#1A1917]">Экспресс Авиа</h4>
-              <p className="text-[11px] text-[#8A8680]">Сеул ➔ Ташкент & СНГ</p>
+              <p className="text-[11px] text-[#8A8680]">Корея ➔ Ташкент & СНГ</p>
             </div>
           </div>
 

@@ -133,7 +133,7 @@ export const ProductDetailPage: React.FC = () => {
   const handleShare = async () => {
     const shareUrl = window.location.href;
     const shareTitle = `${product.name} — MK KOREA COSMETIC`;
-    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
+    const shareText = `Оригинальная корейская косметика со склада в Южной Корее: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
 
     if (navigator.share) {
       try {
@@ -153,14 +153,14 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleShareTelegram = () => {
     const shareUrl = window.location.href;
-    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
+    const shareText = `Оригинальная корейская косметика со склада в Южной Корее: ${product.name} (${formatKrw(product.priceKrw)} ₩)`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
     setShareDropdownOpen(false);
   };
 
   const handleShareWhatsApp = () => {
     const shareUrl = window.location.href;
-    const shareText = `Оригинальная корейская косметика со склада в Сеуле: ${product.name} (${formatKrw(product.priceKrw)} ₩)\n${shareUrl}`;
+    const shareText = `Оригинальная корейская косметика со склада в Южной Корее: ${product.name} (${formatKrw(product.priceKrw)} ₩)\n${shareUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
     setShareDropdownOpen(false);
   };
@@ -180,8 +180,8 @@ export const ProductDetailPage: React.FC = () => {
 
   const productCanonical = `https://mkkoreacosmetic.com/product/${product.slug}`;
   const brandName = product.brand || 'Корейская косметика';
-  const pageTitle = `${product.name} ${brandName} — купить со склада в Сеуле (Корея) | MK KOREA COSMETIC`;
-  const pageDesc = product.excerpt || (product.description ? product.description.slice(0, 160) : '') || `Оригинальная корейская косметика ${product.name} ${brandName} напрямую со склада в Сеуле. Быстрая доставка по СНГ.`;
+  const pageTitle = `${product.name} ${brandName} — купить со склада в Южной Корее | MK KOREA COSMETIC`;
+  const pageDesc = product.excerpt || (product.description ? product.description.slice(0, 160) : '') || `Оригинальная корейская косметика ${product.name} ${brandName} напрямую со склада в Южной Корее. Быстрая доставка по СНГ.`;
 
   const productSchema = {
     '@context': 'https://schema.org/',
@@ -245,7 +245,7 @@ export const ProductDetailPage: React.FC = () => {
       <SEOHead
         title={pageTitle}
         description={pageDesc}
-        keywords={`${product.name}, ${brandName}, корейская косметика, косметика из кореи, купить в сеуле, оптом`}
+        keywords={`${product.name}, ${brandName}, корейская косметика, косметика из кореи, купить в корее, оптом`}
         canonical={productCanonical}
         image={currentImage}
         type="product"

@@ -116,7 +116,7 @@ export const RevenueReportPDFModal: React.FC<RevenueReportPDFModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-neutral-400 mt-1 print:text-neutral-600">
-                Прямые поставки сертифицированной корейской косметики • Сеул — Ташкент
+                Прямые поставки сертифицированной корейской косметики • Корея — Ташкент
               </p>
             </div>
 

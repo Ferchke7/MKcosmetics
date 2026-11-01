@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
                   />
                   <div>
                     <div className="font-serif text-lg font-bold tracking-wider text-ink">MK KOREA</div>
-                    <div className="text-[9px] uppercase tracking-widest text-muted font-semibold">Cosmetic Seoul</div>
+                    <div className="text-[9px] uppercase tracking-widest text-muted font-semibold">Cosmetic Korea</div>
                   </div>
                 </div>
                 <button

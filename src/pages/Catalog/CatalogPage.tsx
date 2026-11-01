@@ -171,20 +171,20 @@ export const CatalogPage: React.FC = () => {
   );
 
   const seoTitle = brandParam
-    ? `${brandParam} — корейская косметика со склада в Сеуле | MK KOREA COSMETIC`
+    ? `${brandParam} — корейская косметика со склада в Южной Корее | MK KOREA COSMETIC`
     : currentCategoryObj
     ? `${currentCategoryTitle} — корейская косметика из Сеула | MK KOREA COSMETIC`
     : isHitParam
-    ? 'Хиты продаж корейской косметики со склада в Сеуле | MK KOREA COSMETIC'
+    ? 'Хиты продаж корейской косметики со склада в Южной Корее | MK KOREA COSMETIC'
     : queryParam
-    ? `Поиск: ${queryParam} — купить корейскую косметику со склада в Сеуле`
-    : 'Каталог корейской косметики со склада в Сеуле — оптом и в розницу | MK KOREA COSMETIC';
+    ? `Поиск: ${queryParam} — купить корейскую косметику со склада в Южной Корее`
+    : 'Каталог корейской косметики со склада в Южной Корее — оптом и в розницу | MK KOREA COSMETIC';
 
   const seoDesc = brandParam
     ? `Купить оригинальную косметику ${brandParam} со склада в Корее (Сеул). Прямые оптовые и розничные поставки по СНГ, гарантия 100% подлинности.`
     : currentCategoryObj
-    ? `Каталог товаров категории ${currentCategoryTitle} от ведущих корейских брендов. Авиадоставка напрямую из Сеула в Россию, Казахстан, Узбекистан.`
-    : 'Полный каталог оригинальной корейской косметики со склада в Сеуле. Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Оптовые цены, быстрая доставка.';
+    ? `Каталог товаров категории ${currentCategoryTitle} от ведущих корейских брендов. Авиадоставка напрямую из Южной Кореи в Россию, Казахстан, Узбекистан.`
+    : 'Полный каталог оригинальной корейской косметики со склада в Южной Корее. Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Оптовые цены, быстрая доставка.';
 
   const seoCanonical = brandParam
     ? `https://mkkoreacosmetic.com/catalog?brand=${encodeURIComponent(brandParam)}`
@@ -198,7 +198,7 @@ export const CatalogPage: React.FC = () => {
         title={seoTitle}
         description={seoDesc}
         canonical={seoCanonical}
-        keywords="корейская косметика, косметика из кореи, оптом из кореи, склад сеул, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion"
+        keywords="корейская косметика, косметика из кореи, оптом из кореи, склад корея, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion"
       />
       {/* Top Breadcrumb & Title */}
       <div className="border-b border-line bg-paper/60 backdrop-blur-sm">

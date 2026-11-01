@@ -64,9 +64,9 @@ export const HomePage: React.FC = () => {
   return (
     <div>
       <SEOHead
-        title="MK KOREA COSMETIC — Люксовая корейская косметика со склада в Сеуле (Корея)"
-        description="Оптово-розничный склад оригинальной корейской косметики в Сеуле: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Кореи."
-        keywords="косметика из кореи, корейская косметика, корейская косметика оптом, сеул косметика склад, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion"
+        title="MK KOREA COSMETIC — Люксовая корейская косметика со склада в Южной Корее"
+        description="Оптово-розничный склад оригинальной корейской косметики в Южной Корее: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Кореи."
+        keywords="косметика из кореи, корейская косметика, корейская косметика оптом, косметика из кореи склад, amoredelivery, sulwhasoo, whoo, medi-peel, manyo, jogabi, curacion"
         canonical="https://mkkoreacosmetic.com/"
       />
 

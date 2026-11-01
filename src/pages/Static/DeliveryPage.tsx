@@ -19,7 +19,7 @@ export const DeliveryPage: React.FC = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         <div className="text-center space-y-2 mb-12">
-          <p className="eyebrow text-gold">SEOUL • DIRECT LOGISTICS</p>
+          <p className="eyebrow text-gold">KOREA • DIRECT LOGISTICS</p>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-ink">
             Доставка и оплата
           </h1>
@@ -48,7 +48,7 @@ export const DeliveryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: Самовывоз в Сеуле */}
+          {/* Card 2: Самовывоз в Южной Корее */}
           <div className="bg-paper rounded-3xl border border-line p-6 md:p-8 space-y-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-cream text-gold flex items-center justify-center border border-line">

@@ -176,7 +176,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     // Hero
     hero_tag: 'MK KOREA COSMETIC',
     hero_title_1: 'Оригинальная корейская косметика',
-    hero_title_2: 'напрямую из Сеула в 1 клик',
+    hero_title_2: 'напрямую из Южной Кореи в 1 клик',
     hero_subtitle: 'Прямые поставки премиального корейского ухода. Выбирайте из более 250+ проверенных средств и оформляйте быстрый заказ с удобной доставкой.',
     hero_btn_catalog: 'Каталог товаров',
     hero_btn_contacts: 'Контакты и соцсети',
@@ -194,7 +194,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     // Catalog Page & Tree Sidebar
     catalog_badge: 'SEOUL DIRECT • 100% ORIGINAL',
     catalog_title: 'Каталог косметики',
-    catalog_subtitle: 'Оригинальная корейская косметика напрямую из Сеула',
+    catalog_subtitle: 'Оригинальная корейская косметика напрямую из Южной Кореи',
     catalog_shop_tagline: 'Откройте для себя сочетание инновационных формул и премиального ухода в каждом средстве. Новая коллекция для сияния вашей кожи.',
     catalog_filters_title: 'Фильтры',
     catalog_search_placeholder: 'Поиск бренда, средства, типа кожи...',
@@ -315,7 +315,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 
     // Footer & Visitor Counter
     footer_about_title: 'О магазине',
-    footer_about_desc: 'Прямые поставки 100% оригинальной сертифицированной корейской косметики напрямую из Сеула.',
+    footer_about_desc: 'Прямые поставки 100% оригинальной сертифицированной корейской косметики напрямую из Южной Кореи.',
     footer_social_title: 'Мы в соцсетях',
     visitor_stats_title: 'География покупателей',
     visitor_stats_badge: 'LIVE СТАТИСТИКА',

@@ -62,7 +62,7 @@ export const Footer: React.FC = () => {
                   MK KOREA
                 </div>
                 <div className="text-[11px] sm:text-xs uppercase tracking-widest text-gold font-semibold">
-                  COSMETIC • SEOUL
+                  COSMETIC • KOREA
                 </div>
               </div>
             </div>

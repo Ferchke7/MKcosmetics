@@ -44,7 +44,7 @@ const DELIVERY_METHODS = [
     id: 'cargo_world',
     title: 'Международная доставка по всему миру (СНГ, США, Европа, Азия)',
     costKrw: 0,
-    desc: 'Авиа-карго и экспресс-отправка в любую точку мира напрямую из Сеула. Оплата веса карго при получении.',
+    desc: 'Авиа-карго и экспресс-отправка в любую точку мира напрямую из Южной Кореи. Оплата веса карго при получении.',
     freeThreshold: 0,
   },
 ];
@@ -169,7 +169,7 @@ export const CheckoutPage: React.FC = () => {
               Благодарим за заказ!
             </h1>
             <p className="text-xs sm:text-sm text-ink/70 leading-relaxed max-w-md mx-auto">
-              Ваш заказ принят в обработку. Менеджер MK Cosmetics свяжется с вами по указанному телефону для согласования отправки из Сеула.
+              Ваш заказ принят в обработку. Менеджер MK Cosmetics свяжется с вами по указанному телефону для согласования отправки из Южной Кореи.
             </p>
           </div>
 
@@ -201,7 +201,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
             <div className="flex justify-between text-ink/70">
               <span>Прямой склад:</span>
-              <span>Сеул, Южная Корея</span>
+              <span>Южная Корея</span>
             </div>
             <div className="flex justify-between text-ink/70">
               <span>Контакты для связи:</span>
@@ -444,7 +444,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Сеул, Каннам-гу, ул..."
+                        placeholder="Южная Корея, адрес..."
                         className="w-full pl-9 pr-3 py-2.5 text-xs bg-cream/30 border border-line rounded-xl focus:outline-none focus:border-gold"
                       />
                     </div>

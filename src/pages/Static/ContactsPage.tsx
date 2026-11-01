@@ -85,7 +85,7 @@ export const ContactsPage: React.FC = () => {
             </div>
             <h3 className="font-serif text-lg font-normal text-ink">Instagram</h3>
             <p className="text-xs text-ink/60">
-              Эстетика, видео распаковок из Сеула и живые отзывы
+              Эстетика, видео распаковок из Южной Кореи и живые отзывы
             </p>
             <div className="pt-2">
               <a

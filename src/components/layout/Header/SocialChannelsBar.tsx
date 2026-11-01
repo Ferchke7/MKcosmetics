@@ -66,7 +66,7 @@ export const SocialChannelsBar: React.FC = () => {
             <span>
               {language === 'uz'
                 ? "Seuldan to'g'ridan-to'g'ri yetkazib berish • 100% Original"
-                : 'Прямые поставки из Сеула • 100% Оригинал'}
+                : 'Прямые поставки из Южной Кореи • 100% Оригинал'}
             </span>
           </span>
         </div>

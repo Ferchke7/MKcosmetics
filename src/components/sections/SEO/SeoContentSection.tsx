@@ -15,7 +15,7 @@ export const SeoContentSection: React.FC = () => {
             <span>Оригинальная корейская косметика</span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-ink font-normal leading-tight tracking-tight">
-            Косметика из Кореи напрямую со склада в Сеуле — оптом и в розницу
+            Косметика из Кореи напрямую со склада в Южной Корее — оптом и в розницу
           </h2>
           <p className="mt-4 text-sm sm:text-base text-ink/70 leading-relaxed">
             <strong>MK KOREA COSMETIC</strong> — прямой поставщик оригинальной косметики из Южной Кореи.
@@ -30,7 +30,7 @@ export const SeoContentSection: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-gold/10 text-gold flex items-center justify-center mb-4">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-serif text-lg font-semibold text-ink mb-2">100% Оригинал из Сеула</h3>
+            <h3 className="font-serif text-lg font-semibold text-ink mb-2">100% Оригинал из Южной Кореи</h3>
             <p className="text-xs text-ink/70 leading-relaxed">
               Закупки напрямую у корейских дистрибьюторов и фабрик. Вся продукция сертифицирована для внутреннего рынка Кореи.
             </p>

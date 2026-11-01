@@ -267,7 +267,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center gap-2 text-[11px] text-[#1A1917]">
                     <Plane className="w-3.5 h-3.5 text-[#B89254]" />
-                    <span>{language === 'uz' ? 'Seuldan toʻgʻridan-toʻgʻri avia yetkazib berish' : 'Прямая авиа-доставка из Сеула 2 раза в неделю'}</span>
+                    <span>{language === 'uz' ? 'Koreyadan toʻgʻridan-toʻgʻri avia yetkazib berish' : 'Прямая авиа-доставка из Южной Кореи 2 раза в неделю'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px] text-[#1A1917]">
                     <Truck className="w-3.5 h-3.5 text-[#B89254]" />
