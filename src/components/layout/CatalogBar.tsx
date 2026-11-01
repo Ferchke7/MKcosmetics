@@ -108,19 +108,24 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
 
   return (
     <div ref={barRef} className="sticky top-0 z-30 bg-paper/95 backdrop-blur-md border-y border-line shadow-sm">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 relative">
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Left Buttons: Categories / Brands / Price */}
-          <div className="flex items-center gap-1.5 shrink-0">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3 relative">
+        {/* On mobile: Row 1 = Categories & Brands pills; Row 2 = Full width Search bar */}
+        {/* On sm+: Single horizontal bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5">
+          {/* Pills: Categories / Brands / Price */}
+          <div className="flex items-center gap-2 shrink-0">
             {/* 1. Categories dropdown */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setActiveMenu(activeMenu === 'categories' ? null : 'categories')}
-                className={`h-10 sm:h-11 px-3.5 sm:px-4 rounded-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
+                onClick={() => {
+                  setShowSuggestions(false);
+                  setActiveMenu(activeMenu === 'categories' ? null : 'categories');
+                }}
+                className={`h-10 sm:h-11 px-4 sm:px-4.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
                   activeMenu === 'categories'
-                    ? 'bg-gold text-white'
-                    : 'bg-cream-soft hover:bg-cream-deep text-ink border border-line'
+                    ? 'bg-gold text-white shadow-xs'
+                    : 'bg-[#F9F7F4] hover:bg-[#F2EDE4] text-ink border border-[#E8E4DC]'
                 }`}
               >
                 <span>Категории</span>
@@ -128,7 +133,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               </button>
 
               {activeMenu === 'categories' && (
-                <div className="absolute top-full left-0 mt-2 w-[320px] sm:w-[480px] bg-paper rounded-2xl shadow-soft-lg border border-line p-4 z-40 max-h-[75vh] overflow-y-auto animate-in fade-in duration-150">
+                <div className="absolute top-full left-0 mt-2 w-[calc(100vw-1.75rem)] sm:w-[480px] max-w-lg bg-paper rounded-2xl shadow-soft-2xl border border-line p-3.5 sm:p-4 z-40 max-h-[75vh] overflow-y-auto animate-in fade-in duration-150">
                   <div className="flex items-center justify-between pb-2 mb-3 border-b border-line text-xs font-bold uppercase tracking-wider text-muted">
                     <span>Все категории ({categories.length})</span>
                     <button
@@ -170,11 +175,14 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setActiveMenu(activeMenu === 'brands' ? null : 'brands')}
-                className={`h-10 sm:h-11 px-3.5 sm:px-4 rounded-card text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
+                onClick={() => {
+                  setShowSuggestions(false);
+                  setActiveMenu(activeMenu === 'brands' ? null : 'brands');
+                }}
+                className={`h-10 sm:h-11 px-4 sm:px-4.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
                   activeMenu === 'brands'
-                    ? 'bg-gold text-white'
-                    : 'bg-cream-soft hover:bg-cream-deep text-ink border border-line'
+                    ? 'bg-gold text-white shadow-xs'
+                    : 'bg-[#F9F7F4] hover:bg-[#F2EDE4] text-ink border border-[#E8E4DC]'
                 }`}
               >
                 <span>Бренды</span>
@@ -182,7 +190,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
               </button>
 
               {activeMenu === 'brands' && (
-                <div className="absolute top-full left-0 mt-2 w-[280px] sm:w-[360px] bg-paper rounded-2xl shadow-soft-lg border border-line p-4 z-40 max-h-[75vh] overflow-y-auto animate-in fade-in duration-150">
+                <div className="absolute top-full left-0 mt-2 w-[calc(100vw-1.75rem)] sm:w-[360px] max-w-sm bg-paper rounded-2xl shadow-soft-2xl border border-line p-3.5 sm:p-4 z-40 max-h-[75vh] overflow-y-auto animate-in fade-in duration-150">
                   <div className="mb-3">
                     <input
                       type="text"
@@ -259,10 +267,10 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
             </div>
           </div>
 
-          {/* Right: Search Input */}
-          <div className="flex-1">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-muted absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* Search Input: Full-width on mobile row 2; flex-1 on desktop row 1 */}
+          <div className="flex-1 w-full">
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
+              <Search className="w-4.5 h-4.5 text-[#8A8680] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 inputMode="search"
@@ -276,7 +284,7 @@ export const CatalogBar: React.FC<CatalogBarProps> = ({ categories, brands }) =>
                   }
                 }}
                 placeholder="Поиск косметики по названию, бренду..."
-                className="w-full h-10 sm:h-11 pl-8.5 sm:pl-10.5 pr-8 sm:pr-9 rounded-card bg-cream-soft border border-line text-xs sm:text-sm text-ink placeholder-muted focus:outline-none focus:border-gold focus:bg-paper transition-all"
+                className="w-full h-11 pl-11 pr-10 rounded-2xl bg-[#F9F7F4] hover:bg-[#F2EDE4] focus:bg-white border border-[#E8E4DC] focus:border-gold text-xs sm:text-sm text-ink placeholder-[#8A8680] focus:outline-none transition-all shadow-2xs"
               />
               {searchQuery && (
                 <button
