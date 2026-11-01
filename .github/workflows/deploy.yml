@@ -100,6 +100,10 @@ jobs:
             docker compose up -d --build --remove-orphans
             docker compose restart caddy || docker exec mkcosmetics-caddy caddy reload --config /etc/caddy/Caddyfile || true
 
+            echo "=== RECENT CONTAINER LOGS ==="
+            docker compose logs --tail=50 mkcosmetics || true
+            docker compose logs --tail=30 caddy || true
+
             echo "--> Verifying service health..."
             MAX_RETRIES=30
             RETRY_INTERVAL=2
