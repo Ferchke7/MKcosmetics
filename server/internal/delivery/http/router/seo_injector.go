@@ -160,14 +160,56 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		URL  string `json:"url"`
 	}
 
+	type MonetaryAmountSchema struct {
+		Type     string `json:"@type"`
+		Value    string `json:"value"`
+		Currency string `json:"currency"`
+	}
+
+	type DefinedRegionSchema struct {
+		Type           string `json:"@type"`
+		AddressCountry string `json:"addressCountry"`
+	}
+
+	type QuantitativeValueSchema struct {
+		Type     string `json:"@type"`
+		MinValue int    `json:"minValue"`
+		MaxValue int    `json:"maxValue"`
+		UnitCode string `json:"unitCode"`
+	}
+
+	type ShippingDeliveryTimeSchema struct {
+		Type         string                  `json:"@type"`
+		HandlingTime QuantitativeValueSchema `json:"handlingTime"`
+		TransitTime  QuantitativeValueSchema `json:"transitTime"`
+	}
+
+	type OfferShippingDetailsSchema struct {
+		Type                string                     `json:"@type"`
+		ShippingRate        MonetaryAmountSchema       `json:"shippingRate"`
+		ShippingDestination DefinedRegionSchema        `json:"shippingDestination"`
+		DeliveryTime        ShippingDeliveryTimeSchema `json:"deliveryTime"`
+	}
+
+	type MerchantReturnPolicySchema struct {
+		Type                 string   `json:"@type"`
+		ApplicableCountry    []string `json:"applicableCountry"`
+		ReturnPolicyCategory string   `json:"returnPolicyCategory"`
+		MerchantReturnDays   int      `json:"merchantReturnDays"`
+		ReturnMethod         string   `json:"returnMethod"`
+		ReturnFees           string   `json:"returnFees"`
+	}
+
 	type OfferSchema struct {
-		Type          string       `json:"@type"`
-		URL           string       `json:"url"`
-		PriceCurrency string       `json:"priceCurrency"`
-		Price         int64        `json:"price"`
-		Availability  string       `json:"availability"`
-		ItemCondition string       `json:"itemCondition"`
-		Seller        SellerSchema `json:"seller"`
+		Type                    string                       `json:"@type"`
+		URL                     string                       `json:"url"`
+		PriceCurrency           string                       `json:"priceCurrency"`
+		Price                   int64                        `json:"price"`
+		Availability            string                       `json:"availability"`
+		ItemCondition           string                       `json:"itemCondition"`
+		Seller                  SellerSchema                 `json:"seller"`
+		ShippingDetails         []OfferShippingDetailsSchema `json:"shippingDetails"`
+		HasMerchantReturnPolicy MerchantReturnPolicySchema   `json:"hasMerchantReturnPolicy"`
 	}
 
 	type RatingSchema struct {
@@ -222,6 +264,124 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 				Type: "Organization",
 				Name: "MK KOREA COSMETIC",
 				URL:  "https://mkkoreacosmetic.com",
+			},
+			ShippingDetails: []OfferShippingDetailsSchema{
+				{
+					Type: "OfferShippingDetails",
+					ShippingRate: MonetaryAmountSchema{
+						Type:     "MonetaryAmount",
+						Value:    "0",
+						Currency: "KRW",
+					},
+					ShippingDestination: DefinedRegionSchema{
+						Type:           "DefinedRegion",
+						AddressCountry: "RU",
+					},
+					DeliveryTime: ShippingDeliveryTimeSchema{
+						Type: "ShippingDeliveryTime",
+						HandlingTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 1,
+							MaxValue: 2,
+							UnitCode: "DAY",
+						},
+						TransitTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 5,
+							MaxValue: 14,
+							UnitCode: "DAY",
+						},
+					},
+				},
+				{
+					Type: "OfferShippingDetails",
+					ShippingRate: MonetaryAmountSchema{
+						Type:     "MonetaryAmount",
+						Value:    "0",
+						Currency: "KRW",
+					},
+					ShippingDestination: DefinedRegionSchema{
+						Type:           "DefinedRegion",
+						AddressCountry: "KZ",
+					},
+					DeliveryTime: ShippingDeliveryTimeSchema{
+						Type: "ShippingDeliveryTime",
+						HandlingTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 1,
+							MaxValue: 2,
+							UnitCode: "DAY",
+						},
+						TransitTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 5,
+							MaxValue: 14,
+							UnitCode: "DAY",
+						},
+					},
+				},
+				{
+					Type: "OfferShippingDetails",
+					ShippingRate: MonetaryAmountSchema{
+						Type:     "MonetaryAmount",
+						Value:    "0",
+						Currency: "KRW",
+					},
+					ShippingDestination: DefinedRegionSchema{
+						Type:           "DefinedRegion",
+						AddressCountry: "UZ",
+					},
+					DeliveryTime: ShippingDeliveryTimeSchema{
+						Type: "ShippingDeliveryTime",
+						HandlingTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 1,
+							MaxValue: 2,
+							UnitCode: "DAY",
+						},
+						TransitTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 5,
+							MaxValue: 14,
+							UnitCode: "DAY",
+						},
+					},
+				},
+				{
+					Type: "OfferShippingDetails",
+					ShippingRate: MonetaryAmountSchema{
+						Type:     "MonetaryAmount",
+						Value:    "0",
+						Currency: "KRW",
+					},
+					ShippingDestination: DefinedRegionSchema{
+						Type:           "DefinedRegion",
+						AddressCountry: "KR",
+					},
+					DeliveryTime: ShippingDeliveryTimeSchema{
+						Type: "ShippingDeliveryTime",
+						HandlingTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 1,
+							MaxValue: 2,
+							UnitCode: "DAY",
+						},
+						TransitTime: QuantitativeValueSchema{
+							Type:     "QuantitativeValue",
+							MinValue: 1,
+							MaxValue: 3,
+							UnitCode: "DAY",
+						},
+					},
+				},
+			},
+			HasMerchantReturnPolicy: MerchantReturnPolicySchema{
+				Type:                 "MerchantReturnPolicy",
+				ApplicableCountry:    []string{"RU", "KZ", "UZ", "KR", "BY", "KG"},
+				ReturnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+				MerchantReturnDays:   14,
+				ReturnMethod:         "https://schema.org/ReturnByMail",
+				ReturnFees:           "https://schema.org/FreeReturn",
 			},
 		},
 		AggregateRating: &RatingSchema{
