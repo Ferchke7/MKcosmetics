@@ -347,7 +347,7 @@ export const ProductDetailPage: React.FC = () => {
         '@type': 'ListItem',
         position: 3,
         name: product.categoryName,
-        item: `https://mkkoreacosmetic.com/catalog?category=${product.categorySlug}`,
+        item: `https://mkkoreacosmetic.com/catalog?categorySlug=${product.categorySlug}`,
       }, {
         '@type': 'ListItem',
         position: 4,
@@ -384,7 +384,7 @@ export const ProductDetailPage: React.FC = () => {
               <>
                 <ChevronRight className="w-3 h-3 text-line" />
                 <Link
-                  to={`/catalog?category=${product.categorySlug}`}
+                  to={`/catalog?categorySlug=${product.categorySlug}`}
                   className="hover:text-gold transition-colors"
                 >
                   {product.categoryName}
@@ -658,7 +658,7 @@ export const ProductDetailPage: React.FC = () => {
               </div>
               {product.categorySlug && (
                 <Link
-                  to={`/catalog?category=${product.categorySlug}`}
+                  to={`/catalog?categorySlug=${product.categorySlug}`}
                   className="text-xs font-semibold uppercase tracking-wider text-gold hover:text-ink transition-colors flex items-center gap-1"
                 >
                   Смотреть все <ChevronRight className="w-3.5 h-3.5" />

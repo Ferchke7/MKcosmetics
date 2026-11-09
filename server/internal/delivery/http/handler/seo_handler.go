@@ -34,6 +34,8 @@ Allow: /uploads/
 Disallow: /admin/
 Disallow: /admin
 Disallow: /api/
+Disallow: /checkout
+Disallow: /wishlist
 
 User-agent: Googlebot
 Allow: /
@@ -142,7 +144,7 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			urlSet.URLs = append(urlSet.URLs, SitemapURL{
-				Loc:        fmt.Sprintf("%s/catalog?category=%s", baseURL, cat.Slug),
+				Loc:        fmt.Sprintf("%s/catalog?categorySlug=%s", baseURL, cat.Slug),
 				LastMod:    today,
 				ChangeFreq: "daily",
 				Priority:   "0.8",
@@ -158,7 +160,7 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			urlSet.URLs = append(urlSet.URLs, SitemapURL{
-				Loc:        fmt.Sprintf("%s/catalog?brand=%s", baseURL, b.Slug),
+				Loc:        fmt.Sprintf("%s/catalog?brand=%s", baseURL, b.Name),
 				LastMod:    today,
 				ChangeFreq: "daily",
 				Priority:   "0.8",

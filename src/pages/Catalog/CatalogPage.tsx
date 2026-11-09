@@ -189,7 +189,7 @@ export const CatalogPage: React.FC = () => {
   const seoCanonical = brandParam
     ? `https://mkkoreacosmetic.com/catalog?brand=${encodeURIComponent(brandParam)}`
     : categoryParam
-    ? `https://mkkoreacosmetic.com/catalog?category=${encodeURIComponent(categoryParam)}`
+    ? `https://mkkoreacosmetic.com/catalog?categorySlug=${encodeURIComponent(categoryParam)}`
     : 'https://mkkoreacosmetic.com/catalog';
 
   return (

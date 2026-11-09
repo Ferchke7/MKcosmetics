@@ -81,7 +81,10 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 	// 2. Catalog Page
 	if path == "/catalog" || strings.HasPrefix(path, "/catalog/") {
 		brand := r.URL.Query().Get("brand")
-		cat := r.URL.Query().Get("category")
+		cat := r.URL.Query().Get("categorySlug")
+		if cat == "" {
+			cat = r.URL.Query().Get("category")
+		}
 		rendered := inj.injectCatalogSEO(rawHTML, brand, cat)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write(rendered)
@@ -96,9 +99,42 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 		return true
 	}
 
-	// Default SPA Fallback
+	// 4. Delivery Page
+	if path == "/delivery" || path == "/delivery/" {
+		rendered := inj.injectDeliverySEO(rawHTML)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(rendered)
+		return true
+	}
+
+	// 5. About Page
+	if path == "/about" || path == "/about/" {
+		rendered := inj.injectAboutSEO(rawHTML)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(rendered)
+		return true
+	}
+
+	// 6. Contacts Page
+	if path == "/contacts" || path == "/contacts/" {
+		rendered := inj.injectContactsSEO(rawHTML)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(rendered)
+		return true
+	}
+
+	// 7. Non-indexable utility & transactional pages
+	if strings.HasPrefix(path, "/wishlist") || strings.HasPrefix(path, "/checkout") || strings.HasPrefix(path, "/cart") || strings.HasPrefix(path, "/admin") {
+		rendered := inj.injectNoindexSEO(rawHTML, path)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(rendered)
+		return true
+	}
+
+	// Default SPA Fallback: Inject canonical for any other route
+	rendered := inj.injectDefaultSEO(rawHTML, path)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write(rawHTML)
+	_, _ = w.Write(rendered)
 	return true
 }
 
@@ -506,7 +542,7 @@ func (inj *SEOInjector) injectCatalogSEO(baseHTML []byte, brand, category string
 	} else if category != "" {
 		titleText = fmt.Sprintf("Корейская косметика %s — каталог со склада в Южной Корее | MK KOREA COSMETIC", category)
 		descText = fmt.Sprintf("Каталог средств %s от ведущих корейских брендов. Доставка напрямую из Южной Кореи со склада в Россию, Казахстан, Узбекистан и СНГ.", category)
-		canonicalURL = fmt.Sprintf("https://mkkoreacosmetic.com/catalog?category=%s", category)
+		canonicalURL = fmt.Sprintf("https://mkkoreacosmetic.com/catalog?categorySlug=%s", category)
 	}
 
 	metaTags := fmt.Sprintf(`
@@ -707,4 +743,152 @@ func replaceHeadContent(baseHTML []byte, newHeadTags string) []byte {
 	}
 
 	return []byte(s)
+}
+
+func (inj *SEOInjector) injectDeliverySEO(baseHTML []byte) []byte {
+	titleText := "Доставка и оплата корейской косметики из Южной Кореи | MK KOREA COSMETIC"
+	descText := "Условия международной авиа-доставки и экспресс-карго оригинальной корейской косметики в Россию, Казахстан, Узбекистан и СНГ. Сроки от 5 до 14 дней со склада в Сеуле."
+	canonicalURL := "https://mkkoreacosmetic.com/delivery"
+
+	metaTags := fmt.Sprintf(`
+    <title>%s</title>
+    <meta name="description" content="%s" />
+    <meta name="keywords" content="доставка косметики из кореи, карго корея, доставка в россию, доставка в казахстан, доставка в узбекистан, оптовая доставка корейской косметики" />
+    <link rel="canonical" href="%s" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="MK KOREA COSMETIC" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="%s" />
+    <meta property="og:description" content="%s" />
+    <meta property="og:url" content="%s" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:locale" content="ru_RU" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="%s" />
+    <meta name="twitter:description" content="%s" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+`,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
+}
+
+func (inj *SEOInjector) injectAboutSEO(baseHTML []byte) []byte {
+	titleText := "О компании MK KOREA COSMETIC — Оптово-розничный склад в Южной Корее"
+	descText := "MK KOREA COSMETIC — прямой поставщик сертифицированной корейской косметики оптом и в розницу. Собственный склад в Южной Корее, официальные контракты, 100%% оригинальная продукция."
+	canonicalURL := "https://mkkoreacosmetic.com/about"
+
+	metaTags := fmt.Sprintf(`
+    <title>%s</title>
+    <meta name="description" content="%s" />
+    <meta name="keywords" content="о компании mk korea cosmetic, оптовый склад косметики сеул, поставщик корейской косметики, amoredelivery, официальная корейская косметика" />
+    <link rel="canonical" href="%s" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="MK KOREA COSMETIC" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="%s" />
+    <meta property="og:description" content="%s" />
+    <meta property="og:url" content="%s" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:locale" content="ru_RU" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="%s" />
+    <meta name="twitter:description" content="%s" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+`,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
+}
+
+func (inj *SEOInjector) injectContactsSEO(baseHTML []byte) []byte {
+	titleText := "Контакты оптово-розничного склада в Южной Корее | MK KOREA COSMETIC"
+	descText := "Свяжитесь с отделом оптовых и розничных продаж MK KOREA COSMETIC: WhatsApp +82 10 8390 5577, Telegram @mkcosmetkor. Склад в Южной Корее, поддержка клиентов 7 дней в неделю."
+	canonicalURL := "https://mkkoreacosmetic.com/contacts"
+
+	metaTags := fmt.Sprintf(`
+    <title>%s</title>
+    <meta name="description" content="%s" />
+    <meta name="keywords" content="контакты mk korea cosmetic, телефон склад корея, whatsapp корейская косметика, telegram канал корейская косметика" />
+    <link rel="canonical" href="%s" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="MK KOREA COSMETIC" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="%s" />
+    <meta property="og:description" content="%s" />
+    <meta property="og:url" content="%s" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:locale" content="ru_RU" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="%s" />
+    <meta name="twitter:description" content="%s" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+`,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+		canonicalURL,
+		html.EscapeString(titleText),
+		html.EscapeString(descText),
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
+}
+
+func (inj *SEOInjector) injectNoindexSEO(baseHTML []byte, path string) []byte {
+	cleanPath := strings.TrimRight(path, "/")
+	canonicalURL := "https://mkkoreacosmetic.com" + cleanPath
+
+	metaTags := fmt.Sprintf(`
+    <title>MK KOREA COSMETIC — Личный кабинет</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="canonical" href="%s" />
+`,
+		canonicalURL,
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
+}
+
+func (inj *SEOInjector) injectDefaultSEO(baseHTML []byte, path string) []byte {
+	cleanPath := strings.TrimRight(path, "/")
+	canonicalURL := "https://mkkoreacosmetic.com" + cleanPath
+	if cleanPath == "" {
+		canonicalURL = "https://mkkoreacosmetic.com/"
+	}
+
+	metaTags := fmt.Sprintf(`
+    <link rel="canonical" href="%s" />
+`,
+		canonicalURL,
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
 }

@@ -1,4 +1,8 @@
-mkkoreacosmetic.com, www.mkkoreacosmetic.com {
+www.mkkoreacosmetic.com {
+    redir https://mkkoreacosmetic.com{uri} permanent
+}
+
+mkkoreacosmetic.com {
     encode gzip zstd
 
     request_body {
@@ -28,4 +32,3 @@ mkkoreacosmetic.com, www.mkkoreacosmetic.com {
         }
     }
 }
-
