@@ -43,7 +43,10 @@ Allow: /catalog
 Allow: /product/
 Allow: /uploads/
 Disallow: /admin/
+Disallow: /admin
 Disallow: /api/
+Disallow: /checkout
+Disallow: /wishlist
 
 User-agent: Yandex
 Allow: /
@@ -51,7 +54,10 @@ Allow: /catalog
 Allow: /product/
 Allow: /uploads/
 Disallow: /admin/
+Disallow: /admin
 Disallow: /api/
+Disallow: /checkout
+Disallow: /wishlist
 
 User-agent: Googlebot-Image
 Allow: /uploads/
