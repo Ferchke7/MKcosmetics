@@ -20,16 +20,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile || bun install
+        run: npm ci || npm install
 
       - name: Build frontend
-        run: bun run build
+        run: npm run build
 
       - name: Setup Go
         uses: actions/setup-go@v6
