@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Product } from '../../core/types/product';
 import {
-  Star,
   ShoppingBag,
   Zap,
   ShieldCheck,
@@ -140,15 +139,10 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             )}
           </div>
 
-          {/* Rating */}
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 fill-current" />
-              ))}
-            </div>
-            <span className="font-bold text-[#1A1917]">{product.rating}</span>
-            <span className="text-[#8A8680]">({product.reviewCount} {t('product_reviews')})</span>
+          {/* Authenticity Badge */}
+          <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span className="font-semibold text-[11px]">100% Оригинальная косметика со склада в Корее</span>
           </div>
 
           {/* Price Box */}

@@ -329,12 +329,6 @@ export const ProductDetailPage: React.FC = () => {
         returnFees: 'https://schema.org/FreeReturn',
       },
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      reviewCount: '87',
-      bestRating: '5',
-    },
   };
 
   const breadcrumbsSchema = {

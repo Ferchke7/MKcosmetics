@@ -420,12 +420,6 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 				ReturnFees:           "https://schema.org/FreeReturn",
 			},
 		},
-		AggregateRating: &RatingSchema{
-			Type:        "AggregateRating",
-			RatingValue: "4.9",
-			ReviewCount: "87",
-			BestRating:  "5",
-		},
 	}
 
 	prodBytes, _ := json.Marshal(prodJSON)

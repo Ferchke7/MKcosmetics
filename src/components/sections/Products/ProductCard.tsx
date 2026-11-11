@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../../../core/types/product';
 import {
-  Star,
   Heart,
   ShoppingBag,
   MessageCircle,
@@ -207,14 +206,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.name}
           </h3>
 
-          {/* Rating & Authenticity */}
-          <div className="flex items-center gap-1 text-xs pt-0.5">
-            <div className="flex text-amber-400">
-              <Star className="w-3 h-3 fill-current" />
-            </div>
-            <span className="font-bold text-[#1A1917] text-[11px]">{product.rating}</span>
-            <span className="text-[10px] text-[#888888]">({product.reviewCount})</span>
-            <span className="text-[10px] text-emerald-600 font-semibold ml-auto flex items-center gap-0.5">
+          {/* Authenticity & Origin */}
+          <div className="flex items-center justify-between text-xs pt-0.5">
+            <span className="text-[11px] text-[#888888] font-medium">Оригинал из Кореи</span>
+            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
               <ShieldCheck className="w-3 h-3" />
               <span>100% Origin</span>
             </span>
