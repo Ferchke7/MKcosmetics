@@ -87,6 +87,14 @@ func NewRouter(
 	r.Head("/robots.txt", seoHandler.GetRobotsTXT)
 	r.Get("/sitemap.xml", seoHandler.GetSitemapXML)
 	r.Head("/sitemap.xml", seoHandler.GetSitemapXML)
+	r.Get("/sitemap-main.xml", seoHandler.GetSitemapMainXML)
+	r.Head("/sitemap-main.xml", seoHandler.GetSitemapMainXML)
+	r.Get("/sitemap-categories.xml", seoHandler.GetSitemapCategoriesXML)
+	r.Head("/sitemap-categories.xml", seoHandler.GetSitemapCategoriesXML)
+	r.Get("/sitemap-brands.xml", seoHandler.GetSitemapBrandsXML)
+	r.Head("/sitemap-brands.xml", seoHandler.GetSitemapBrandsXML)
+	r.Get("/sitemap-products.xml", seoHandler.GetSitemapProductsXML)
+	r.Head("/sitemap-products.xml", seoHandler.GetSitemapProductsXML)
 
 	// API Routes
 	r.Route("/api", func(api chi.Router) {
@@ -246,6 +254,35 @@ func NewRouter(
 				if strings.HasPrefix(r.URL.Path, "/api") || strings.HasPrefix(r.URL.Path, "/uploads") {
 					http.NotFound(w, r)
 					return
+				}
+
+				// Strict .well-known handler (RFC 8615) - Never bleed into SPA
+				if strings.HasPrefix(r.URL.Path, "/.well-known/") {
+					cleanRel := filepath.Clean(strings.TrimPrefix(r.URL.Path, "/.well-known/"))
+					targetFile := filepath.Join(cfg.StaticDir, ".well-known", cleanRel)
+					if info, err := os.Stat(targetFile); err == nil && !info.IsDir() {
+						w.Header().Set("Cache-Control", "public, max-age=86400")
+						if strings.HasSuffix(targetFile, "security.txt") {
+							w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+						} else if strings.HasSuffix(targetFile, "traffic-advice") || strings.HasSuffix(targetFile, ".json") {
+							w.Header().Set("Content-Type", "application/json; charset=utf-8")
+						}
+						http.ServeFile(w, r, targetFile)
+						return
+					}
+					http.NotFound(w, r)
+					return
+				}
+
+				// Web App Manifest
+				if r.URL.Path == "/site.webmanifest" || r.URL.Path == "/manifest.json" {
+					manifestPath := filepath.Join(cfg.StaticDir, "site.webmanifest")
+					if info, err := os.Stat(manifestPath); err == nil && !info.IsDir() {
+						w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
+						w.Header().Set("Cache-Control", "public, max-age=604800")
+						http.ServeFile(w, r, manifestPath)
+						return
+					}
 				}
 
 				requestedPath := filepath.Join(cfg.StaticDir, filepath.Clean(r.URL.Path))

@@ -69,12 +69,19 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 			defer cancel()
 
 			product, err := inj.catalogRepo.GetBySlug(ctx, slug)
-			if err == nil && product != nil {
+			if err == nil && product != nil && !product.IsHidden && !product.Archived {
 				rendered := inj.injectProductSEO(rawHTML, product, slug)
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				_, _ = w.Write(rendered)
 				return true
 			}
+
+			// Missing / archived product: Genuine 404 with noindex to prevent Google Soft 404
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusNotFound)
+			rendered := inj.injectNotFoundSEO(rawHTML, path)
+			_, _ = w.Write(rendered)
+			return true
 		}
 	}
 
@@ -236,11 +243,17 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		ReturnFees           string   `json:"returnFees"`
 	}
 
+	type CountrySchema struct {
+		Type string `json:"@type"`
+		Name string `json:"name"`
+	}
+
 	type OfferSchema struct {
 		Type                    string                       `json:"@type"`
 		URL                     string                       `json:"url"`
 		PriceCurrency           string                       `json:"priceCurrency"`
 		Price                   int64                        `json:"price"`
+		PriceValidUntil         string                       `json:"priceValidUntil,omitempty"`
 		Availability            string                       `json:"availability"`
 		ItemCondition           string                       `json:"itemCondition"`
 		Seller                  SellerSchema                 `json:"seller"`
@@ -256,15 +269,17 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	}
 
 	type ProductSchema struct {
-		Context         string        `json:"@context"`
-		Type            string        `json:"@type"`
-		Name            string        `json:"name"`
-		Image           []string      `json:"image"`
-		Description     string        `json:"description"`
-		SKU             string        `json:"sku,omitempty"`
-		Brand           BrandSchema   `json:"brand"`
-		Offers          OfferSchema   `json:"offers"`
-		AggregateRating *RatingSchema `json:"aggregateRating,omitempty"`
+		Context         string         `json:"@context"`
+		Type            string         `json:"@type"`
+		Name            string         `json:"name"`
+		Image           []string       `json:"image"`
+		Description     string         `json:"description"`
+		SKU             string         `json:"sku,omitempty"`
+		Category        string         `json:"category,omitempty"`
+		Brand           BrandSchema    `json:"brand"`
+		CountryOfOrigin *CountrySchema `json:"countryOfOrigin,omitempty"`
+		Offers          OfferSchema    `json:"offers"`
+		AggregateRating *RatingSchema  `json:"aggregateRating,omitempty"`
 	}
 
 	imagesList := []string{imgURL}
@@ -285,16 +300,22 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		Image:       imagesList,
 		Description: descText,
 		SKU:         p.Code,
+		Category:    p.CategoryName,
+		CountryOfOrigin: &CountrySchema{
+			Type: "Country",
+			Name: "KR",
+		},
 		Brand: BrandSchema{
 			Type: "Brand",
 			Name: brand,
 		},
 		Offers: OfferSchema{
-			Type:          "Offer",
-			URL:           canonicalURL,
-			PriceCurrency: "KRW",
-			Price:         p.PriceKRW,
-			Availability:  "https://schema.org/InStock",
+			Type:            "Offer",
+			URL:             canonicalURL,
+			PriceCurrency:   "KRW",
+			Price:           p.PriceKRW,
+			PriceValidUntil: "2027-12-31",
+			Availability:    "https://schema.org/InStock",
 			ItemCondition: "https://schema.org/NewCondition",
 			Seller: SellerSchema{
 				Type: "Organization",
@@ -448,7 +469,7 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 			Type:     "ListItem",
 			Position: 3,
 			Name:     p.CategoryName,
-			Item:     fmt.Sprintf("https://mkkoreacosmetic.com/catalog?category=%s", p.CategorySlug),
+			Item:     fmt.Sprintf("https://mkkoreacosmetic.com/catalog?categorySlug=%s", p.CategorySlug),
 		})
 		breadItems = append(breadItems, BreadcrumbItem{
 			Type:     "ListItem",
@@ -578,7 +599,7 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
 	descText := "Оптово-розничный склад оригинальной корейской косметики в Южной Корее: AMORE PACIFIC, Sulwhasoo, The History of Whoo, Medi-Peel, Manyo, JOGABI, CURACION. Прямые поставки из Южной Кореи."
 	canonicalURL := "https://mkkoreacosmetic.com/"
 
-	// WebSite Schema with SearchAction
+	// WebSite Schema with Sitelinks Searchbox
 	websiteJSON := `{
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -587,12 +608,15 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
   "url": "https://mkkoreacosmetic.com/",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://mkkoreacosmetic.com/catalog?q={search_term_string}",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://mkkoreacosmetic.com/catalog?q={search_term_string}"
+    },
     "query-input": "required name=search_term_string"
   }
 }`
 
-	// Organization & Store Schema
+	// Organization & Store Schema with Seoul headquarters and social links
 	orgJSON := `{
   "@context": "https://schema.org",
   "@type": "WholesaleStore",
@@ -600,13 +624,26 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
   "url": "https://mkkoreacosmetic.com/",
   "logo": "https://mkkoreacosmetic.com/logo.png",
   "image": "https://mkkoreacosmetic.com/logo.png",
-  "description": "Прямые поставки оригинальной корейской косметики оптом и в розницу со склада в Южной Корее, Южная Корея.",
+  "description": "Прямые поставки оригинальной корейской косметики оптом и в розницу со склада в Южной Корее, Сеул.",
+  "sameAs": [
+    "https://t.me/mkcosmetkor",
+    "https://instagram.com/muhabbat.kim.mk"
+  ],
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Seoul",
     "addressCountry": "KR"
   },
-  "priceRange": "$$",
+  "contactPoint": [
+    {
+      "@type": "ContactPoint",
+      "telephone": "+82-10-8390-5577",
+      "contactType": "sales",
+      "areaServed": ["RU", "KZ", "UZ", "KG", "BY", "KR"],
+      "availableLanguage": ["Russian", "Korean", "English"]
+    }
+  ],
+  "priceRange": "$",
   "currenciesAccepted": "KRW, USD, RUB, KZT, UZS",
   "paymentAccepted": "Cash, Credit Card, Wire Transfer, Crypto",
   "areaServed": ["RU", "KZ", "UZ", "KG", "BY", "KR"]
@@ -775,6 +812,47 @@ func (inj *SEOInjector) injectDeliverySEO(baseHTML []byte) []byte {
 		html.EscapeString(descText),
 	)
 
+	deliveryFaqJSON := `{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "В какие страны осуществляется доставка корейской косметики?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Мы осуществляем регулярную авиа-доставку и карго со склада в Сеуле (Южная Корея) в Россию, Казахстан, Узбекистан, Кыргызстан, Беларусь и другие страны СНГ."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Каковы сроки доставки из Южной Кореи?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Сроки международной доставки составляют в среднем от 5 до 14 рабочих дней в зависимости от города назначения и выбранного типа отправки (авиа-экспресс или карго)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Предоставляется ли трек-номер для отслеживания посылки?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да, после сборки и отправки заказа со склада в Корее клиенту высылается международный трек-номер для полного онлайн-отслеживания груза на всем пути следования."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Как упаковывается косметика при международной перевозке?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Каждый заказ надежно упаковывается в плотные гофрокороба с многослойной воздушно-пузырчатой пленкой (Bubble wrap), исключая повреждение флаконов, банок и подарочных наборов."
+      }
+    }
+  ]
+}`
+
+	metaTags += fmt.Sprintf("\n    <!-- Delivery FAQ Schema -->\n    <script type=\"application/ld+json\">%s</script>\n", deliveryFaqJSON)
+
 	return replaceHeadContent(baseHTML, metaTags)
 }
 
@@ -879,6 +957,21 @@ func (inj *SEOInjector) injectDefaultSEO(baseHTML []byte, path string) []byte {
 	}
 
 	metaTags := fmt.Sprintf(`
+    <link rel="canonical" href="%s" />
+`,
+		canonicalURL,
+	)
+
+	return replaceHeadContent(baseHTML, metaTags)
+}
+
+func (inj *SEOInjector) injectNotFoundSEO(baseHTML []byte, path string) []byte {
+	cleanPath := strings.TrimRight(path, "/")
+	canonicalURL := "https://mkkoreacosmetic.com" + cleanPath
+
+	metaTags := fmt.Sprintf(`
+    <title>Товар не найден (404) | MK KOREA COSMETIC</title>
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="canonical" href="%s" />
 `,
 		canonicalURL,

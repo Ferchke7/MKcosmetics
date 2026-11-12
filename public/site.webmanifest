@@ -1,0 +1,23 @@
+{
+  "name": "MK KOREA COSMETIC",
+  "short_name": "MK Cosmetics",
+  "description": "Оптово-розничный склад оригинальной корейской косметики в Южной Корее",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F5F0",
+  "theme_color": "#A8834A",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

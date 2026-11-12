@@ -77,6 +77,10 @@ User-agent: PerplexityBot
 Allow: /
 
 Sitemap: https://mkkoreacosmetic.com/sitemap.xml
+Sitemap: https://mkkoreacosmetic.com/sitemap-main.xml
+Sitemap: https://mkkoreacosmetic.com/sitemap-categories.xml
+Sitemap: https://mkkoreacosmetic.com/sitemap-brands.xml
+Sitemap: https://mkkoreacosmetic.com/sitemap-products.xml
 Host: https://mkkoreacosmetic.com
 `
 	_, _ = w.Write([]byte(robots))
@@ -102,25 +106,61 @@ type SitemapURL struct {
 type SitemapURLSet struct {
 	XMLName    xml.Name     `xml:"urlset"`
 	XMLNS      string       `xml:"xmlns,attr"`
-	XMLNSImage string       `xml:"xmlns:image,attr"`
+	XMLNSImage string       `xml:"xmlns:image,attr,omitempty"`
 	URLs       []SitemapURL `xml:"url"`
 }
 
-// Sitemap.xml dynamic generator with Google Images extensions
-func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-	defer cancel()
+// Sitemap Index structures (Standard protocol for multi-part sitemaps)
+type SitemapIndexEntry struct {
+	XMLName xml.Name `xml:"sitemap"`
+	Loc     string   `xml:"loc"`
+	LastMod string   `xml:"lastmod,omitempty"`
+}
 
+type SitemapIndex struct {
+	XMLName  xml.Name            `xml:"sitemapindex"`
+	XMLNS    string              `xml:"xmlns,attr"`
+	Sitemaps []SitemapIndexEntry `xml:"sitemap"`
+}
+
+func writeXML(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+
+	_, _ = w.Write([]byte(xml.Header))
+	enc := xml.NewEncoder(w)
+	enc.Indent("", "  ")
+	_ = enc.Encode(data)
+}
+
+// GetSitemapXML returns the Master Sitemap Index referencing specialized child sitemaps
+func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
+	baseURL := "https://mkkoreacosmetic.com"
+	today := time.Now().Format("2006-01-02")
+
+	idx := SitemapIndex{
+		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		Sitemaps: []SitemapIndexEntry{
+			{Loc: baseURL + "/sitemap-main.xml", LastMod: today},
+			{Loc: baseURL + "/sitemap-categories.xml", LastMod: today},
+			{Loc: baseURL + "/sitemap-brands.xml", LastMod: today},
+			{Loc: baseURL + "/sitemap-products.xml", LastMod: today},
+		},
+	}
+
+	writeXML(w, idx)
+}
+
+// GetSitemapMainXML returns static landing pages
+func (h *SEOHandler) GetSitemapMainXML(w http.ResponseWriter, r *http.Request) {
 	baseURL := "https://mkkoreacosmetic.com"
 	today := time.Now().Format("2006-01-02")
 
 	urlSet := SitemapURLSet{
-		XMLNS:      "http://www.sitemaps.org/schemas/sitemap/0.9",
-		XMLNSImage: "http://www.google.com/schemas/sitemap-image/1.1",
-		URLs:       make([]SitemapURL, 0, 1500),
+		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  make([]SitemapURL, 0, 10),
 	}
 
-	// 1. Static Core Landing Pages
 	staticPages := []struct {
 		path     string
 		freq     string
@@ -142,7 +182,22 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// 2. Categories
+	writeXML(w, urlSet)
+}
+
+// GetSitemapCategoriesXML returns all catalog categories
+func (h *SEOHandler) GetSitemapCategoriesXML(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	baseURL := "https://mkkoreacosmetic.com"
+	today := time.Now().Format("2006-01-02")
+
+	urlSet := SitemapURLSet{
+		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  make([]SitemapURL, 0, 50),
+	}
+
 	categories, err := h.catalogRepo.GetCategories(ctx)
 	if err == nil {
 		for _, cat := range categories {
@@ -158,15 +213,34 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 3. Brands
+	writeXML(w, urlSet)
+}
+
+// GetSitemapBrandsXML returns all catalog brands
+func (h *SEOHandler) GetSitemapBrandsXML(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	baseURL := "https://mkkoreacosmetic.com"
+	today := time.Now().Format("2006-01-02")
+
+	urlSet := SitemapURLSet{
+		XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  make([]SitemapURL, 0, 100),
+	}
+
 	brands, err := h.catalogRepo.GetBrands(ctx)
 	if err == nil {
 		for _, b := range brands {
-			if b.Slug == "" {
+			if b.Name == "" && b.Slug == "" {
 				continue
 			}
+			brandName := b.Name
+			if brandName == "" {
+				brandName = b.Slug
+			}
 			urlSet.URLs = append(urlSet.URLs, SitemapURL{
-				Loc:        fmt.Sprintf("%s/catalog?brand=%s", baseURL, b.Name),
+				Loc:        fmt.Sprintf("%s/catalog?brand=%s", baseURL, brandName),
 				LastMod:    today,
 				ChangeFreq: "daily",
 				Priority:   "0.8",
@@ -174,7 +248,23 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 4. Products with Google Images Extensions
+	writeXML(w, urlSet)
+}
+
+// GetSitemapProductsXML returns all active catalog products with Google Images extensions
+func (h *SEOHandler) GetSitemapProductsXML(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
+	defer cancel()
+
+	baseURL := "https://mkkoreacosmetic.com"
+	today := time.Now().Format("2006-01-02")
+
+	urlSet := SitemapURLSet{
+		XMLNS:      "http://www.sitemaps.org/schemas/sitemap/0.9",
+		XMLNSImage: "http://www.google.com/schemas/sitemap-image/1.1",
+		URLs:       make([]SitemapURL, 0, 2000),
+	}
+
 	filter := repository.CatalogFilter{
 		Page:         1,
 		PageSize:     10000,
@@ -201,7 +291,6 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 				Images:     make([]SitemapImage, 0, len(p.Photos)),
 			}
 
-			// Add product images for Google Images & Yandex Images indexing
 			brandName := p.Brand
 			if p.BrandOverride != "" {
 				brandName = p.BrandOverride
@@ -232,7 +321,6 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 
-			// Fallback to p.Images if Photos was empty
 			if len(productURL.Images) == 0 && len(p.Images) > 0 {
 				for _, rawImg := range p.Images {
 					if rawImg == "" {
@@ -253,11 +341,5 @@ func (h *SEOHandler) GetSitemapXML(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-
-	_, _ = w.Write([]byte(xml.Header))
-	enc := xml.NewEncoder(w)
-	enc.Indent("", "  ")
-	_ = enc.Encode(urlSet)
+	writeXML(w, urlSet)
 }

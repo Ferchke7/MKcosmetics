@@ -194,6 +194,11 @@ export const ProductDetailPage: React.FC = () => {
     image: images.length > 0 ? images.map((img) => img.startsWith('/') ? `https://mkkoreacosmetic.com${img}` : img) : ['https://mkkoreacosmetic.com/logo.png'],
     description: pageDesc,
     sku: product.code || undefined,
+    category: product.categoryName || undefined,
+    countryOfOrigin: {
+      '@type': 'Country',
+      name: 'KR',
+    },
     brand: {
       '@type': 'Brand',
       name: brandName,
@@ -203,6 +208,7 @@ export const ProductDetailPage: React.FC = () => {
       url: productCanonical,
       priceCurrency: 'KRW',
       price: product.priceKrw,
+      priceValidUntil: '2027-12-31',
       availability: 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: {

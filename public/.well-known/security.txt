@@ -1,0 +1,6 @@
+Contact: mailto:info@mkkoreacosmetic.com
+Contact: https://t.me/mkcosmetkor
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: ru, en, ko
+Canonical: https://mkkoreacosmetic.com/.well-known/security.txt
+Policy: https://mkkoreacosmetic.com/about

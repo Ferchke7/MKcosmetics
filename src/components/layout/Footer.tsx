@@ -108,17 +108,31 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Col 2: Catalog Links */}
+          {/* Col 2: Catalog Links & Top Brands */}
           <div className="space-y-3">
             <h5 className="font-serif text-sm sm:text-base font-bold text-paper uppercase tracking-wider">Каталог</h5>
-            <ul className="space-y-2 text-muted">
+            <ul className="space-y-1.5 text-muted">
               <li><Link to="/catalog" className="hover:text-gold transition-colors">Все товары</Link></li>
               <li><Link to="/catalog?categorySlug=krema-588144" className="hover:text-gold transition-colors">Крема для лица</Link></li>
               <li><Link to="/catalog?categorySlug=nabory-588136" className="hover:text-gold transition-colors">Наборы ухода</Link></li>
-              <li><Link to="/catalog?categorySlug=maski-588137" className="hover:text-gold transition-colors">Маски</Link></li>
+              <li><Link to="/catalog?categorySlug=maski-588137" className="hover:text-gold transition-colors">Маски для лица</Link></li>
               <li><Link to="/catalog?categorySlug=ochishchenie-588146" className="hover:text-gold transition-colors">Очищение</Link></li>
               <li><Link to="/catalog?discount=true" className="text-sale hover:underline font-semibold">Специальные скидки</Link></li>
             </ul>
+            <div className="pt-2 border-t border-paper/10">
+              <div className="text-[11px] uppercase tracking-wider text-gold font-semibold mb-1.5">Популярные бренды</div>
+              <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
+                <Link to="/catalog?brand=The%20History%20of%20Whoo" className="hover:text-gold transition-colors">Whoo</Link>
+                <span>•</span>
+                <Link to="/catalog?brand=Sulwhasoo" className="hover:text-gold transition-colors">Sulwhasoo</Link>
+                <span>•</span>
+                <Link to="/catalog?brand=O%20HUI" className="hover:text-gold transition-colors">O HUI</Link>
+                <span>•</span>
+                <Link to="/catalog?brand=SU:M37" className="hover:text-gold transition-colors">SU:M37</Link>
+                <span>•</span>
+                <Link to="/catalog?brand=HERA" className="hover:text-gold transition-colors">HERA</Link>
+              </div>
+            </div>
           </div>
 
           {/* Col 3: Customer Service */}
