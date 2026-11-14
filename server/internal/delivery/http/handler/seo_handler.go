@@ -36,6 +36,8 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /checkout
 Disallow: /wishlist
+Disallow: /*?*q=*
+Disallow: /*search_term_string*
 
 User-agent: Googlebot
 Allow: /
@@ -47,6 +49,8 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /checkout
 Disallow: /wishlist
+Disallow: /*?*q=*
+Disallow: /*search_term_string*
 
 User-agent: Yandex
 Allow: /
@@ -58,6 +62,8 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /checkout
 Disallow: /wishlist
+Disallow: /*?*q=*
+Disallow: /*search_term_string*
 
 User-agent: Googlebot-Image
 Allow: /uploads/

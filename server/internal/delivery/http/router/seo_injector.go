@@ -85,14 +85,50 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	// 2. Catalog Page
-	if path == "/catalog" || strings.HasPrefix(path, "/catalog/") {
-		brand := r.URL.Query().Get("brand")
+	// 2. Catalog Page & Canonical 301 Redirect for /catalog/:slug -> /catalog?categorySlug=:slug
+	if strings.HasPrefix(path, "/catalog/") {
+		sub := strings.Trim(strings.TrimPrefix(path, "/catalog/"), "/")
+		if sub != "" {
+			target := fmt.Sprintf("/catalog?categorySlug=%s", sub)
+			if r.URL.RawQuery != "" {
+				target = fmt.Sprintf("%s&%s", target, r.URL.RawQuery)
+			}
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+			return true
+		}
+	}
+
+	if path == "/catalog" {
+		// Clean search template crawl trap
+		q := r.URL.Query().Get("q")
+		if q == "{search_term_string}" || strings.Contains(q, "search_term_string") {
+			http.Redirect(w, r, "/catalog", http.StatusMovedPermanently)
+			return true
+		}
+
+		rawBrand := r.URL.Query().Get("brand")
+		trimmedBrand := strings.TrimSpace(rawBrand)
+		if rawBrand != "" && rawBrand != trimmedBrand {
+			values := r.URL.Query()
+			values.Set("brand", trimmedBrand)
+			http.Redirect(w, r, "/catalog?"+values.Encode(), http.StatusMovedPermanently)
+			return true
+		}
+
 		cat := r.URL.Query().Get("categorySlug")
 		if cat == "" {
 			cat = r.URL.Query().Get("category")
 		}
-		rendered := inj.injectCatalogSEO(rawHTML, brand, cat)
+
+		// If internal search query is active, serve noindex to prevent crawl trap
+		if q != "" {
+			rendered := inj.injectNoindexSEO(rawHTML, path)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(rendered)
+			return true
+		}
+
+		rendered := inj.injectCatalogSEO(rawHTML, trimmedBrand, cat)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write(rendered)
 		return true
@@ -145,10 +181,31 @@ func (inj *SEOInjector) ServeDynamicSPA(w http.ResponseWriter, r *http.Request) 
 	return true
 }
 
-func safeTruncate(s string, maxRunes int) string {
-	runes := []rune(s)
+func formatNumber(n int64) string {
+	in := fmt.Sprintf("%d", n)
+	out := ""
+	for i, c := range in {
+		if i > 0 && (len(in)-i)%3 == 0 {
+			out += " "
+		}
+		out += string(c)
+	}
+	return out
+}
+
+func cleanPreviewText(s string, maxRunes int) string {
+	s = strings.ReplaceAll(s, "\r\n", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\t", " ")
+	s = strings.ReplaceAll(s, "*", "")
+	s = strings.ReplaceAll(s, "#", "")
+
+	fields := strings.Fields(s)
+	joined := strings.Join(fields, " ")
+
+	runes := []rune(joined)
 	if len(runes) <= maxRunes {
-		return s
+		return joined
 	}
 	return string(runes[:maxRunes-3]) + "..."
 }
@@ -163,28 +220,39 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	}
 
 	titleText := fmt.Sprintf("%s %s — купить со склада в Южной Корее | MK KOREA COSMETIC", p.Name, brand)
-	ogTitleText := fmt.Sprintf("%s (%s)", p.Name, brand)
-	descText := p.Excerpt
-	if descText == "" {
-		descText = p.Description
+
+	var ogTitleText string
+	if p.PriceKRW > 0 {
+		ogTitleText = fmt.Sprintf("%s • %s — %s ₩", p.Name, brand, formatNumber(p.PriceKRW))
+	} else {
+		ogTitleText = fmt.Sprintf("%s • %s", p.Name, brand)
 	}
-	descText = safeTruncate(descText, 160)
+
+	descSource := p.Excerpt
+	if descSource == "" {
+		descSource = p.Description
+	}
+	descText := cleanPreviewText(descSource, 200)
 	if descText == "" {
-		descText = fmt.Sprintf("Оригинальная корейская косметика %s %s со склада в Южной Корее. Прямые поставки по оптовым ценам, быстрая доставка по СНГ.", p.Name, brand)
+		descText = fmt.Sprintf("Оригинальная корейская косметика %s %s со склада в Южной Корее (Сеул). Прямые оптовые поставки, быстрая доставка по СНГ.", p.Name, brand)
 	}
 
 	canonicalURL := fmt.Sprintf("https://mkkoreacosmetic.com/product/%s", slug)
 
 	// Pick primary image
-	imgURL := "https://mkkoreacosmetic.com/logo.png"
+	imgURL := "https://mkkoreacosmetic.com/og-image.jpg"
+	isDefaultImage := true
 	if len(p.Photos) > 0 {
 		if p.Photos[0].Full != "" {
 			imgURL = p.Photos[0].Full
+			isDefaultImage = false
 		} else if p.Photos[0].W600 != "" {
 			imgURL = p.Photos[0].W600
+			isDefaultImage = false
 		}
 	} else if len(p.Images) > 0 && p.Images[0] != "" {
 		imgURL = p.Images[0]
+		isDefaultImage = false
 	}
 
 	if strings.HasPrefix(imgURL, "/") {
@@ -493,6 +561,11 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 	}
 	breadBytes, _ := json.Marshal(breadJSON)
 
+	imgDims := ""
+	if isDefaultImage {
+		imgDims = "\n    <meta property=\"og:image:width\" content=\"1200\" />\n    <meta property=\"og:image:height\" content=\"630\" />"
+	}
+
 	metaTags := fmt.Sprintf(`
     <title>%s</title>
     <meta name="description" content="%s" />
@@ -501,15 +574,13 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
     
     <!-- Open Graph / Telegram / WhatsApp / Facebook -->
     <meta property="og:site_name" content="MK KOREA COSMETIC" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="product" />
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
     <meta property="og:image" content="%s" />
     <meta property="og:image:secure_url" content="%s" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="600" />
-    <meta property="og:image:height" content="600" />
+    <meta property="og:image:type" content="image/jpeg" />%s
     <meta property="og:locale" content="ru_RU" />
     <meta property="product:price:amount" content="%d" />
     <meta property="product:price:currency" content="KRW" />
@@ -534,6 +605,7 @@ func (inj *SEOInjector) injectProductSEO(baseHTML []byte, p *entity.CatalogProdu
 		canonicalURL,
 		html.EscapeString(imgURL),
 		html.EscapeString(imgURL),
+		imgDims,
 		p.PriceKRW,
 		html.EscapeString(ogTitleText),
 		html.EscapeString(descText),
@@ -572,14 +644,18 @@ func (inj *SEOInjector) injectCatalogSEO(baseHTML []byte, brand, category string
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
-    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ru_RU" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
-    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
 `,
 		html.EscapeString(titleText),
 		html.EscapeString(descText),
@@ -701,14 +777,18 @@ func (inj *SEOInjector) injectHomeSEO(baseHTML []byte) []byte {
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
-    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ru_RU" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
-    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
 
     <!-- Schema.org Rich Snippets JSON-LD -->
     <script type="application/ld+json">%s</script>
@@ -793,14 +873,18 @@ func (inj *SEOInjector) injectDeliverySEO(baseHTML []byte) []byte {
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
-    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ru_RU" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
-    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
 `,
 		html.EscapeString(titleText),
 		html.EscapeString(descText),
@@ -873,14 +957,18 @@ func (inj *SEOInjector) injectAboutSEO(baseHTML []byte) []byte {
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
-    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ru_RU" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
-    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
 `,
 		html.EscapeString(titleText),
 		html.EscapeString(descText),
@@ -912,14 +1000,18 @@ func (inj *SEOInjector) injectContactsSEO(baseHTML []byte) []byte {
     <meta property="og:title" content="%s" />
     <meta property="og:description" content="%s" />
     <meta property="og:url" content="%s" />
-    <meta property="og:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta property="og:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://mkkoreacosmetic.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ru_RU" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="%s" />
     <meta name="twitter:description" content="%s" />
-    <meta name="twitter:image" content="https://mkkoreacosmetic.com/logo.png" />
+    <meta name="twitter:image" content="https://mkkoreacosmetic.com/og-image.jpg" />
 `,
 		html.EscapeString(titleText),
 		html.EscapeString(descText),

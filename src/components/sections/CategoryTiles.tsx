@@ -33,7 +33,7 @@ export const CategoryTiles: React.FC<CategoryTilesProps> = ({ categories }) => {
           {categories.slice(0, 12).map((c) => (
             <Link
               key={c.id}
-              to={`/catalog/${c.slug}`}
+              to={`/catalog?categorySlug=${c.slug}`}
               className="group flex flex-col items-center text-center p-4 rounded-card bg-paper border border-line hover:border-gold hover:shadow-soft transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation select-none"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-cream-soft mb-3 shrink-0 flex items-center justify-center">
